@@ -1,5 +1,7 @@
 package com.zrlog.blog.hexo.template;
 
+import com.zrlog.theme.spi.BundledThemes;
+
 import com.zrlog.blog.hexo.template.support.butterfly.ButterflyHexoObjectBox;
 import com.zrlog.blog.hexo.template.support.fluid.FluidHexoObjectBox;
 import com.zrlog.blog.hexo.template.support.next.NextHexoObjectBox;
@@ -57,13 +59,15 @@ public class HexoTemplate implements ZrLogTemplate {
     }
 
     private HexoObjectBox buildHexoObjectByTemplate(Map<String, Object> root, BasePageInfo pageInfo) {
-        if (this.templateVO.getTemplate().endsWith("/hexo-theme-fluid")) {
+        String adapter = BundledThemes.getInstance().find(this.templateVO.getTemplate())
+                .map(com.zrlog.theme.spi.BundledThemeProvider::adapter).orElse("");
+        if ("fluid".equals(adapter)) {
             return new FluidHexoObjectBox(root, rootPath, pageInfo, templateVO, template);
         }
-        if (this.templateVO.getTemplate().endsWith("/hexo-theme-butterfly")) {
+        if ("butterfly".equals(adapter)) {
             return new ButterflyHexoObjectBox(root, rootPath, pageInfo, templateVO, template);
         }
-        if (this.templateVO.getTemplate().endsWith("/hexo-theme-next")) {
+        if ("next".equals(adapter)) {
             return new NextHexoObjectBox(root, rootPath, pageInfo, templateVO, template);
         }
         return new HexoObjectBox(root, rootPath, pageInfo, templateVO, template);

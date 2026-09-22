@@ -46,7 +46,7 @@ public class MemoryApplicationTest {
             try (InMemoryDatabase database = InMemoryDatabase.open(properties, false)) {
                 assertEquals("localhost:17081", database.scalar(
                         "select value from website where name=?", "host"));
-                assertEquals(Constants.DEFAULT_TEMPLATE_PATH, database.scalar(
+                assertEquals(Constants.getDefaultTemplatePath(), database.scalar(
                         "select value from website where name=?", "template"));
                 assertEquals("zh_CN", database.scalar(
                         "select value from website where name=?", "language"));
@@ -68,7 +68,7 @@ public class MemoryApplicationTest {
                         "select thumbnail from log where alias=?", "notes-from-the-past"));
                 assertEquals(1L, ((Number) database.scalar("select count(*) from comment")).longValue());
             }
-            assertEquals(Constants.DEFAULT_TEMPLATE_PATH,
+            assertEquals(Constants.getDefaultTemplatePath(),
                     config.getCacheService().getPublicWebSiteInfo().getTemplate());
             assertEquals(2L, config.getCacheService().getPublicWebSiteInfo().getRows().longValue());
             assertFalse(Files.exists(projectRoot.resolve("conf/memory-install.generated.json")));

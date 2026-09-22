@@ -19,6 +19,13 @@
 
     <artifactId>zrlog-blog-web</artifactId>
     <dependencies>
+        <!-- Rendering regression fixture only; optional themes are assembled by zrlog-main. -->
+        <dependency>
+            <groupId>com.hibegin</groupId>
+            <artifactId>zrlog-template-www</artifactId>
+            <version>3.2</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>

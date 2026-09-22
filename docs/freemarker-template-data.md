@@ -551,3 +551,11 @@ ${_res.footerLink!''}
 4. `article.ftl`
 5. `plugin.ftl`
 6. `footer.ftl`
+
+## 内置主题资源 JAR
+
+内置主题源码已拆到 `zrlog-extensions` 下的 `zrlog-template-default`、`zrlog-template-www` 与四个 `zrlog-template-hexo-*` 工程。FreeMarker/Polyglot 模块通过固定 Maven 依赖带入资源，正常启动博客工程仍可直接看到页面。
+
+注册契约为 `com.hibegin:zrlog-template-spi:1.0.0`，使用 `ServiceLoader<BundledThemeProvider>`。核心层不再枚举主题目录。原有主题 id/路径保持不变，现有数据库与 Cookie 配置仍有效。新增默认主题通过 provider 的 `isDefault()` 声明，应用 classpath 必须且只能选择一个默认 provider。默认主题路径由 `Constants.getDefaultTemplatePath()` 获取，替代原先会被编译器内联的路径常量。
+
+各主题 JAR 自动携带 Native Image 注册和资源索引；`BlogResourceUtils` 合并索引，`BlogNativeImageUtils` 按 provider 引擎进行预热。Hexo 兼容适配器由 provider 显式声明，不再从主题路径猜测。原有 Zip 安装主题继续从站点文件目录读取，不要求实现 SPI。

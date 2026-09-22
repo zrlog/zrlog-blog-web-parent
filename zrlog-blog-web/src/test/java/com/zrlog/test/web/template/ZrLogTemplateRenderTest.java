@@ -513,7 +513,7 @@ public class ZrLogTemplateRenderTest {
         public PublicWebSiteInfo getPublicWebSiteInfo() {
             PublicWebSiteInfo publicWebSiteInfo = new PublicWebSiteInfo();
             publicWebSiteInfo.setGenerator_html_status(generatorHtmlStatus);
-            publicWebSiteInfo.setTemplate(Constants.DEFAULT_TEMPLATE_PATH);
+            publicWebSiteInfo.setTemplate(Constants.getDefaultTemplatePath());
             publicWebSiteInfo.setLanguage(Constants.DEFAULT_LANGUAGE);
             publicWebSiteInfo.setTitle("ZrLog");
             publicWebSiteInfo.setSecond_title("Theme Preview");

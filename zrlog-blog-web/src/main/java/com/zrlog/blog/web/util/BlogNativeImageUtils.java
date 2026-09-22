@@ -1,5 +1,7 @@
 package com.zrlog.blog.web.util;
 
+import com.zrlog.theme.spi.BundledThemes;
+
 import com.hibegin.common.util.LoggerUtil;
 import com.hibegin.common.util.StringUtils;
 import com.hibegin.http.HttpMethod;
@@ -34,15 +36,13 @@ public class BlogNativeImageUtils {
         List<String> resources = BlogResourceUtils.getInstance().getResources();
         NativeImageUtils.doResourceLoadByResourceNames(resources.stream().filter(StringUtils::isNotEmpty).map(e -> "/" + e).collect(Collectors.toList()));
 
-        try {
-            new FreemarkerZrLogTemplate().init(PathUtil.getStaticFile(Constants.TEMPLATE_BASE_PATH + "default"));
-        } catch (Exception e) {
-            LoggerUtil.getLogger(BlogWebSetup.class).info("Freemarker init error " + e.getMessage());
-        }
-        try {
-            new FreemarkerZrLogTemplate().initClassTemplate(Constants.TEMPLATE_BASE_PATH + "default");
-        } catch (Exception e) {
-            LoggerUtil.getLogger(BlogWebSetup.class).info("Freemarker init error " + e.getMessage());
+        for (com.zrlog.theme.spi.BundledThemeProvider provider : BundledThemes.getInstance().providers()) {
+            if (!"freemarker".equals(provider.engine())) continue;
+            try {
+                new FreemarkerZrLogTemplate().initClassTemplate(provider.path());
+            } catch (Exception e) {
+                throw new IllegalStateException("Unable to initialize bundled theme " + provider.id(), e);
+            }
         }
         try {
             ApplicationContext applicationContext = new ApplicationContext(zrLogConfig.getServerConfig());

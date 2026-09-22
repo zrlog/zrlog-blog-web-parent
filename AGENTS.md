@@ -9,7 +9,7 @@
 - 博客前台页面：文章列表、文章详情、评论、归档、标签、分类、搜索、RSS。
 - Freemarker `.ftl` 主题渲染。
 - Polyglot / Hexo 风格模板兼容。
-- 本地主题资源维护，主要目录是 `static/include/templates`。
+- 通过 Maven 主题 JAR 与 SPI 加载内置资源；主题源码在 zrlog-extensions 的独立仓库维护。
 - Java 单元测试与 JaCoCo 覆盖率检查，目标覆盖率约 80%。
 
 ## 目录职责
@@ -18,8 +18,8 @@
 | --- | --- |
 | `zrlog-blog-web/` | 博客前台主模块，包含 Controller、Service、Router、Listener、页面 VO 和公共博客行为。 |
 | `zrlog-freemarker-template/` | Freemarker 模板适配与渲染集成。修改 `.ftl` 渲染行为或模板数据暴露时，从这里开始。 |
-| `zrlog-polyglot-template/` | Polyglot / Hexo 兼容模板支持和内置 Hexo 风格主题资源。 |
-| `static/include/templates/` | 本地 ZrLog 主题工作区。新增 Freemarker 主题优先放这里。 |
+| `zrlog-polyglot-template/` | Polyglot / Hexo 兼容模板支持；主题 JAR 由 zrlog-main 组装。 |
+| `static/include/templates/` | 运行时安装的外部主题目录，不作为主题源码仓库。 |
 | `docs/` | 面向人和 AI 的开发文档。 |
 | `conf/`、`shell/` | 本地运行配置与辅助脚本。修改前确认不是用户本地配置。 |
 
@@ -27,8 +27,8 @@
 
 - [博客公开 API 文档](docs/api/README.md)
 - [Freemarker 模板数据结构](docs/freemarker-template-data.md)
-- [主题工作区说明](static/include/templates/README.md)
-- [Signal Notes 主题维护规范](static/include/templates/template-signal-notes/README.md)
+- [内置主题与 SPI](docs/bundled-themes.md)
+- 新建独立主题参考 `templates/README.md` 和对应主题仓库的 `AGENTS.md`。
 - `zrlog-ops/docs/repository-structure-guide.md`
 - `zrlog-ops/acceptance/zrlog-blog-web.yaml`
 
@@ -70,7 +70,7 @@ ${model.log.title}
 
 新增或修改主题时遵守：
 
-- 主题目录放在 `static/include/templates/<template-name>/`。
+- 主题源码在独立仓库；内置 JAR 资源放在 `src/main/resources/include/templates/<id>/`，外部 ZIP 安装后放在 `static/include/templates/<id>/`。
 - 尽量拆分为 `header.ftl`、`footer.ftl`、`page.ftl`、`detail.ftl`、`article.ftl`、`comment.ftl`、`pager.ftl`、`plugin.ftl`。
 - 主题元信息写入 `template.properties`。
 - 用户可见文案写入 `language/i18n_*.properties`，不要散落在模板里。
@@ -78,26 +78,9 @@ ${model.log.title}
 - 可选字段必须加兜底，例如 `${log.thumbnail!''}`。
 - 不要硬编码生产域名或外部资源，除非主题文档明确说明该依赖。
 
-## 当前主题约束
+## 主题维护边界
 
-`template-signal-notes` 是当前重点维护的 Freemarker 主题，风格参考 Next.js 官方博客。后续 AI Agent 除非收到明确重设计要求，否则必须保留这些约束：
-
-- 可以参考 Next.js Blog 的布局节奏，但不能复制或保留 Next.js / Vercel 官方品牌图标。
-- 顶部品牌使用文字，来源优先为 `_res.navBarBrand`，其次为 `webs.title`。
-- 顶部搜索、暗黑模式切换、部署/行动按钮应保持同一套视觉语言。
-- 不显示搜索快捷键提示，例如 `⌘K`。
-- 不增加 `Learn` 导航项。
-- 首页文章卡片使用瀑布流布局。
-- 首页卡片需要显示文章预览图。
-- 首页卡片摘要支持 Markdown 渲染，并使用 `markdown-body`。
-- 作者头像使用 `log.header`。
-- 首页和详情页都要显示分类，并使用统一的分类 icon。
-- 详情页不要再次显示外部列表预览摘要，避免和正文重复。
-- 文章正文使用 `markdown-body`。
-- Markdown 的暗黑模式必须跟随顶部主题切换状态，不能自己用独立媒体查询。
-- 不要把 `.article-body` 限制为 `65ch`。
-
-细节以 [Signal Notes 主题维护规范](static/include/templates/template-signal-notes/README.md) 为准。
+默认主题在 `zrlog-extensions/zrlog-template-default` 维护；Signal Notes 等外部主题在各自仓库维护，视觉约束以对应仓库文档为准。渲染工程保留数据契约、引擎与内存预览入口，不复制主题源码。
 
 ## 默认主题内存评审环境
 
@@ -132,7 +115,7 @@ ${model.log.title}
 | --- | --- |
 | 修改公开文章行为 | `zrlog-blog-web/src/main/java` |
 | 新增或修复 Freemarker 数据字段 | `zrlog-freemarker-template/` 和 `docs/freemarker-template-data.md` |
-| 新建 `.ftl` 主题 | `static/include/templates/` |
-| 维护 `template-signal-notes` | `static/include/templates/template-signal-notes/README.md` |
+| 新建 `.ftl` 主题 | `templates/README.md` 与独立主题仓库 |
+| 维护内置主题 | `docs/bundled-themes.md` 与独立主题仓库 |
 | 修复 Hexo 主题兼容 | `zrlog-polyglot-template/` |
 | 补充测试和覆盖率 | 各模块的 `src/test` 目录 |
