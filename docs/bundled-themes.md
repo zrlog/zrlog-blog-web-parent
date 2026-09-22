@@ -21,7 +21,7 @@
 
 资源放在 `include/templates/<id>/`。Java 构建工具 `ThemeResourceIndexer` 扫描 Maven 处理后的资源，自动生成 inventory 和 Native Image 元数据。`BundledThemes` 使用 ServiceLoader 发现 provider，拒绝重复 id、冲突默认项和无效资源清单。安装器通过 `Constants.getDefaultTemplatePath()` 取得默认主题；只有声明 `isDefault=true` 的 provider 决定默认值。
 
-新增内置主题只需引入其 Maven 依赖；仅当增加新的渲染引擎或兼容能力时才需要改引擎代码。本工程仅通过 Freemarker 模块引入 default，保证独立启动可以预览默认页面。WWW 和四款 Hexo 主题仅在 zrlog-main 的 zrlog-web 模块以 runtime 依赖组装，渲染引擎不携带这些可选资源。外部 ZIP 主题继续使用既有安装机制，JAR 不替代市场 ZIP 协议。
+新增内置主题只需引入其 Maven 依赖；仅当增加新的渲染引擎或兼容能力时才需要改引擎代码。本工程仅通过 Freemarker 模块引入 default，保证独立启动可以预览默认页面。WWW 和四款 Hexo 主题仅在 zrlog-main 的 zrlog-web 模块组装：WWW 使用 runtime，四款 Hexo 使用 `${zrlog-polyglot-template-scope}` 与引擎保持一致。渲染工程不携带这些可选资源。外部 ZIP 主题继续使用既有安装机制，JAR 不替代市场 ZIP 协议。
 
 ## 本地开发与发布
 
