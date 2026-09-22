@@ -25,6 +25,8 @@
 
 ## 本地开发与发布
 
+产品运行时边界：普通 JDK ZIP/WAR 的 `zrlog-polyglot-template-scope` 固定为 `provided`，不打包或运行 Polyglot/GraalJS 与 Hexo；仅 Native 构建使用 `compile`。引擎的本地开发测试与产品发行包是不同场景，不能因测试需要修改 JDK 打包边界。默认主题和 WWW 仍通过 Freemarker 提供页面。具体约定与包校验见主工程 `doc/build.md`。
+
 博客模块的 WWW 渲染回归测试使用 test 作用域依赖，不进入发布产物的运行时依赖。`memory-run.sh` 使用测试 classpath，因此这个评审入口也能加载 WWW 测试资源；正常博客应用只携带 default。
 
 构建顺序：SPI → 六个主题（各自 `./mvnw clean install`）→ zrlog-base → 本工程 → zrlog 主工程。已发布版本可直接从 Central 解析。

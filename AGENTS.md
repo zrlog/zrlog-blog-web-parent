@@ -80,6 +80,8 @@ ${model.log.title}
 
 ## 主题维护边界
 
+**普通 JDK 的 ZIP/WAR 不运行 Polyglot/GraalJS，不携带 Hexo 主题；只有 Native 构建启用。** 主工程 Java 包使用 `zrlog-polyglot-template-scope=provided`，Native 使用 `compile`。本仓库的引擎开发测试不代表产品 JDK 发行包可启用引擎。不得因为主题拆分、JDK 升级或 Markdown 渲染需求，修改主工程脚本为 `runtime` 或添加绕过 scope 的依赖。若功能需要引擎，应兼容缺席状态；改变产品边界需用户明确要求。权威约定见 `zrlog-main/doc/build.md` 的运行时边界。
+
 默认主题在 `zrlog-extensions/zrlog-template-default` 维护；Signal Notes 等外部主题在各自仓库维护，视觉约束以对应仓库文档为准。渲染工程保留数据契约、引擎与内存预览入口，不复制主题源码。
 
 ## 默认主题内存评审环境
