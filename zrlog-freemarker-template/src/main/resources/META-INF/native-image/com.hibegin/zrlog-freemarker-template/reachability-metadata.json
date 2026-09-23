@@ -1,0 +1,15 @@
+{
+  "reflection": [
+    {
+      "type": "freemarker.template.Configuration",
+      "methods": [
+        {
+          "name": "setDirectoryForTemplateLoading",
+          "parameterTypes": [
+            "java.io.File"
+          ]
+        }
+      ]
+    }
+  ]
+}

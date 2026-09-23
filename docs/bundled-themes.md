@@ -37,4 +37,6 @@
 
 ## Native Image 验证
 
+`BlogNativeImageUtils.reg()` 通过 SPI 初始化内置 Freemarker 主题，采集的是 classpath 加载路径。外部 ZIP 主题仍通过 `FreeMarkerUtil.init()` 从磁盘目录加载；该路径反射调用的 `Configuration.setDirectoryForTemplateLoading(File)` 由 `zrlog-freemarker-template/src/main/resources/META-INF/native-image/com.hibegin/zrlog-freemarker-template/reachability-metadata.json` 显式注册，不依赖采集时磁盘上是否存在外部主题。修改此元数据后，需要重新构建 Freemarker 模块并重新编译主工程 Native Image；替换主题文件不会更新已有可执行文件的反射注册。
+
 每个主题 JAR 自动包含资源与 ServiceLoader provider 构造器注册，无需在宿主中添加主题名称。2026-09-22 使用 GraalVM 25.0.4 将 SPI 的 RegistrySmoke 和六个实际主题 JAR 编译为原生程序（`--no-fallback -O1`），发现 6 个 provider 并成功读取 772 个资源、9,369,924 字节；相同 JVM 检查也通过。这是 SPI/资源层的原生验证，不等同于完整应用 Native Image 构建。
