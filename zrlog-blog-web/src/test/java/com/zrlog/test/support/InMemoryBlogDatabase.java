@@ -1,7 +1,6 @@
 package com.zrlog.test.support;
 
 import com.hibegin.common.dao.DataSourceWrapper;
-import com.hibegin.common.dao.InMemoryDatabase;
 import com.zrlog.common.CacheService;
 import com.zrlog.common.Constants;
 import com.zrlog.common.TokenService;
@@ -13,34 +12,29 @@ import com.zrlog.common.cache.vo.BaseDataInitVO;
 import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
-import com.zrlog.util.DataSourceUtil;
 import org.apache.commons.dbutils.handlers.MapHandler;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
 
-import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
 
 public class InMemoryBlogDatabase implements AutoCloseable {
 
     private final DataSourceWrapper dataSource;
-    private final InMemoryDatabase database;
+    private final ZrLogTestDatabase database;
     private final ZrLogConfig previousConfig;
     private final TestCacheService cacheService;
 
     private InMemoryBlogDatabase() throws Exception {
         this.previousConfig = Constants.zrLogConfig;
         this.cacheService = new TestCacheService();
-        this.dataSource = newDataSource();
-        this.database = InMemoryDatabase.open(dataSource, true);
+        this.database = ZrLogTestDatabase.open();
+        this.dataSource = database.dataSource();
         Constants.zrLogConfig = new TestZrLogConfig(cacheService);
-        loadSchema();
         seedBaseData();
     }
 
@@ -86,21 +80,6 @@ public class InMemoryBlogDatabase implements AutoCloseable {
                 commentId, "2026-06-03 12:00:00", false, false, "2026-06-03 12:00:00", userComment,
                 "https://reader.example.com", "127.0.0.1", "reader@example.com", "reader", logId,
                 "post-" + commentId, "", "JUnit", null);
-    }
-
-    private static DataSourceWrapper newDataSource() {
-        Properties properties = InMemoryDatabase.h2Properties("zrlog_blog_" + UUID.randomUUID());
-        return DataSourceUtil.buildDataSource(properties);
-    }
-
-    private void loadSchema() throws Exception {
-        try (InputStream input = InMemoryBlogDatabase.class.getResourceAsStream("/init-table-structure.sql")) {
-            if (input == null) {
-                throw new IllegalStateException("Missing init-table-structure.sql from zrlog-install-web test dependency");
-            }
-            database.loadMySQLSchema(input);
-            dataSource.getQueryRunner().update("alter table log add column if not exists sticky integer not null default 0");
-        }
     }
 
     private void seedBaseData() throws SQLException {

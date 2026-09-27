@@ -19,6 +19,12 @@
 
     <artifactId>zrlog-blog-web</artifactId>
     <dependencies>
+        <dependency>
+            <groupId>com.hibegin</groupId>
+            <artifactId>zrlog-test-support</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Rendering regression fixture only; optional themes are assembled by zrlog-main. -->
         <dependency>
             <groupId>com.hibegin</groupId>
@@ -83,6 +89,7 @@
                                 </goals>
                                 <configuration>
                                     <outputDirectory>${libOutputPath}</outputDirectory>
+                                    <includeScope>runtime</includeScope>
                                     <overWriteReleases>false</overWriteReleases>
                                     <overWriteSnapshots>false</overWriteSnapshots>
                                     <overWriteIfNewer>true</overWriteIfNewer>

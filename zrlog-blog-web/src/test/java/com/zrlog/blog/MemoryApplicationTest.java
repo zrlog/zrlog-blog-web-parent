@@ -21,6 +21,39 @@ import static org.junit.Assert.assertTrue;
 
 public class MemoryApplicationTest {
 
+    @org.junit.Rule public org.junit.rules.TemporaryFolder temporary = new org.junit.rules.TemporaryFolder();
+    private String originalUserDir;
+
+    @org.junit.Before public void useIsolatedProject() throws Exception {
+        originalUserDir = System.getProperty("user.dir");
+        Path source = MemoryApplication.projectRootPath();
+        Path project = temporary.newFolder("project").toPath();
+        Files.createDirectory(project.resolve("conf"));
+        for (String name : new String[]{"memory-install.json", "default-install-preview.json", "memory-content.json"}) {
+            Files.copy(source.resolve("conf").resolve(name), project.resolve("conf").resolve(name));
+        }
+        for (String name : new String[]{"memory-install.json", "default-install-preview.json"}) {
+            Path file = project.resolve("conf").resolve(name);
+            com.google.gson.Gson gson = new com.google.gson.Gson();
+            var config = gson.fromJson(Files.readString(file), com.zrlog.install.business.vo.InstallConfigVO.class);
+            config.getDbConfig().setDbName(config.getDbConfig().getDbName() + "_" + java.util.UUID.randomUUID());
+            Files.writeString(file, gson.toJson(config));
+        }
+        Path assets = source.resolve("conf/memory-assets");
+        try (var paths = Files.walk(assets)) {
+            for (Path path : paths.collect(java.util.stream.Collectors.toList())) {
+                Path target = project.resolve("conf/memory-assets").resolve(assets.relativize(path));
+                if (Files.isDirectory(path)) Files.createDirectories(target);
+                else Files.copy(path, target);
+            }
+        }
+        System.setProperty("user.dir", project.toString());
+    }
+
+    @org.junit.After public void restoreUserDir() {
+        System.setProperty("user.dir", originalUserDir);
+    }
+
     @Test
     public void shouldPrepareCleanDefaultThemeReviewRuntime() throws Exception {
         String previousRootPath = PathUtil.getRootPath();
@@ -129,11 +162,7 @@ public class MemoryApplicationTest {
     }
 
     private static Properties loadDbProperties(Path runtimeRoot) throws Exception {
-        Properties properties = new Properties();
-        try (var input = Files.newInputStream(runtimeRoot.resolve("conf/db.properties"))) {
-            properties.load(input);
-        }
-        return properties;
+        return com.zrlog.test.support.MemoryRuntime.readDatabaseProperties(runtimeRoot);
     }
 
     private static void deleteTree(Path rootPath) throws Exception {

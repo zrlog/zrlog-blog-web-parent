@@ -96,6 +96,7 @@ ${model.log.title}
 - 不读取或覆盖仓库已有的 `conf/db.properties`、`conf/install.lock`，也不连接远端测试数据库。
 - 评审数据必须覆盖首页、文章详情、分类、标签、搜索、归档、无缩略图、长标题和 Markdown 富内容等真实状态。
 - `MemoryApplication` 保持在 `src/test/java`，只使用测试作用域的 install-web 和 H2，不得进入正式 JAR 或改变发布依赖。
+- 数据库夹具和内存目录工具复用 base 的 `zrlog-test-support`（test scope），遵守 `zrlog-base/docs/test-support.md`；MemoryApplicationTest 使用临时项目配置和素材，不清空真实预览目录。
 - 修改内存评审入口后，至少运行 `MemoryApplicationTest`、`mvn test`，并检查正式 JAR 不包含 `MemoryApplication`。
 - `bash shell/memory-run.sh --installed-default` 只运行真实安装链路并保留安装器生成的默认内容；发布主题的
   `previewImages` 素材必须从该模式截图，禁止使用 `conf/memory-content.json` 扩展评审数据伪装安装后首页。
