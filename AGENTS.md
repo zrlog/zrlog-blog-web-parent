@@ -28,6 +28,8 @@
 - [博客公开 API 文档](docs/api/README.md)
 - [Freemarker 模板数据结构](docs/freemarker-template-data.md)
 - [内置主题与 SPI](docs/bundled-themes.md)
+- [Ops UI 统一入口](../zrlog-ops/docs/ui-design-guide.md)：适用范围、公开博客规则与验收索引。
+- [Ops 产品文案规范](../zrlog-ops/docs/content-writing-guide.md)：产品表达规则与任务边界；本地维护资源和渲染实现。
 - 新建独立主题参考 `templates/README.md` 和对应主题仓库的 `AGENTS.md`。
 - `zrlog-ops/docs/repository-structure-guide.md`
 - `zrlog-ops/acceptance/zrlog-blog-web.yaml`
