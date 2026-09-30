@@ -50,6 +50,8 @@ mvn verify
 
 根 `pom.xml` 配置了 JaCoCo 覆盖率检查。不要为了通过验证降低覆盖率阈值，应补充聚焦测试。
 
+快照、正式版和本地部署验证见 [构建与发布](docs/build.md)。
+
 ## Freemarker 模板规则
 
 Freemarker 模板的根对象是页面对象本身，不是包了一层的 `model`。模板中应直接使用：

@@ -132,15 +132,7 @@
                     <source>${compile.graaljs.java.version}</source>
                     <release>${compile.graaljs.java.version}</release>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <phase>deploy</phase>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <!-- Inherit the release/snapshot execution phase from the parent. -->
             </plugin>
         </plugins>
     </build>
