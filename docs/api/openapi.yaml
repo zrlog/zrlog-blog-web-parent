@@ -164,6 +164,7 @@ components:
           description: 0 表示成功，非零表示业务失败
         message:
           type: string
+          description: 按当前请求语言返回的提示；成功时可为空。资源不存在或服务异常使用本地化说明，不返回原始异常文本；调用方应依据 error 判断结果。
     ArticlePageResponse:
       allOf:
         - $ref: "#/components/schemas/StandardResponse"
