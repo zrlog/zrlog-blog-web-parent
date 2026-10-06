@@ -6,7 +6,7 @@
 
 | 仓库 / artifactId | 版本 | 主题 id |
 | --- | --- | --- |
-| zrlog-template-default | 1.0 | default |
+| zrlog-template-default | 1.0.1 | default |
 | zrlog-template-www | 3.2 | template-www |
 | zrlog-template-hexo-fluid | 1.9.8 | hexo-theme-fluid |
 | zrlog-template-hexo-butterfly | 5.5.4-b1 | hexo-theme-butterfly |
