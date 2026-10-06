@@ -27,6 +27,10 @@ public class BlogApiDocumentationContractTest {
     @SuppressWarnings("unchecked")
     public void shouldKeepOpenApiOperationsBoundToExplicitControllerMethods() throws Exception {
         Path openApiPath = findOpenApiPath();
+        Path canonical = openApiPath.getParent().getParent().getParent().getParent().resolve("zrlog-api/blog-web.yaml");
+        if (Files.isRegularFile(canonical)) {
+            assertEquals("Stale OpenAPI snapshot; synchronize from zrlog-api", Files.readString(canonical), Files.readString(openApiPath));
+        }
         Map<String, Object> spec;
         try (Reader reader = Files.newBufferedReader(openApiPath)) {
             spec = new Yaml(new SafeConstructor(new LoaderOptions())).load(reader);

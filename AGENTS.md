@@ -110,7 +110,7 @@ ${model.log.title}
 1. 先判断任务属于哪一层：Java 博客行为、Freemarker 渲染、Polyglot / Hexo 兼容，还是纯主题资源。
 2. 编辑前读取最小必要文档或源码，不要直接猜实现。
 3. 保留工作区里已有的用户改动，不要 reset、restore 或覆盖无关文件。
-4. 修改 Java 行为时，同步补充或调整测试；修改公开 `/api` 时同步维护 `docs/api/openapi.yaml`。
+4. 修改 Java 行为时，同步补充或调整测试；修改公开 `/api` 时同步维护 `zrlog-api/blog-web.yaml` 并生成本仓库的 `docs/api/openapi.yaml` 快照。
 5. 修改模板时，先核对 `docs/freemarker-template-data.md` 或 Java DTO 中的数据字段。
 6. 修改主题视觉时，优先遵守当前主题文档，不要把已经确认的交互和样式退回去。
 7. 完成后运行最小但有效的验证命令。
