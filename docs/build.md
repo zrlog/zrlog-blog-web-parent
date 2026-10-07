@@ -10,6 +10,8 @@
 
 本工程显式维护该 profile，可与尚未更新发布配置的 base 快照配合使用。Polyglot 子模块保留 Javadoc 的 Java 17 配置，执行阶段由父工程继承，避免在快照构建中重新启用 Javadoc。此改动不改变普通 JDK 与 Native 的引擎和主题依赖边界。
 
+Maven 3.10 起会按仓库 origin 校验凭证；`central` 默认关联的下载域名与 Sonatype 发布域名不同。发布工作流读取实际 Maven 版本，3.10 及以上使用 settings 1.3.0，并为 `central` 显式声明 `https://central.sonatype.com`；旧 Maven 保留 settings 1.0.0，避免不支持 `repositoryOrigins` 的警告。升级 Maven 时须验证 HTTP 认证上传，文件仓库部署无法覆盖凭证校验。
+
 ## 正式版
 
 `v*` tag 使用不带 `snapshot` profile 的 `clean deploy`，保留 Javadoc、源码、GPG 签名和 Central Publishing bundle 流程。仅 tag 构建导入 GPG 私钥；`snapshot` profile 会跳过发布版号。`main` 分支仍只在测试和部署成功后通知预览构建。
