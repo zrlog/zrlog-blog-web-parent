@@ -87,6 +87,7 @@ public class BlogInterceptorRoutingTest {
         BlogStaticResourceInterceptor interceptor = new BlogStaticResourceInterceptor();
 
         assertFalse(interceptor.isHandleAble(request("/admin/login")));
+        assertFalse(interceptor.isHandleAble(request("/error/404.html")));
         assertFalse(interceptor.isHandleAble(request("/index.html", BaseStaticSitePlugin.STATIC_USER_AGENT)));
         assertTrue(interceptor.isHandleAble(request("/assets/app.css")));
     }

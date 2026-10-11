@@ -5,6 +5,9 @@ import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.http.HttpMethod;
 import com.hibegin.http.HttpVersion;
 import com.hibegin.http.server.api.HttpRequest;
+import com.hibegin.http.server.api.HttpResponse;
+import com.hibegin.http.server.web.Controller;
+import com.zrlog.blog.web.interceptor.BlogPageInterceptor;
 import com.hibegin.http.server.config.RequestConfig;
 import com.hibegin.http.server.config.ServerConfig;
 import com.hibegin.http.server.web.cookie.Cookie;
@@ -31,6 +34,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.lang.reflect.Proxy;
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,6 +49,14 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -173,6 +185,53 @@ public class ZrLogTemplateRenderTest {
             assertTrue(homeHtml.contains("class=\"post-card-pinned\""));
             assertFalse(searchHtml.contains("class=\"post-card-pinned\""));
         });
+    }
+
+    @Test
+    public void shouldReturnNotFoundWithoutCachingMissingDetail() throws Exception {
+        TestStaticSitePlugin staticPlugin = new TestStaticSitePlugin("/generated/not-found");
+        withConfig(true, staticPlugin, () -> {
+            for (String path : new String[]{"/missing", "/missing.html", "/error/404.html"}) {
+                HttpRequest request = templateRequest(path);
+                request.getServerConfig().getRouter().addMapper("/detail", PageFixtureController.class, "detail");
+                HttpResponse response = mock(HttpResponse.class);
+                List<String> bodies = new ArrayList<>();
+                doAnswer(call -> {
+                    bodies.add(new String(((InputStream) call.getArgument(0)).readAllBytes(), StandardCharsets.UTF_8));
+                    return null;
+                }).when(response).write(any(InputStream.class), eq(404));
+                new BlogPageInterceptor().doInterceptor(request, response);
+                verify(response).write(any(InputStream.class), eq(404));
+                verify(response).setContentType("text/html;charset=UTF-8");
+                verify(response, never()).renderHtmlStr(anyString());
+                assertEquals(1, bodies.size());
+                assertTrue(bodies.get(0).contains("404"));
+                assertFalse(staticPlugin.loadCacheFile(request).exists());
+            }
+        });
+    }
+
+    @Test
+    public void shouldKeepEmptyListAndSearchSuccessful() throws Exception {
+        withConfig(false, () -> {
+            for (String path : new String[]{"/all-1", "/sort/empty", "/search/no-results"}) {
+                Map<String, Object> attrs = new HashMap<>();
+                attrs.put("data", new PageData<ArticleBasicDTO>(0L, Collections.emptyList()));
+                HttpRequest request = templateRequest(path, null, attrs);
+                for (String route : new String[]{"/index", "/sort", "/search"}) {
+                    request.getServerConfig().getRouter().addMapper(route, PageFixtureController.class, "page");
+                }
+                HttpResponse response = mock(HttpResponse.class);
+                new BlogPageInterceptor().doInterceptor(request, response);
+                verify(response).renderHtmlStr(anyString());
+                verify(response, never()).write(any(InputStream.class), eq(404));
+            }
+        });
+    }
+
+    public static class PageFixtureController extends Controller {
+        public String detail() { return "detail"; }
+        public String page() { return "page"; }
     }
 
     private void withConfig(boolean generatorHtmlStatus, ThrowingRunnable runnable) throws Exception {
