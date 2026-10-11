@@ -75,6 +75,10 @@ public class BlogStaticResourceInterceptor implements HandleAbleInterceptor {
      */
     @Override
     public boolean isHandleAble(HttpRequest request) {
+        // The exported error document is not a successful cached page.
+        if (request.getUri().equals("/error/404.html")) {
+            return false;
+        }
         if (request.getUri().startsWith("/admin")) {
             return false;
         }

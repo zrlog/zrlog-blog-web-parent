@@ -6,7 +6,9 @@ import com.hibegin.http.server.api.HttpResponse;
 import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.web.template.ZrLogTemplateRender;
 
+import java.io.ByteArrayInputStream;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
@@ -46,8 +48,14 @@ public class BlogPageInterceptor implements HandleAbleInterceptor {
         }
         Object invoke = method.invoke(Controller.buildController(method, request, response));
         if (Objects.nonNull(invoke)) {
-            String htmlStr = new ZrLogTemplateRender(request).renderByTemplateName(invoke.toString());
-            response.renderHtmlStr(htmlStr);
+            ZrLogTemplateRender render = new ZrLogTemplateRender(request);
+            String htmlStr = render.renderByTemplateName(invoke.toString());
+            if (render.isNotFound()) {
+                response.setContentType("text/html;charset=UTF-8");
+                response.write(new ByteArrayInputStream(htmlStr.getBytes(StandardCharsets.UTF_8)), 404);
+            } else {
+                response.renderHtmlStr(htmlStr);
+            }
         }
         return false;
     }

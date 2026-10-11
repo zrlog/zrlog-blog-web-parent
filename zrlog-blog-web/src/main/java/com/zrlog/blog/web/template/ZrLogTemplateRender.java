@@ -9,6 +9,7 @@ import com.hibegin.template.TemplateRender;
 import com.zrlog.blog.freemarker.template.FreemarkerZrLogTemplate;
 import com.zrlog.blog.hexo.template.HexoTemplate;
 import com.zrlog.blog.web.template.vo.BasePageInfo;
+import com.zrlog.blog.web.template.vo.NotFindPageVO;
 import com.zrlog.business.plugin.BodySaveResponse;
 import com.zrlog.business.service.TemplateInfoHelper;
 import com.zrlog.business.template.HtmlTemplateProcessor;
@@ -93,6 +94,10 @@ public class ZrLogTemplateRender implements TemplateRender {
         return template;
     }
 
+    public boolean isNotFound() {
+        return pageInfo instanceof NotFindPageVO;
+    }
+
     public boolean existsByTemplateName(String templateName) {
         File path = PathUtil.getStaticFile(pageInfo.getTemplate());
         if (path.exists() && !TemplateInfoHelper.isDefaultTemplate(pageInfo.getTemplate())) {
@@ -144,7 +149,7 @@ public class ZrLogTemplateRender implements TemplateRender {
         if (EnvKit.isDevMode()) {
             LOGGER.info("Render " + request.getUri() + " page, used time " + (System.currentTimeMillis() - start) + "ms");
         }
-        if (!catGeneratorHtml(request)) {
+        if (isNotFound() || !catGeneratorHtml(request)) {
             return realHtmlStr;
         }
         //save to cache
