@@ -6,12 +6,6 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 10
-  - package-ecosystem: npm
-    directory: /zrlog-polyglot-template/src/main/resources/include/templates/hexo-theme-shiro
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 10
   - package-ecosystem: github-actions
     directory: /
     schedule:
