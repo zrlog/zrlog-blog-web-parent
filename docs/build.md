@@ -16,6 +16,8 @@ Maven 3.10 起会按仓库 origin 校验凭证；`central` 默认关联的下载
 
 `v*` tag 使用不带 `snapshot` profile 的 `clean deploy`，保留 Javadoc、源码、GPG 签名和 Central Publishing bundle 流程。仅 tag 构建导入 GPG 私钥；`snapshot` profile 会跳过发布版号。`main` 分支仍只在测试和部署成功后通知预览构建。
 
+Test Coverage 工作流在测试后执行 `./mvnw -B -ntp -DskipTests verify javadoc:jar`，校验覆盖率与正式包，并为全部 Java 模块生成 Javadoc JAR。此步骤不启用 `snapshot` profile，不使用发布凭证，也不上传产物；Javadoc 的错误会使 PR 检查失败。博客与 FreeMarker 使用 JDK 17 构建、保持 Java 11 目标，Polyglot 保留其 Java 17 Javadoc 配置。不要通过关闭 doclint、忽略错误或跳过 Javadoc 绕过发布校验。
+
 ## 本地部署验证
 
 先安装需要验证的 base 快照，再使用临时文件仓库：
