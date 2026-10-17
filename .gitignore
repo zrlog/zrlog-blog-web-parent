@@ -21,3 +21,5 @@ zrlog-polyglot-template/src/main/resources/include/templates/*
 !zrlog-polyglot-template/src/main/resources/include/templates/hexo-theme-butterfly
 !zrlog-polyglot-template/src/main/resources/include/templates/hexo-theme-shiro
 !zrlog-polyglot-template/src/main/resources/include/templates/hexo-theme-next
+
+/.codex/
