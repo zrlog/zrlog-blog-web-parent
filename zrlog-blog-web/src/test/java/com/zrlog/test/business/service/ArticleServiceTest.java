@@ -15,15 +15,14 @@ import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
+import com.zrlog.web.WebSiteInfoProvider;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -41,8 +40,8 @@ public class ArticleServiceTest {
         publicWebSiteInfo.setArticle_thumbnail_status(true);
         ArticleBasicDTO article = article();
 
-        withConfig(publicWebSiteInfo, () -> {
-            ArticleBasicDTO result = ArticleService.handlerArticle(article, request("/blog", "blog.example.com"));
+        withConfig(publicWebSiteInfo, cache -> {
+            ArticleBasicDTO result = ArticleService.handlerArticle(article, request("/blog", "blog.example.com"), cache);
 
             assertEquals(Long.valueOf(10L), result.getId());
             assertEquals("hello-world", result.getAlias());
@@ -78,8 +77,8 @@ public class ArticleServiceTest {
         publicWebSiteInfo.setArticle_thumbnail_status(false);
         ArticleBasicDTO article = article();
 
-        withConfig(publicWebSiteInfo, () -> {
-            ArticleBasicDTO result = ArticleService.handlerArticle(article, request("/", "blog.example.com"));
+        withConfig(publicWebSiteInfo, cache -> {
+            ArticleBasicDTO result = ArticleService.handlerArticle(article, request("/", "blog.example.com"), cache);
 
             assertEquals(Boolean.FALSE, result.getCanComment());
             assertNull(result.getThumbnail());
@@ -114,7 +113,7 @@ public class ArticleServiceTest {
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder().getAbsolutePath());
             Constants.zrLogConfig = new ArticleZrLogConfig(publicWebSiteInfo);
-            runnable.run();
+            runnable.run(((ArticleZrLogConfig) Constants.zrLogConfig).cacheForTest());
         } finally {
             Constants.zrLogConfig = previousConfig;
             restoreProperty("sws.root.path", previousRootPath);
@@ -151,7 +150,7 @@ public class ArticleServiceTest {
     }
 
     private interface ThrowingRunnable {
-        void run() throws Exception;
+        void run(CacheService cache) throws Exception;
     }
 
     private static class ArticleZrLogConfig extends ZrLogConfig {
@@ -174,7 +173,16 @@ public class ArticleServiceTest {
         }
 
         @Override
-        public CacheService getCacheService() {
+        public <T> T getWebSetup(Class<T> capability) {
+            if (capability == WebSiteInfoProvider.class) {
+                CacheService cache = cacheForTest();
+                return cache == null ? null : capability.cast(
+                        (WebSiteInfoProvider) cache::getPublicWebSiteInfo);
+            }
+            return super.getWebSetup(capability);
+        }
+
+        private CacheService cacheForTest() {
             return new ArticleCacheService(publicWebSiteInfo);
         }
 

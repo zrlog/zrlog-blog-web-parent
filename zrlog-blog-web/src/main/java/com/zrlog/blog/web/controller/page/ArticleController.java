@@ -7,8 +7,6 @@ import com.hibegin.common.util.LoggerUtil;
 import com.hibegin.common.util.StringUtils;
 import com.hibegin.http.HttpMethod;
 import com.hibegin.http.annotation.RequestMethod;
-import com.hibegin.http.server.api.HttpRequest;
-import com.hibegin.http.server.api.HttpResponse;
 import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.web.template.PagerUtil;
@@ -25,34 +23,29 @@ import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.model.Log;
 import com.zrlog.util.I18nUtil;
 import com.zrlog.util.ParseUtil;
-
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
-import java.util.*;
 import java.util.logging.Logger;
+import java.util.*;
 
 public class ArticleController extends Controller {
 
     private static final Logger LOGGER = LoggerUtil.getLogger(ArticleController.class);
-    private final ArticleService articleService = new ArticleService();
+    private final ArticleService articleService;
     private final CacheService cacheService;
 
-    public ArticleController(HttpRequest request, HttpResponse response) {
-        super(request, response);
-        this.cacheService = Constants.zrLogConfig.getCacheService();
-    }
-
-    public ArticleController() {
-        this.cacheService = Constants.zrLogConfig.getCacheService();
+    public ArticleController(CacheService cacheService, ArticleService articleService) {
+        this.cacheService = cacheService;
+        this.articleService = articleService;
     }
 
     /**
      * add page info for template more easy
      */
     private void setPageDataInfo(String currentUri, PageData<ArticleBasicDTO> data, PageRequest pageRequest) {
-        data.getRows().forEach(e -> ArticleService.handlerArticle(e, request));
+        data.getRows().forEach(e -> ArticleService.handlerArticle(e, request, cacheService));
         getRequest().getAttr().put("yurl", Constants.getArticleUri() + currentUri);
         getRequest().getAttr().put("data", data);
         long totalPage = BigDecimal.valueOf(Math.ceil(data.getTotalElements() * 1.0 / pageRequest.getSize())).longValue();
@@ -142,7 +135,6 @@ public class ArticleController extends Controller {
         }
         return "detail";
     }
-
 
     static ArticleUriInfoVO parseUriInfo(String uri) {
         String rawUrl = uri;

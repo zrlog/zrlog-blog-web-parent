@@ -8,13 +8,11 @@ import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.test.support.InMemoryBlogDatabase;
-import org.junit.Test;
-
 import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
+import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -28,7 +26,7 @@ public class ArticleServiceDatabaseTest {
             seedThreePublishedArticles(database);
             database.insertComment(1, 2, "first comment");
 
-            ArticleDetailDTO detail = new ArticleService().detail("hello-world", request("/blog"));
+            ArticleDetailDTO detail = new ArticleService(database.cacheService()).detail("hello-world", request("/blog"));
 
             assertNotNull(detail);
             assertEquals(Long.valueOf(2), detail.getId());
@@ -63,7 +61,7 @@ public class ArticleServiceDatabaseTest {
             database.insertArticle(3, "other-post", "Other Post", "Other content", "other",
                     "2026-06-03 10:00:00", false, false);
 
-            PageData<ArticleBasicDTO> data = new ArticleService()
+            PageData<ArticleBasicDTO> data = new ArticleService(database.cacheService())
                     .pageByKeywords(new PageRequestImpl(1L, 10L), "Java", request("/blog"),
                             ArticleListOrder.STICKY_FIRST);
 
@@ -89,7 +87,7 @@ public class ArticleServiceDatabaseTest {
             database.insertArticle(3, "other-post", "Other Post", "Other content", "other",
                     "2026-06-03 10:00:00", false, false);
             database.update("update log set sticky=? where logId=?", 1, 1);
-            ArticleService service = new ArticleService();
+            ArticleService service = new ArticleService(database.cacheService());
 
             PageData<ArticleBasicDTO> home = service.pageByKeywords(
                     new PageRequestImpl(1L, 10L), "", request("/blog"), ArticleListOrder.STICKY_FIRST);

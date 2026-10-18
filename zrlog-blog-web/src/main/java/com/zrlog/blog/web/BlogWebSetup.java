@@ -1,8 +1,12 @@
 package com.zrlog.blog.web;
 
 import com.hibegin.http.server.api.Interceptor;
+import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.web.config.BlogRouters;
 import com.zrlog.blog.web.config.ZrLogRequestRecordListener;
+import com.zrlog.blog.web.controller.api.BlogApiArticleController;
+import com.zrlog.blog.web.controller.api.BlogApiCacheController;
+import com.zrlog.blog.web.controller.page.ArticleController;
 import com.zrlog.blog.web.interceptor.BlogApiInterceptor;
 import com.zrlog.blog.web.interceptor.BlogPageInterceptor;
 import com.zrlog.blog.web.interceptor.BlogPluginInterceptor;
@@ -11,10 +15,10 @@ import com.zrlog.blog.web.plugin.ArticleStatisticsPluginImpl;
 import com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin;
 import com.zrlog.blog.web.plugin.TemplateDownloadPlugin;
 import com.zrlog.blog.web.util.BlogNativeImageUtils;
+import com.zrlog.common.CacheService;
 import com.zrlog.common.ZrLogConfig;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSetup;
-
 import java.util.List;
 
 public class BlogWebSetup implements WebSetup {
@@ -22,7 +26,6 @@ public class BlogWebSetup implements WebSetup {
     private final ZrLogConfig zrLogConfig;
     private final String contextPath;
     private final boolean enablePageStatic;
-
 
     public BlogWebSetup(ZrLogConfig zrLogConfig, String contextPath, boolean enablePageStatic) {
         this.zrLogConfig = zrLogConfig;
@@ -36,6 +39,12 @@ public class BlogWebSetup implements WebSetup {
 
     @Override
     public void setup() {
+        zrLogConfig.getServerConfig().getBindings()
+                .interceptor(BlogPageInterceptor.class, r -> new BlogPageInterceptor(() -> r.get(CacheService.class)))
+                .singleton(ArticleService.class, r -> new ArticleService(r.get(CacheService.class)))
+                .controller(ArticleController.class, (r, request, response) -> new ArticleController(r.get(CacheService.class), r.get(ArticleService.class)))
+                .controller(BlogApiCacheController.class, (r, request, response) -> new BlogApiCacheController(r.get(CacheService.class)))
+                .controller(BlogApiArticleController.class, (r, request, response) -> new BlogApiArticleController(r.get(ArticleService.class)));
         List<Class<? extends Interceptor>> interceptors = zrLogConfig.getServerConfig().getInterceptors();
         interceptors.add(BlogPluginInterceptor.class);
         interceptors.add(BlogStaticResourceInterceptor.class);

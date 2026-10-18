@@ -12,7 +12,6 @@ import com.zrlog.web.inteceptor.DefaultInterceptor;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -43,7 +42,7 @@ public class DevZrLogConfigTest {
     }
 
     @Test
-    public void shouldExposeBlogBasePlugins() throws Exception {
+    public void shouldLeaveSharedPluginsToTheServiceModule() throws Exception {
         String previousRootPath = System.getProperty("sws.root.path");
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder().getAbsolutePath());
@@ -52,8 +51,9 @@ public class DevZrLogConfigTest {
             Plugins plugins = new Plugins();
             plugins.addAll(config.getBasePluginList());
 
-            assertTrue(plugins.stream().anyMatch(PluginCorePluginImpl.class::isInstance));
-            assertTrue(plugins.stream().anyMatch(CacheManagerPlugin.class::isInstance));
+            assertFalse(plugins.stream().anyMatch(PluginCorePluginImpl.class::isInstance));
+            org.junit.Assert.assertNotNull(config.getWebSetup(com.zrlog.business.web.ServiceWebSetup.class));
+            assertFalse(plugins.stream().anyMatch(CacheManagerPlugin.class::isInstance));
             assertTrue(plugins.stream().anyMatch(UpdateVersionInfoPlugin.class::isInstance));
         } finally {
             restoreProperty("sws.root.path", previousRootPath);

@@ -5,7 +5,7 @@ import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.api.HttpResponse;
 import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.web.template.ZrLogTemplateRender;
-
+import com.zrlog.common.CacheService;
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
@@ -15,7 +15,11 @@ import java.util.Objects;
  * 静态化文章页，加快文章页的响应，压缩 html 文本，提供自定义插件标签的解析
  */
 public class BlogPageInterceptor implements HandleAbleInterceptor {
+    private final java.util.function.Supplier<CacheService> cacheService;
 
+    public BlogPageInterceptor(java.util.function.Supplier<CacheService> cacheService) {
+        this.cacheService = cacheService;
+    }
 
     @Override
     public boolean doInterceptor(HttpRequest request, HttpResponse response) throws Exception {
@@ -48,7 +52,7 @@ public class BlogPageInterceptor implements HandleAbleInterceptor {
         }
         Object invoke = method.invoke(Controller.buildController(method, request, response));
         if (Objects.nonNull(invoke)) {
-            ZrLogTemplateRender render = new ZrLogTemplateRender(request);
+            ZrLogTemplateRender render = new ZrLogTemplateRender(request, cacheService.get());
             String htmlStr = render.renderByTemplateName(invoke.toString());
             if (render.isNotFound()) {
                 response.setContentType("text/html;charset=UTF-8");

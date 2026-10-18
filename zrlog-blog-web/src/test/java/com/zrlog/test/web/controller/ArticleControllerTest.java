@@ -1,6 +1,7 @@
 package com.zrlog.blog.web.controller.page;
 
 import com.hibegin.common.dao.DataSourceWrapper;
+import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.business.service.ArticleService;
@@ -13,14 +14,10 @@ import com.zrlog.common.cache.dto.TypeDTO;
 import com.zrlog.common.cache.dto.UserBasicDTO;
 import com.zrlog.common.cache.vo.BaseDataInitVO;
 import com.zrlog.common.vo.PublicWebSiteInfo;
-import com.hibegin.common.dao.dto.PageData;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
+import com.zrlog.web.WebSiteInfoProvider;
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
@@ -28,7 +25,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 
@@ -76,9 +75,9 @@ public class ArticleControllerTest {
 
     @Test
     public void shouldReturnStaticPageNamesForSimplePages() throws Exception {
-        withConfig(() -> {
+        withConfig(cache -> {
             Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController();
+            ArticleController controller = new ArticleController(cache, new ArticleService(cache));
             setControllerRequest(controller, request("/link", attrs));
 
             assertEquals("links", controller.link());
@@ -92,9 +91,9 @@ public class ArticleControllerTest {
 
     @Test
     public void shouldPrepareTagsPageWithoutArticleRows() throws Exception {
-        withConfig(() -> {
+        withConfig(cache -> {
             Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController();
+            ArticleController controller = new ArticleController(cache, new ArticleService(cache));
             setControllerRequest(controller, request("/tags", attrs));
 
             assertEquals("tags", controller.tags());
@@ -105,9 +104,9 @@ public class ArticleControllerTest {
 
     @Test
     public void shouldAttachArticleDetailWhenServiceReturnsResult() throws Exception {
-        withConfig(() -> {
+        withConfig(cache -> {
             Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController();
+            ArticleController controller = new ArticleController(cache, new ArticleService(cache));
             FakeArticleService articleService = new FakeArticleService();
             ArticleDetailDTO detail = new ArticleDetailDTO();
             detail.setLogId(99L);
@@ -125,9 +124,9 @@ public class ArticleControllerTest {
 
     @Test
     public void shouldLeaveArticleDetailUnsetWhenServiceReturnsNull() throws Exception {
-        withConfig(() -> {
+        withConfig(cache -> {
             Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController();
+            ArticleController controller = new ArticleController(cache, new ArticleService(cache));
             setArticleService(controller, new FakeArticleService());
             setControllerRequest(controller, request("/missing.html", attrs));
 
@@ -142,7 +141,7 @@ public class ArticleControllerTest {
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder().getAbsolutePath());
             Constants.zrLogConfig = new TestZrLogConfig();
-            runnable.run();
+            runnable.run(((TestZrLogConfig) Constants.zrLogConfig).cacheForTest());
         } finally {
             Constants.zrLogConfig = previousConfig;
             restoreProperty("sws.root.path", previousRootPath);
@@ -194,7 +193,7 @@ public class ArticleControllerTest {
     }
 
     private interface ThrowingRunnable {
-        void run() throws Exception;
+        void run(CacheService cache) throws Exception;
     }
 
     private static class TestZrLogConfig extends ZrLogConfig {
@@ -214,7 +213,16 @@ public class ArticleControllerTest {
         }
 
         @Override
-        public CacheService getCacheService() {
+        public <T> T getWebSetup(Class<T> capability) {
+            if (capability == WebSiteInfoProvider.class) {
+                CacheService cache = cacheForTest();
+                return cache == null ? null : capability.cast(
+                        (WebSiteInfoProvider) cache::getPublicWebSiteInfo);
+            }
+            return super.getWebSetup(capability);
+        }
+
+        private CacheService cacheForTest() {
             return new TestCacheService();
         }
 
@@ -281,6 +289,8 @@ public class ArticleControllerTest {
     }
 
     private static class FakeArticleService extends ArticleService {
+        private FakeArticleService() { super(new TestCacheService()); }
+
 
         private ArticleDetailDTO detail;
         private Object lastId;

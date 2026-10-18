@@ -1,14 +1,14 @@
 package com.zrlog.test.web.interceptor;
 
+import com.hibegin.common.dao.DataSourceWrapper;
+import com.hibegin.common.util.http.handle.CloseResponseHandle;
+import com.hibegin.http.HttpMethod;
 import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.api.HttpResponse;
 import com.hibegin.http.server.config.RequestConfig;
 import com.hibegin.http.server.config.ServerConfig;
 import com.hibegin.http.server.web.Controller;
 import com.hibegin.http.server.web.Router;
-import com.hibegin.common.dao.DataSourceWrapper;
-import com.hibegin.common.util.http.handle.CloseResponseHandle;
-import com.hibegin.http.HttpMethod;
 import com.zrlog.blog.web.interceptor.BlogApiInterceptor;
 import com.zrlog.blog.web.interceptor.BlogPageInterceptor;
 import com.zrlog.blog.web.interceptor.BlogPluginInterceptor;
@@ -16,18 +16,15 @@ import com.zrlog.blog.web.interceptor.BlogStaticResourceInterceptor;
 import com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin;
 import com.zrlog.business.exception.MissingInstallException;
 import com.zrlog.business.plugin.PluginCorePlugin;
+import com.zrlog.common.CacheService;
 import com.zrlog.common.Constants;
 import com.zrlog.common.TokenService;
 import com.zrlog.common.ZrLogConfig;
 import com.zrlog.common.vo.AdminTokenVO;
-import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.BaseStaticSitePlugin;
+import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.util.StaticFileCacheUtils;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,7 +36,9 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -75,7 +74,7 @@ public class BlogInterceptorRoutingTest {
 
     @Test
     public void shouldMatchBlogPageRequests() {
-        BlogPageInterceptor interceptor = new BlogPageInterceptor();
+        BlogPageInterceptor interceptor = new BlogPageInterceptor(() -> org.mockito.Mockito.mock(CacheService.class));
 
         assertTrue(interceptor.isHandleAble(request("/")));
         assertTrue(interceptor.isHandleAble(request("/article.html")));
@@ -199,7 +198,7 @@ public class BlogInterceptorRoutingTest {
         ServerConfig serverConfig = new ServerConfig();
         CapturedResponse capturedResponse = new CapturedResponse();
 
-        boolean continueChain = new BlogPageInterceptor()
+        boolean continueChain = new BlogPageInterceptor(() -> org.mockito.Mockito.mock(CacheService.class))
                 .doInterceptor(request("/missing", null, serverConfig), capturedResponse.response());
 
         assertFalse(continueChain);
@@ -316,7 +315,7 @@ public class BlogInterceptorRoutingTest {
             throws Exception {
         TestPageController.lastMethod = null;
 
-        boolean continueChain = new BlogPageInterceptor()
+        boolean continueChain = new BlogPageInterceptor(() -> org.mockito.Mockito.mock(CacheService.class))
                 .doInterceptor(request(uri, null, serverConfig), new CapturedResponse().response());
 
         assertFalse(continueChain);

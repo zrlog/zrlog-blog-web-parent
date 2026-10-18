@@ -14,13 +14,13 @@ import com.zrlog.business.plugin.BodySaveResponse;
 import com.zrlog.business.service.TemplateInfoHelper;
 import com.zrlog.business.template.HtmlTemplateProcessor;
 import com.zrlog.business.type.TemplateType;
+import com.zrlog.common.CacheService;
 import com.zrlog.common.Constants;
 import com.zrlog.common.TokenService;
 import com.zrlog.common.exception.NotImplementException;
 import com.zrlog.common.vo.AdminTokenVO;
 import com.zrlog.common.vo.TemplateVO;
 import com.zrlog.plugin.BaseStaticSitePlugin;
-
 import java.io.File;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -39,9 +39,9 @@ public class ZrLogTemplateRender implements TemplateRender {
 
     private final ZrLogTemplate zrLogTemplate;
 
-    public ZrLogTemplateRender(HttpRequest request) throws Exception {
+    public ZrLogTemplateRender(HttpRequest request, CacheService cacheService) throws Exception {
         this.request = request;
-        this.pageInfo = TemplateRenderUtils.fullTemplateInfo(request);
+        this.pageInfo = TemplateRenderUtils.fullTemplateInfo(request, cacheService);
         loadClasspathTemplateI18n(pageInfo);
         this.zrLogTemplate = setupTemplate();
     }

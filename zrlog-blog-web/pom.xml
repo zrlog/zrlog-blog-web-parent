@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.hibegin</groupId>
         <artifactId>zrlog-blog-web-parent</artifactId>
-        <version>4.0.0-SNAPSHOT</version>
+        <version>4.0.1-SNAPSHOT</version>
     </parent>
     <name>ZrLog Blog web</name>
 
@@ -41,13 +41,13 @@
         <dependency>
             <groupId>com.hibegin</groupId>
             <artifactId>zrlog-freemarker-template</artifactId>
-            <version>4.0.0-SNAPSHOT</version>
+            <version>4.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.hibegin</groupId>
             <artifactId>zrlog-polyglot-template</artifactId>
-            <version>4.0.0-SNAPSHOT</version>
+            <version>4.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

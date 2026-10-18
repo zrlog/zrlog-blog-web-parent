@@ -11,15 +11,14 @@ import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.model.Log;
 import com.zrlog.plugin.BaseStaticSitePlugin;
 import com.zrlog.util.UserAgentUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.select.Elements;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.select.Elements;
 
 public class ArticleStatisticsRunnable extends BaseLockObject implements Runnable {
 
@@ -30,7 +29,6 @@ public class ArticleStatisticsRunnable extends BaseLockObject implements Runnabl
      */
     private static final long REMOVE_TIME = 2 * 1000 * 60L;
     private final List<RequestInfo> requestInfoList = Collections.synchronizedList(new ArrayList<>());
-
 
     /**
      *
@@ -68,7 +66,7 @@ public class ArticleStatisticsRunnable extends BaseLockObject implements Runnabl
     }
 
     private boolean isDisabled() {
-        PublicWebSiteInfo publicWebSiteInfo = Constants.zrLogConfig.getCacheService().getPublicWebSiteInfo();
+        PublicWebSiteInfo publicWebSiteInfo = Constants.getPublicWebSiteInfo();
         String webCmStr = publicWebSiteInfo.getWebCm();
         if (StringUtils.isEmpty(webCmStr)) {
             return false;

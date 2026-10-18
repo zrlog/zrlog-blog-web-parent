@@ -1,26 +1,20 @@
 package com.zrlog.blog;
 
-import com.hibegin.common.dao.DataSourceWrapper;
 import com.hibegin.http.server.WebServerBuilder;
 import com.hibegin.http.server.util.PathUtil;
 import com.zrlog.blog.web.BlogWebSetup;
-import com.zrlog.business.plugin.CacheManagerPlugin;
-import com.zrlog.business.plugin.PluginCorePluginImpl;
-import com.zrlog.business.service.DbUpgradeService;
 import com.zrlog.business.updater.UpdateVersionInfoPlugin;
 import com.zrlog.common.Constants;
 import com.zrlog.common.TokenService;
 import com.zrlog.common.Updater;
 import com.zrlog.common.ZrLogConfig;
-import com.zrlog.data.cache.CacheServiceImpl;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
-import com.zrlog.web.WebSetup;
+import com.zrlog.web.WebSetupContext;
+import com.zrlog.web.WebSetupLoader;
 import com.zrlog.web.inteceptor.DefaultInterceptor;
-
 import java.util.List;
 import java.util.Objects;
-
 import static com.zrlog.common.Constants.getZrLogHome;
 
 public class Application {
@@ -44,19 +38,12 @@ class DevZrLogConfig extends ZrLogConfig {
 
     protected DevZrLogConfig(Integer port, Updater updater, String contextPath) {
         super(port, updater, contextPath);
+        webSetups.addAll(WebSetupLoader.load(
+                new WebSetupContext(this, dbPropertiesFile, installLockFile, contextPath, updater),
+                provider -> provider.name().equals("data") || provider.name().equals("services")));
         webSetups.add(new BlogWebSetup(this, contextPath, false));
-        webSetups.forEach(WebSetup::setup);
+        initializeWebSetups();
         this.serverConfig.addInterceptor(DefaultInterceptor.class);
-    }
-
-    @Override
-    public DataSourceWrapper configDatabase() throws Exception {
-        this.dataSource = super.configDatabase();
-        if (Objects.nonNull(this.dataSource)) {
-            cacheService = new CacheServiceImpl();
-            new DbUpgradeService(this.dataSource, this.cacheService.getCurrentSqlVersion()).tryDoUpgrade();
-        }
-        return dataSource;
     }
 
     @Override
@@ -67,8 +54,6 @@ class DevZrLogConfig extends ZrLogConfig {
     @Override
     public List<IPlugin> getBasePluginList() {
         Plugins basePlugin = new Plugins();
-        basePlugin.add(new PluginCorePluginImpl(dbPropertiesFile, serverConfig.getContextPath()));
-        basePlugin.add(new CacheManagerPlugin(this));
         basePlugin.add(new UpdateVersionInfoPlugin());
         return basePlugin;
     }

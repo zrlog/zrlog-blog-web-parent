@@ -11,6 +11,7 @@ import com.zrlog.blog.web.util.OutlineUtil;
 import com.zrlog.blog.web.util.WebTools;
 import com.zrlog.business.plugin.StaticSitePlugin;
 import com.zrlog.business.util.ArticleHelpers;
+import com.zrlog.common.CacheService;
 import com.zrlog.common.Constants;
 import com.zrlog.common.vo.Outline;
 import com.zrlog.common.vo.PublicWebSiteInfo;
@@ -20,7 +21,6 @@ import com.zrlog.model.Log;
 import com.zrlog.util.I18nUtil;
 import com.zrlog.util.ParseUtil;
 import com.zrlog.util.ZrLogUtil;
-
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -31,8 +31,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-
 public class ArticleService {
+
+    private final CacheService cacheService;
+
+    public ArticleService(CacheService cacheService) {
+        this.cacheService = cacheService;
+    }
 
     public enum ArticleListOrder {
         STICKY_FIRST,
@@ -55,7 +60,7 @@ public class ArticleService {
     }
 
     private ArticleDetailDTO fillArticleInfo(ArticleDetailDTO log, HttpRequest request) {
-        handlerArticle(log, request);
+        handlerArticle(log, request, cacheService);
         String suffix = StaticSitePlugin.getSuffix(request);
         log.getNextLog().setUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + log.getNextLog().getAlias() + suffix));
         log.getLastLog().setUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + log.getLastLog().getAlias() + suffix));
@@ -91,7 +96,7 @@ public class ArticleService {
         return fillArticleInfo(log, request);
     }
 
-    public static <T extends ArticleBasicDTO> T handlerArticle(T log, HttpRequest request) {
+    public static <T extends ArticleBasicDTO> T handlerArticle(T log, HttpRequest request, CacheService cacheService) {
         String suffix = StaticSitePlugin.getSuffix(request);
         String originalAlias = log.getAlias();
         String aliasUrl = UrlEncodeUtils.encodeUrl(originalAlias) + suffix;
@@ -101,7 +106,7 @@ public class ArticleService {
         log.setRubbish(ResultValueConvertUtils.toBoolean(log.getRubbish()));
         log.setPrivacy(ResultValueConvertUtils.toBoolean(log.getPrivacy()));
         log.setHot(ResultValueConvertUtils.toBoolean(log.getHot()));
-        PublicWebSiteInfo publicWebSiteInfo = Constants.zrLogConfig.getCacheService().getPublicWebSiteInfo();
+        PublicWebSiteInfo publicWebSiteInfo = cacheService.getPublicWebSiteInfo();
         log.setCanComment(ResultValueConvertUtils.toBoolean(log.getCanComment()) && Objects.equals(publicWebSiteInfo.getDisable_comment_status(), false));
         log.setTypeUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + "sort/" + log.getTypeAlias() + suffix));
         log.setNoSchemeUrl(ZrLogUtil.getHomeUrlWithHost(request) + Constants.getArticleUri() + aliasUrl);
@@ -189,7 +194,7 @@ public class ArticleService {
                 : log.visitorFind(pageRequest, keywords);
         ArticleHelpers.wrapperSearchKeyword(data, keywords);
         data.setKey(keywords);
-        data.getRows().forEach(e -> handlerArticle(e, request));
+        data.getRows().forEach(e -> handlerArticle(e, request, cacheService));
         return data;
     }
 
