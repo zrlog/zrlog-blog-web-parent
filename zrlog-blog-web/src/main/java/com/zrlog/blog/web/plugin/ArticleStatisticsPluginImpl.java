@@ -9,14 +9,15 @@ import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 public class ArticleStatisticsPluginImpl implements ArticleStatisticsPlugin {
 
     private ScheduledExecutorService clickSchedule;
     private final ArticleStatisticsRunnable runnable;
 
-    public ArticleStatisticsPluginImpl() {
-        this.runnable = new ArticleStatisticsRunnable();
+    public ArticleStatisticsPluginImpl(Supplier<String> webCm) {
+        this.runnable = new ArticleStatisticsRunnable(webCm);
     }
 
     @Override
@@ -49,7 +50,6 @@ public class ArticleStatisticsPluginImpl implements ArticleStatisticsPlugin {
     public boolean isStarted() {
         return Objects.nonNull(clickSchedule);
     }
-
 
     @Override
     public boolean stop() {

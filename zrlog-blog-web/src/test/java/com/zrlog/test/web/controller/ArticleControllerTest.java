@@ -18,6 +18,10 @@ import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSiteInfoProvider;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
@@ -25,9 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 
@@ -77,7 +79,7 @@ public class ArticleControllerTest {
     public void shouldReturnStaticPageNamesForSimplePages() throws Exception {
         withConfig(cache -> {
             Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController(cache, new ArticleService(cache));
+            ArticleController controller = new ArticleController(cache, new ArticleService(cache), com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
             setControllerRequest(controller, request("/link", attrs));
 
             assertEquals("links", controller.link());
@@ -93,7 +95,7 @@ public class ArticleControllerTest {
     public void shouldPrepareTagsPageWithoutArticleRows() throws Exception {
         withConfig(cache -> {
             Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController(cache, new ArticleService(cache));
+            ArticleController controller = new ArticleController(cache, new ArticleService(cache), com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
             setControllerRequest(controller, request("/tags", attrs));
 
             assertEquals("tags", controller.tags());
@@ -106,7 +108,7 @@ public class ArticleControllerTest {
     public void shouldAttachArticleDetailWhenServiceReturnsResult() throws Exception {
         withConfig(cache -> {
             Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController(cache, new ArticleService(cache));
+            ArticleController controller = new ArticleController(cache, new ArticleService(cache), com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
             FakeArticleService articleService = new FakeArticleService();
             ArticleDetailDTO detail = new ArticleDetailDTO();
             detail.setLogId(99L);
@@ -126,7 +128,7 @@ public class ArticleControllerTest {
     public void shouldLeaveArticleDetailUnsetWhenServiceReturnsNull() throws Exception {
         withConfig(cache -> {
             Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController(cache, new ArticleService(cache));
+            ArticleController controller = new ArticleController(cache, new ArticleService(cache), com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
             setArticleService(controller, new FakeArticleService());
             setControllerRequest(controller, request("/missing.html", attrs));
 

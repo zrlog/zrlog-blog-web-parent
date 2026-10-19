@@ -28,6 +28,10 @@ import com.zrlog.plugin.BaseStaticSitePlugin;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSiteInfoProvider;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -44,21 +48,19 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import static org.junit.Assert.assertThrows;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class ZrLogTemplateRenderTest {
 
@@ -68,26 +70,26 @@ public class ZrLogTemplateRenderTest {
     @Test
     public void shouldNotCacheStaticPluginRequestsAsGeneratedHtml() throws Exception {
         withConfig(true, cache -> assertFalse(canGeneratorHtml(
-                request("/article.html", BaseStaticSitePlugin.STATIC_USER_AGENT))));
+                request("/article.html", BaseStaticSitePlugin.STATIC_USER_AGENT), true)));
     }
 
     @Test
     public void shouldNotCacheHtmlWhenStaticGenerationIsDisabled() throws Exception {
-        withConfig(false, cache -> assertFalse(canGeneratorHtml(request("/article.html", null))));
+        withConfig(false, cache -> assertFalse(canGeneratorHtml(request("/article.html", null), false)));
     }
 
     @Test
     public void shouldOnlyCacheHtmlRequestsWhenStaticGenerationIsEnabled() throws Exception {
         withConfig(true, cache -> {
-            assertTrue(canGeneratorHtml(request("/article.html", null)));
-            assertFalse(canGeneratorHtml(request("/assets/app.css", null)));
+            assertTrue(canGeneratorHtml(request("/article.html", null), true));
+            assertFalse(canGeneratorHtml(request("/assets/app.css", null), true));
         });
     }
 
     @Test
     public void shouldInitializeDefaultTemplateAndCheckTemplateFileExistence() throws Exception {
         withConfig(false, cache -> {
-            ZrLogTemplateRender render = new ZrLogTemplateRender(templateRequest("/missing.html"), cache);
+            ZrLogTemplateRender render = new ZrLogTemplateRender(templateRequest("/missing.html"), cache, com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), null, null, Constants.zrLogConfig.getPlugin(StaticSitePlugin.class), Constants.zrLogConfig.getResponseConfig());
 
             assertTrue(render.existsByTemplateName("index"));
             assertFalse(render.existsByTemplateName("missing-template-file"));
@@ -97,7 +99,7 @@ public class ZrLogTemplateRenderTest {
     @Test
     public void shouldRejectDirectRenderMethods() throws Exception {
         withConfig(false, cache -> {
-            ZrLogTemplateRender render = new ZrLogTemplateRender(templateRequest("/missing.html"), cache);
+            ZrLogTemplateRender render = new ZrLogTemplateRender(templateRequest("/missing.html"), cache, com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), null, null, Constants.zrLogConfig.getPlugin(StaticSitePlugin.class), Constants.zrLogConfig.getResponseConfig());
 
             assertThrows(RuntimeException.class, () -> render.render("index"));
             assertThrows(RuntimeException.class, () -> render.render(new ByteArrayInputStream(
@@ -108,7 +110,7 @@ public class ZrLogTemplateRenderTest {
     @Test
     public void shouldRenderDefaultTemplateAndTransformHtml() throws Exception {
         withConfig(false, cache -> {
-            ZrLogTemplateRender render = new ZrLogTemplateRender(templateRequest("/empty.html"), cache);
+            ZrLogTemplateRender render = new ZrLogTemplateRender(templateRequest("/empty.html"), cache, com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), null, null, Constants.zrLogConfig.getPlugin(StaticSitePlugin.class), Constants.zrLogConfig.getResponseConfig());
 
             String html = render.renderByTemplateName("empty");
 
@@ -126,7 +128,7 @@ public class ZrLogTemplateRenderTest {
             attrs.put("data", previewPageData());
             HttpRequest request = templateRequest("/index.html",
                     Cookie.saxToCookie("template=" + Constants.TEMPLATE_BASE_PATH + "template-www"), attrs);
-            ZrLogTemplateRender render = new ZrLogTemplateRender(request, cache);
+            ZrLogTemplateRender render = new ZrLogTemplateRender(request, cache, com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), null, null, Constants.zrLogConfig.getPlugin(StaticSitePlugin.class), Constants.zrLogConfig.getResponseConfig());
 
             String html = render.renderByTemplateName("index");
             Path output = staticSitePlugin.loadCacheFile(request).toPath();
@@ -146,7 +148,7 @@ public class ZrLogTemplateRenderTest {
 
             HttpRequest englishRequest = templateRequest("/index-en",
                     Cookie.saxToCookie("template=" + Constants.TEMPLATE_BASE_PATH + "template-www"), attrs, "en-US");
-            String englishHtml = new ZrLogTemplateRender(englishRequest, cache).renderByTemplateName("index");
+            String englishHtml = new ZrLogTemplateRender(englishRequest, cache, com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), null, null, Constants.zrLogConfig.getPlugin(StaticSitePlugin.class), Constants.zrLogConfig.getResponseConfig()).renderByTemplateName("index");
             assertTrue(englishHtml.contains("12 views"));
             assertTrue(englishHtml.contains("Read more"));
         });
@@ -159,9 +161,12 @@ public class ZrLogTemplateRenderTest {
             attrs.put("data", previewPageData());
             HttpRequest request = templateRequest("/all-3", null, attrs);
 
-            String html = new ZrLogTemplateRender(request, cache).renderByTemplateName("index");
+            var responseConfig = Constants.zrLogConfig.getResponseConfig();
+            cache.getPublicWebSiteInfo().setHost("configured.example");
+            Constants.zrLogConfig = null;
+            String html = new ZrLogTemplateRender(request, cache, null, null, null, null, responseConfig).renderByTemplateName("index");
 
-            assertTrue(html.contains("<meta property=\"og:url\" content=\"//blog.example.com/all-3\">"));
+            assertTrue(html.contains("<meta property=\"og:url\" content=\"//configured.example/all-3\">"));
         });
     }
 
@@ -173,13 +178,13 @@ public class ZrLogTemplateRenderTest {
             Map<String, Object> homeAttrs = new HashMap<>();
             homeAttrs.put("data", data);
             String homeHtml = new ZrLogTemplateRender(
-                    templateRequest("/all-1", null, homeAttrs), cache).renderByTemplateName("index");
+                    templateRequest("/all-1", null, homeAttrs), cache, com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), null, null, Constants.zrLogConfig.getPlugin(StaticSitePlugin.class), Constants.zrLogConfig.getResponseConfig()).renderByTemplateName("index");
             Map<String, Object> searchAttrs = new HashMap<>();
             searchAttrs.put("data", data);
             searchAttrs.put("tipsType", "Search");
             searchAttrs.put("tipsName", "Pinned");
             String searchHtml = new ZrLogTemplateRender(
-                    templateRequest("/search/Pinned-1", null, searchAttrs), cache).renderByTemplateName("page");
+                    templateRequest("/search/Pinned-1", null, searchAttrs), cache, com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), null, null, Constants.zrLogConfig.getPlugin(StaticSitePlugin.class), Constants.zrLogConfig.getResponseConfig()).renderByTemplateName("page");
 
             assertTrue(homeHtml.contains("class=\"post-card-pinned\""));
             assertFalse(searchHtml.contains("class=\"post-card-pinned\""));
@@ -199,7 +204,8 @@ public class ZrLogTemplateRenderTest {
                     bodies.add(new String(((InputStream) call.getArgument(0)).readAllBytes(), StandardCharsets.UTF_8));
                     return null;
                 }).when(response).write(any(InputStream.class), eq(404));
-                new BlogPageInterceptor(() -> cache).doInterceptor(request, response);
+                new BlogPageInterceptor(renderRequest -> new ZrLogTemplateRender(renderRequest, cache, null, null, null,
+                        staticPlugin, Constants.zrLogConfig.getResponseConfig())).doInterceptor(request, response);
                 verify(response).write(any(InputStream.class), eq(404));
                 verify(response).setContentType("text/html;charset=UTF-8");
                 verify(response, never()).renderHtmlStr(anyString());
@@ -221,7 +227,8 @@ public class ZrLogTemplateRenderTest {
                     request.getServerConfig().getRouter().addMapper(route, PageFixtureController.class, "page");
                 }
                 HttpResponse response = mock(HttpResponse.class);
-                new BlogPageInterceptor(() -> cache).doInterceptor(request, response);
+                new BlogPageInterceptor(renderRequest -> new ZrLogTemplateRender(renderRequest, cache, null, null, null,
+                        null, Constants.zrLogConfig.getResponseConfig())).doInterceptor(request, response);
                 verify(response).renderHtmlStr(anyString());
                 verify(response, never()).write(any(InputStream.class), eq(404));
             }
@@ -260,8 +267,8 @@ public class ZrLogTemplateRenderTest {
         }
     }
 
-    private static boolean canGeneratorHtml(HttpRequest request) throws Exception {
-        return ZrLogTemplateRender.catGeneratorHtml(request);
+    private static boolean canGeneratorHtml(HttpRequest request, boolean staticHtml) throws Exception {
+        return ZrLogTemplateRender.catGeneratorHtml(request, staticHtml);
     }
 
     private static HttpRequest request(String uri, String userAgent) {
@@ -416,6 +423,9 @@ public class ZrLogTemplateRenderTest {
     }
 
     private static class TestStaticSitePlugin implements StaticSitePlugin {
+        private final com.zrlog.common.vo.PublicWebSiteInfo site = new com.zrlog.common.vo.PublicWebSiteInfo();
+        @Override public com.zrlog.common.vo.PublicWebSiteInfo getSiteInfo() { return site; }
+
 
         private final String contextPath;
         private final Map<String, HandleState> handleStatusPageMap = new HashMap<>();
@@ -560,10 +570,20 @@ public class ZrLogTemplateRenderTest {
 
     private static class TestCacheService implements CacheService {
 
-        private final boolean generatorHtmlStatus;
+        private final PublicWebSiteInfo publicWebSiteInfo = new PublicWebSiteInfo();
 
         TestCacheService(boolean generatorHtmlStatus) {
-            this.generatorHtmlStatus = generatorHtmlStatus;
+            publicWebSiteInfo.setGenerator_html_status(generatorHtmlStatus);
+            publicWebSiteInfo.setTemplate(Constants.getDefaultTemplatePath());
+            publicWebSiteInfo.setLanguage(Constants.DEFAULT_LANGUAGE);
+            publicWebSiteInfo.setTitle("ZrLog");
+            publicWebSiteInfo.setSecond_title("Theme Preview");
+            publicWebSiteInfo.setKeywords("zrlog,template,www");
+            publicWebSiteInfo.setDescription("blog");
+            publicWebSiteInfo.setStaticResourceHost("");
+            publicWebSiteInfo.setHost("blog.example.com");
+            publicWebSiteInfo.setIcp("");
+            publicWebSiteInfo.setWebCm("");
         }
 
         @Override
@@ -578,18 +598,6 @@ public class ZrLogTemplateRenderTest {
 
         @Override
         public PublicWebSiteInfo getPublicWebSiteInfo() {
-            PublicWebSiteInfo publicWebSiteInfo = new PublicWebSiteInfo();
-            publicWebSiteInfo.setGenerator_html_status(generatorHtmlStatus);
-            publicWebSiteInfo.setTemplate(Constants.getDefaultTemplatePath());
-            publicWebSiteInfo.setLanguage(Constants.DEFAULT_LANGUAGE);
-            publicWebSiteInfo.setTitle("ZrLog");
-            publicWebSiteInfo.setSecond_title("Theme Preview");
-            publicWebSiteInfo.setKeywords("zrlog,template,www");
-            publicWebSiteInfo.setDescription("blog");
-            publicWebSiteInfo.setStaticResourceHost("");
-            publicWebSiteInfo.setHost("blog.example.com");
-            publicWebSiteInfo.setIcp("");
-            publicWebSiteInfo.setWebCm("");
             return publicWebSiteInfo;
         }
 

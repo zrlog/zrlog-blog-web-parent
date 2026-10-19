@@ -4,23 +4,27 @@ import com.hibegin.common.util.EnvKit;
 import com.hibegin.common.util.LoggerUtil;
 import com.hibegin.common.util.StringUtils;
 import com.hibegin.http.server.api.HttpRequest;
+import com.hibegin.http.server.config.ResponseConfig;
 import com.hibegin.http.server.util.PathUtil;
 import com.hibegin.template.TemplateRender;
 import com.zrlog.blog.freemarker.template.FreemarkerZrLogTemplate;
 import com.zrlog.blog.hexo.template.HexoTemplate;
+import com.zrlog.blog.web.plugin.TemplateDownloadPlugin;
 import com.zrlog.blog.web.template.vo.BasePageInfo;
 import com.zrlog.blog.web.template.vo.NotFindPageVO;
 import com.zrlog.business.plugin.BodySaveResponse;
+import com.zrlog.business.plugin.PluginCorePlugin;
+import com.zrlog.business.plugin.StaticSitePlugin;
 import com.zrlog.business.service.TemplateInfoHelper;
 import com.zrlog.business.template.HtmlTemplateProcessor;
 import com.zrlog.business.type.TemplateType;
 import com.zrlog.common.CacheService;
-import com.zrlog.common.Constants;
 import com.zrlog.common.TokenService;
 import com.zrlog.common.exception.NotImplementException;
 import com.zrlog.common.vo.AdminTokenVO;
 import com.zrlog.common.vo.TemplateVO;
 import com.zrlog.plugin.BaseStaticSitePlugin;
+
 import java.io.File;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -39,9 +43,20 @@ public class ZrLogTemplateRender implements TemplateRender {
 
     private final ZrLogTemplate zrLogTemplate;
 
-    public ZrLogTemplateRender(HttpRequest request, CacheService cacheService) throws Exception {
+    private final TokenService tokenService;
+    private final PluginCorePlugin pluginCore;
+    private final StaticSitePlugin staticSite;
+    private final ResponseConfig responseConfig;
+
+    public ZrLogTemplateRender(HttpRequest request, CacheService cacheService, TokenService tokenService,
+                               PluginCorePlugin pluginCore, TemplateDownloadPlugin templateDownload,
+                               StaticSitePlugin staticSite, ResponseConfig responseConfig) throws Exception {
+        this.tokenService = tokenService;
+        this.pluginCore = pluginCore;
+        this.staticSite = staticSite;
+        this.responseConfig = responseConfig;
         this.request = request;
-        this.pageInfo = TemplateRenderUtils.fullTemplateInfo(request, cacheService);
+        this.pageInfo = TemplateRenderUtils.fullTemplateInfo(request, cacheService, templateDownload);
         loadClasspathTemplateI18n(pageInfo);
         this.zrLogTemplate = setupTemplate();
     }
@@ -120,12 +135,12 @@ public class ZrLogTemplateRender implements TemplateRender {
     /**
      * 处理静态化文件
      */
-    static boolean catGeneratorHtml(HttpRequest request) {
+    static boolean catGeneratorHtml(HttpRequest request, boolean staticHtml) {
         if (BaseStaticSitePlugin.isStaticPluginRequest(request)) {
             return false;
         }
         String targetUri = request.getUri();
-        if (!Constants.isStaticHtmlStatus()) {
+        if (!staticHtml) {
             return false;
         }
         return targetUri.endsWith(".html");
@@ -138,22 +153,21 @@ public class ZrLogTemplateRender implements TemplateRender {
         }
         long start = System.currentTimeMillis();
         String htmlStr = zrLogTemplate.render(page, pageInfo);
-        TokenService tokenService = Constants.zrLogConfig.getTokenService();
         AdminTokenVO adminTokenVO = null;
         if (Objects.nonNull(tokenService)) {
             adminTokenVO = tokenService.getAdminTokenVO(request);
         }
         HtmlTemplateProcessor pluginTagHande = new HtmlTemplateProcessor(
-                request, adminTokenVO, Objects.requireNonNullElse(pageInfo.getStaticResourceBaseUrl(), "/"));
+                request, adminTokenVO, Objects.requireNonNullElse(pageInfo.getStaticResourceBaseUrl(), "/"), pluginCore);
         String realHtmlStr = pluginTagHande.transform(htmlStr);
         if (EnvKit.isDevMode()) {
             LOGGER.info("Render " + request.getUri() + " page, used time " + (System.currentTimeMillis() - start) + "ms");
         }
-        if (isNotFound() || !catGeneratorHtml(request)) {
+        if (isNotFound() || !catGeneratorHtml(request, Boolean.TRUE.equals(pageInfo.getWebs().getGenerator_html_status()))) {
             return realHtmlStr;
         }
         //save to cache
-        try (BodySaveResponse bodySaveResponse = new BodySaveResponse(request, Constants.zrLogConfig.getResponseConfig(), false)) {
+        try (BodySaveResponse bodySaveResponse = new BodySaveResponse(request, responseConfig, false, staticSite)) {
             bodySaveResponse.renderHtmlStr(realHtmlStr);
         }
         return realHtmlStr;

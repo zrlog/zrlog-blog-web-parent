@@ -3,16 +3,18 @@ package com.zrlog.test.business.service;
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.common.dao.dto.PageRequestImpl;
 import com.hibegin.http.server.api.HttpRequest;
-import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
+import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.test.support.InMemoryBlogDatabase;
+import org.junit.Test;
+
 import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Test;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -48,6 +50,34 @@ public class ArticleServiceDatabaseTest {
             assertEquals("/blog/tag/java", detail.getTags().get(0).getUrl());
             assertFalse(detail.getToc().isEmpty());
             assertTrue(detail.getTocHtml().contains("Hello World"));
+        }
+    }
+
+    @Test
+    public void shouldFollowSiteHostStaticModeAndCommentSwitchWithoutGlobalConfig() throws Exception {
+        try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
+            seedThreePublishedArticles(database);
+            database.insertComment(1, 2, "first comment");
+            ArticleService service = new ArticleService(database.cacheService());
+            var site = database.cacheService().getPublicWebSiteInfo();
+            com.zrlog.common.Constants.zrLogConfig = null;
+            site.setHost("configured.example");
+            site.setGenerator_html_status(true);
+            site.setDisable_comment_status(true);
+            ArticleDetailDTO staticArticle = service.detail("hello-world", request("/blog"));
+            assertEquals("//configured.example/blog/hello-world.html", staticArticle.getNoSchemeUrl());
+            assertEquals("/blog/tag/java.html", staticArticle.getTags().get(0).getUrl());
+            assertEquals("/blog/previous-post.html", staticArticle.getLastLog().getUrl());
+            assertTrue(staticArticle.getComments().isEmpty());
+            assertFalse(staticArticle.getCanComment());
+            site.setGenerator_html_status(false);
+            site.setHost("renamed.example");
+            site.setDisable_comment_status(false);
+            ArticleDetailDTO dynamicArticle = service.detail("hello-world", request("/blog"));
+            assertEquals("//renamed.example/blog/hello-world", dynamicArticle.getNoSchemeUrl());
+            assertEquals("/blog/tag/java", dynamicArticle.getTags().get(0).getUrl());
+            assertEquals(1, dynamicArticle.getComments().size());
+            assertTrue(dynamicArticle.getCanComment());
         }
     }
 

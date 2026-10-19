@@ -8,7 +8,6 @@ import com.hibegin.http.server.util.MimeTypeUtil;
 import com.hibegin.http.server.util.PathUtil;
 import com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin;
 import com.zrlog.business.template.util.BlogResourceUtils;
-import com.zrlog.common.Constants;
 import com.zrlog.common.exception.UnknownException;
 import com.zrlog.plugin.BaseStaticSitePlugin;
 import com.zrlog.util.StaticFileCacheUtils;
@@ -18,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * 静态文件读取优先级
@@ -28,7 +28,10 @@ import java.util.Objects;
 public class BlogStaticResourceInterceptor implements HandleAbleInterceptor {
 
 
-    public BlogStaticResourceInterceptor() {
+    private final Supplier<BlogPageStaticSitePlugin> staticSite;
+
+    public BlogStaticResourceInterceptor(Supplier<BlogPageStaticSitePlugin> staticSite) {
+        this.staticSite = Objects.requireNonNull(staticSite);
     }
 
     @Override
@@ -56,7 +59,7 @@ public class BlogStaticResourceInterceptor implements HandleAbleInterceptor {
                 throw new UnknownException(ex);
             }
         }
-        BlogPageStaticSitePlugin staticSitePlugin = Constants.zrLogConfig.getPlugin(BlogPageStaticSitePlugin.class);
+        BlogPageStaticSitePlugin staticSitePlugin = staticSite.get();
         if (Objects.nonNull(staticSitePlugin)) {
             File cacheFile = staticSitePlugin.loadCacheFile(request);
             if (cacheFile.isFile() && cacheFile.exists()) {

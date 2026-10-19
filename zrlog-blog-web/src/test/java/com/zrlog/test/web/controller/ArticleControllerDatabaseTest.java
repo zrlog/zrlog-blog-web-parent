@@ -8,13 +8,15 @@ import com.zrlog.blog.web.controller.page.ArticleController;
 import com.zrlog.common.CacheService;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.test.support.InMemoryBlogDatabase;
+import org.junit.Test;
+
 import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.junit.Test;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -109,7 +111,7 @@ public class ArticleControllerDatabaseTest {
     }
 
     private static ArticleController controller(CacheService cache, HttpRequest httpRequest) {
-        return new ArticleController(cache, new ArticleService(cache)) {{
+        return new ArticleController(cache, new ArticleService(cache), com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class)) {{
             this.request = httpRequest;
         }};
     }

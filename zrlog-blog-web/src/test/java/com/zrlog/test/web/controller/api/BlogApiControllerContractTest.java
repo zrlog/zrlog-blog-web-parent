@@ -7,14 +7,14 @@ import com.hibegin.common.dao.dto.PageRequest;
 import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.business.rest.response.ApiStandardResponse;
-import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
+import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.web.controller.api.BlogApiArticleController;
 import com.zrlog.blog.web.controller.api.BlogApiCacheController;
 import com.zrlog.blog.web.controller.api.BlogApiPublicController;
+import com.zrlog.business.service.CommonService;
 import com.zrlog.common.CacheService;
 import com.zrlog.common.Constants;
-import com.zrlog.common.TokenService;
 import com.zrlog.common.ZrLogConfig;
 import com.zrlog.common.cache.dto.TagDTO;
 import com.zrlog.common.cache.dto.TypeDTO;
@@ -25,10 +25,13 @@ import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
-import com.zrlog.plugin.IPlugin;
-import com.zrlog.plugin.Plugins;
 import com.zrlog.util.I18nUtil;
-import com.zrlog.web.WebSiteInfoProvider;
+import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.ResultSetHandler;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
@@ -37,11 +40,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.dbutils.QueryRunner;
-import org.apache.commons.dbutils.ResultSetHandler;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -67,7 +66,7 @@ public class BlogApiControllerContractTest {
     public void shouldReturnEmptyBlogResourceWhenI18nContextIsMissing() {
         I18nUtil.threadLocal.remove();
 
-        ApiStandardResponse<Map<String, Object>> response = new BlogApiPublicController().blogResource();
+        ApiStandardResponse<Map<String, Object>> response = new BlogApiPublicController(new CommonService(() -> new PublicWebSiteInfo())).blogResource();
 
         assertTrue(response.getData().isEmpty());
     }
@@ -88,11 +87,12 @@ public class BlogApiControllerContractTest {
         I18nUtil.threadLocal.set(i18nVO);
         try {
             withConfig(new FakeCacheService(initData, publicWebSiteInfo), () -> {
-                BlogApiPublicController controller = new BlogApiPublicController();
+                BlogApiPublicController controller = new BlogApiPublicController(new CommonService(() -> publicWebSiteInfo));
                 setControllerRequest(controller, request("/blog", "blog.example.com"));
 
                 ApiStandardResponse<Map<String, Object>> response = controller.blogResource();
 
+                assertEquals(Map.of("comment", "Comment"), blog);
                 assertEquals("Comment", response.getData().get("comment"));
                 assertEquals("ZrLog", response.getData().get("websiteTitle"));
                 assertEquals("//blog.example.com/blog/", response.getData().get("homeUrl"));
@@ -179,7 +179,7 @@ public class BlogApiControllerContractTest {
         String previousRootPath = System.getProperty("sws.root.path");
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-blog-api").getAbsolutePath());
-            Constants.zrLogConfig = new CacheZrLogConfig(cacheService);
+            Constants.zrLogConfig = null;
             runnable.run();
         } finally {
             Constants.zrLogConfig = previousConfig;
@@ -297,50 +297,6 @@ public class BlogApiControllerContractTest {
 
     private interface ThrowingRunnable {
         void run() throws Exception;
-    }
-
-    private static class CacheZrLogConfig extends ZrLogConfig {
-
-        private final CacheService cacheService;
-
-        CacheZrLogConfig(CacheService cacheService) {
-            super(18080, null, "");
-            this.cacheService = cacheService;
-        }
-
-        @Override
-        public boolean isInstalled() {
-            return false;
-        }
-
-        @Override
-        public DataSourceWrapper configDatabase() {
-            return null;
-        }
-
-        @Override
-        public <T> T getWebSetup(Class<T> capability) {
-            if (capability == WebSiteInfoProvider.class) {
-                CacheService cache = cacheForTest();
-                return cache == null ? null : capability.cast(
-                        (WebSiteInfoProvider) cache::getPublicWebSiteInfo);
-            }
-            return super.getWebSetup(capability);
-        }
-
-        private CacheService cacheForTest() {
-            return cacheService;
-        }
-
-        @Override
-        protected TokenService initTokenService() {
-            return null;
-        }
-
-        @Override
-        public List<IPlugin> getBasePluginList() {
-            return new Plugins();
-        }
     }
 
     private static class FakeCacheService implements CacheService {

@@ -3,9 +3,10 @@ package com.zrlog.blog;
 import com.hibegin.http.server.WebServerBuilder;
 import com.hibegin.http.server.util.PathUtil;
 import com.zrlog.blog.web.BlogWebSetup;
+import com.zrlog.business.service.UpgradeNoticeService;
 import com.zrlog.business.updater.UpdateVersionInfoPlugin;
+import com.zrlog.common.CacheService;
 import com.zrlog.common.Constants;
-import com.zrlog.common.TokenService;
 import com.zrlog.common.Updater;
 import com.zrlog.common.ZrLogConfig;
 import com.zrlog.plugin.IPlugin;
@@ -13,8 +14,10 @@ import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSetupContext;
 import com.zrlog.web.WebSetupLoader;
 import com.zrlog.web.inteceptor.DefaultInterceptor;
+
 import java.util.List;
 import java.util.Objects;
+
 import static com.zrlog.common.Constants.getZrLogHome;
 
 public class Application {
@@ -47,14 +50,11 @@ class DevZrLogConfig extends ZrLogConfig {
     }
 
     @Override
-    protected TokenService initTokenService() {
-        return null;
-    }
-
-    @Override
     public List<IPlugin> getBasePluginList() {
         Plugins basePlugin = new Plugins();
-        basePlugin.add(new UpdateVersionInfoPlugin());
+        var services = serverConfig.getBindings().build();
+        basePlugin.add(new UpdateVersionInfoPlugin(services.get(UpgradeNoticeService.class),
+                () -> services.get(CacheService.class).getPublicWebSiteInfo().getLanguage(), updater));
         return basePlugin;
     }
 }

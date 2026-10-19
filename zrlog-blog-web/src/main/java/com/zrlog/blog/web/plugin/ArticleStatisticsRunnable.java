@@ -6,21 +6,27 @@ import com.hibegin.common.util.EnvKit;
 import com.hibegin.common.util.LoggerUtil;
 import com.hibegin.common.util.StringUtils;
 import com.zrlog.business.plugin.RequestInfo;
-import com.zrlog.common.Constants;
-import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.model.Log;
 import com.zrlog.plugin.BaseStaticSitePlugin;
 import com.zrlog.util.UserAgentUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.select.Elements;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jsoup.Jsoup;
-import org.jsoup.select.Elements;
 
 public class ArticleStatisticsRunnable extends BaseLockObject implements Runnable {
+    private final Supplier<String> webCm;
+
+    public ArticleStatisticsRunnable(Supplier<String> webCm) {
+        this.webCm = Objects.requireNonNull(webCm);
+    }
 
     private static final Logger LOGGER = LoggerUtil.getLogger(ArticleStatisticsRunnable.class);
 
@@ -66,8 +72,7 @@ public class ArticleStatisticsRunnable extends BaseLockObject implements Runnabl
     }
 
     private boolean isDisabled() {
-        PublicWebSiteInfo publicWebSiteInfo = Constants.getPublicWebSiteInfo();
-        String webCmStr = publicWebSiteInfo.getWebCm();
+        String webCmStr = webCm.get();
         if (StringUtils.isEmpty(webCmStr)) {
             return false;
         }
