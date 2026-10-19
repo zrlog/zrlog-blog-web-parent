@@ -22,7 +22,7 @@
     <properties>
         <java.version>11</java.version>
         <maven.test.skip>false</maven.test.skip>
-        <zrlog-install-web.version>4.0.0</zrlog-install-web.version>
+        <zrlog-install-web.version>4.0.1-SNAPSHOT</zrlog-install-web.version>
         <h2.version>2.2.224</h2.version>
     </properties>
 

@@ -19,7 +19,6 @@ import com.zrlog.common.Updater;
 import com.zrlog.common.vo.AdminTokenVO;
 import com.zrlog.install.business.service.InstallService;
 import com.zrlog.install.business.vo.InstallConfigVO;
-import com.zrlog.install.web.InstallConstants;
 import com.zrlog.install.web.config.DefaultInstallConfig;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
@@ -93,7 +92,6 @@ public class MemoryApplication {
         InstallConfigVO installConfig = readInstallConfig(seedReviewFixture
                 ? MEMORY_INSTALL_CONFIG_FILE : INSTALLED_DEFAULT_CONFIG_FILE);
         applyRuntimeConfig(installConfig, port);
-        InstallConstants.installConfig = new MemoryInstallConfig();
         installFromConfig(installConfig);
 
         DevZrLogConfig config = new MemoryZrLogConfig(port, null, installConfig.getContextPath());
@@ -159,7 +157,7 @@ public class MemoryApplication {
     }
 
     private static void installFromConfig(InstallConfigVO config) {
-        InstallService installService = new InstallService(InstallConstants.installConfig, config);
+        InstallService installService = new InstallService(new MemoryInstallConfig(), config);
         if (!installService.install()) {
             throw new IllegalStateException("Install blog memory database failed");
         }

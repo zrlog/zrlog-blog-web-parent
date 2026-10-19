@@ -4,9 +4,6 @@ import com.hibegin.common.dao.InMemoryDatabase;
 import com.hibegin.http.server.util.PathUtil;
 import com.zrlog.common.CacheService;
 import com.zrlog.common.Constants;
-import com.zrlog.install.web.InstallConstants;
-import com.zrlog.install.web.config.DefaultInstallConfig;
-import com.zrlog.install.web.config.InstallConfig;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -55,7 +52,6 @@ public class MemoryApplicationTest {
     @Test
     public void shouldPrepareCleanDefaultThemeReviewRuntime() throws Exception {
         String previousRootPath = PathUtil.getRootPath();
-        InstallConfig previousInstallConfig = InstallConstants.installConfig;
         Path projectRoot = MemoryApplication.projectRootPath();
         Path runtimeRoot = projectRoot.resolve(".zrlog-memory");
         DevZrLogConfig config = null;
@@ -108,8 +104,6 @@ public class MemoryApplicationTest {
             }
             deleteTree(runtimeRoot);
             PathUtil.setRootPath(previousRootPath);
-            InstallConstants.installConfig = previousInstallConfig == null
-                    ? new DefaultInstallConfig() : previousInstallConfig;
         }
     }
 
@@ -126,7 +120,6 @@ public class MemoryApplicationTest {
     @Test
     public void shouldKeepInstallerContentForInstalledDefaultMode() throws Exception {
         String previousRootPath = PathUtil.getRootPath();
-        InstallConfig previousInstallConfig = InstallConstants.installConfig;
         Path runtimeRoot = MemoryApplication.projectRootPath().resolve(".zrlog-memory");
         DevZrLogConfig config = null;
         try {
@@ -150,8 +143,6 @@ public class MemoryApplicationTest {
             }
             deleteTree(runtimeRoot);
             PathUtil.setRootPath(previousRootPath);
-            InstallConstants.installConfig = previousInstallConfig == null
-                    ? new DefaultInstallConfig() : previousInstallConfig;
         }
     }
 
