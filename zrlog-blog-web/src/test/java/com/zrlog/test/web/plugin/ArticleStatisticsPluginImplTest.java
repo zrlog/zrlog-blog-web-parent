@@ -1,22 +1,24 @@
 package com.zrlog.test.web.plugin;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
+import com.hibegin.common.dao.DAO;
 import com.zrlog.blog.web.plugin.ArticleStatisticsPluginImpl;
 import com.zrlog.blog.web.plugin.ArticleStatisticsRunnable;
 import com.zrlog.business.plugin.RequestInfo;
 import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.plugin.BaseStaticSitePlugin;
 import com.zrlog.test.support.InMemoryBlogDatabase;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.lang.reflect.Field;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
 
 public class ArticleStatisticsPluginImplTest {
 
@@ -26,7 +28,9 @@ public class ArticleStatisticsPluginImplTest {
     @Test
     public void shouldRecordOnlyPublicArticleRequests() throws Exception {
         PublicWebSiteInfo publicWebSiteInfo = new PublicWebSiteInfo();
-        ArticleStatisticsPluginImpl plugin = new ArticleStatisticsPluginImpl(publicWebSiteInfo::getWebCm);
+        ArticleStatisticsPluginImpl plugin =
+                new ArticleStatisticsPluginImpl(
+                        new ArticleStatisticsRunnable(publicWebSiteInfo::getWebCm, DAO::new));
 
         withoutGlobalConfig(() -> {
             plugin.record(requestInfo("/admin/index", 1L));
@@ -44,7 +48,9 @@ public class ArticleStatisticsPluginImplTest {
     @Test
     public void shouldSkipRecordsWhenStatisticsPluginIsDisabledByWebsiteConfig() throws Exception {
         PublicWebSiteInfo publicWebSiteInfo = new PublicWebSiteInfo();
-        ArticleStatisticsPluginImpl plugin = new ArticleStatisticsPluginImpl(publicWebSiteInfo::getWebCm);
+        ArticleStatisticsPluginImpl plugin =
+                new ArticleStatisticsPluginImpl(
+                        new ArticleStatisticsRunnable(publicWebSiteInfo::getWebCm, DAO::new));
         publicWebSiteInfo.setWebCm("<div>no statistics plugin</div>");
 
         withoutGlobalConfig(() -> plugin.record(requestInfo("/hello-world", 4L)));
@@ -54,7 +60,8 @@ public class ArticleStatisticsPluginImplTest {
 
     @Test
     public void shouldStartAndStopStatisticsScheduler() {
-        ArticleStatisticsPluginImpl plugin = new ArticleStatisticsPluginImpl(() -> "");
+        ArticleStatisticsPluginImpl plugin =
+                new ArticleStatisticsPluginImpl(new ArticleStatisticsRunnable(() -> "", DAO::new));
 
         assertFalse(plugin.isStarted());
         assertTrue(plugin.start());
@@ -67,7 +74,7 @@ public class ArticleStatisticsPluginImplTest {
 
     @Test
     public void shouldSkipStaticPluginRequestsWhenStatisticsRunnableRuns() throws Exception {
-        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "");
+        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "", DAO::new);
         RequestInfo staticPluginRequest = requestInfo("/hello-world", 4L);
         staticPluginRequest.setUserAgent(BaseStaticSitePlugin.STATIC_USER_AGENT);
         queue(runnable).add(staticPluginRequest);
@@ -80,7 +87,7 @@ public class ArticleStatisticsPluginImplTest {
 
     @Test
     public void shouldSkipCrawlerRequestsWhenStatisticsRunnableRuns() throws Exception {
-        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "");
+        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "", DAO::new);
         RequestInfo crawlerRequest = requestInfo("/hello-world", 4L);
         crawlerRequest.setUserAgent("Googlebot/2.1 (+http://www.google.com/bot.html)");
         queue(runnable).add(crawlerRequest);
@@ -96,7 +103,7 @@ public class ArticleStatisticsPluginImplTest {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
             database.insertArticle(1, "hello-world", "Hello World", "Hello content", "zrlog",
                     "2026-06-01 10:00:00", false, false);
-            ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "");
+            ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "", DAO::new);
             RequestInfo requestInfo = requestInfo("/hello-world", 1L);
             queue(runnable).add(requestInfo);
 
@@ -109,7 +116,7 @@ public class ArticleStatisticsPluginImplTest {
 
     @Test
     public void shouldRemoveExpiredAlreadyProcessedRequestsWhenStatisticsRunnableRuns() throws Exception {
-        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "");
+        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "", DAO::new);
         RequestInfo oldRequest = requestInfo("/hello-world", 4L);
         oldRequest.setDeal(true);
         oldRequest.setRequestTime(System.currentTimeMillis() - 180_000L);
@@ -126,7 +133,8 @@ public class ArticleStatisticsPluginImplTest {
             database.insertArticle(1, "hello-world", "Hello World", "Hello content", "zrlog",
                     "2026-06-01 10:00:00", false, false);
             PublicWebSiteInfo site = new PublicWebSiteInfo();
-            ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(site::getWebCm);
+            ArticleStatisticsRunnable runnable =
+                    new ArticleStatisticsRunnable(site::getWebCm, DAO::new);
             withoutGlobalConfig(() -> {
                 runnable.addTask(requestInfo("/hello-world", 1L));
                 runnable.run();

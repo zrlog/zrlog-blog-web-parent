@@ -1,10 +1,14 @@
 package com.zrlog.blog.web.controller.page;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+
 import com.hibegin.common.dao.DataSourceWrapper;
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.business.service.ArticleService;
+import com.zrlog.business.plugin.PluginCorePlugin;
 import com.zrlog.common.CacheService;
 import com.zrlog.common.TokenService;
 import com.zrlog.common.ZrLogConfig;
@@ -14,9 +18,11 @@ import com.zrlog.common.cache.dto.UserBasicDTO;
 import com.zrlog.common.cache.vo.BaseDataInitVO;
 import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.data.dto.ArticleDetailDTO;
+import com.zrlog.model.Log;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSiteInfoProvider;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -29,12 +35,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-
 public class ArticleControllerTest {
 
-    private com.zrlog.common.ZrLogConfig applicationConfig;
+    private ZrLogConfig applicationConfig;
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -78,64 +81,104 @@ public class ArticleControllerTest {
 
     @Test
     public void shouldReturnStaticPageNamesForSimplePages() throws Exception {
-        withConfig(cache -> {
-            Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController(cache, new ArticleService(cache), applicationConfig == null ? null : applicationConfig.getTokenService(), () -> applicationConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
-            setControllerRequest(controller, request("/link", attrs));
+        withConfig(
+                cache -> {
+                    Map<String, Object> attrs = new HashMap<>();
+                    ArticleController controller =
+                            new ArticleController(
+                                    cache,
+                                    new ArticleService(cache, Log::new),
+                                    () ->
+                                            applicationConfig == null
+                                                    ? null
+                                                    : applicationConfig.getTokenService(),
+                                    () -> applicationConfig.getPlugin(PluginCorePlugin.class),
+                                    Log::new);
+                    setControllerRequest(controller, request("/link", attrs));
 
-            assertEquals("links", controller.link());
-            assertEquals("links", controller.links());
-            assertEquals("archives", controller.archives());
-            assertEquals("categories", controller.categories());
-            assertEquals("tags", controller.tags());
-            assertSame(PageData.class, attrs.get("data").getClass());
-        });
+                    assertEquals("links", controller.link());
+                    assertEquals("links", controller.links());
+                    assertEquals("archives", controller.archives());
+                    assertEquals("categories", controller.categories());
+                    assertEquals("tags", controller.tags());
+                    assertSame(PageData.class, attrs.get("data").getClass());
+                });
     }
 
     @Test
     public void shouldPrepareTagsPageWithoutArticleRows() throws Exception {
-        withConfig(cache -> {
-            Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController(cache, new ArticleService(cache), applicationConfig == null ? null : applicationConfig.getTokenService(), () -> applicationConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
-            setControllerRequest(controller, request("/tags", attrs));
+        withConfig(
+                cache -> {
+                    Map<String, Object> attrs = new HashMap<>();
+                    ArticleController controller =
+                            new ArticleController(
+                                    cache,
+                                    new ArticleService(cache, Log::new),
+                                    () ->
+                                            applicationConfig == null
+                                                    ? null
+                                                    : applicationConfig.getTokenService(),
+                                    () -> applicationConfig.getPlugin(PluginCorePlugin.class),
+                                    Log::new);
+                    setControllerRequest(controller, request("/tags", attrs));
 
-            assertEquals("tags", controller.tags());
-            assertEquals("tags", attrs.get("yurl"));
-            assertSame(PageData.class, attrs.get("data").getClass());
-        });
+                    assertEquals("tags", controller.tags());
+                    assertEquals("tags", attrs.get("yurl"));
+                    assertSame(PageData.class, attrs.get("data").getClass());
+                });
     }
 
     @Test
     public void shouldAttachArticleDetailWhenServiceReturnsResult() throws Exception {
-        withConfig(cache -> {
-            Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController(cache, new ArticleService(cache), applicationConfig == null ? null : applicationConfig.getTokenService(), () -> applicationConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
-            FakeArticleService articleService = new FakeArticleService();
-            ArticleDetailDTO detail = new ArticleDetailDTO();
-            detail.setLogId(99L);
-            articleService.detail = detail;
-            setArticleService(controller, articleService);
-            HttpRequest request = request("/hello-world.html", attrs);
-            setControllerRequest(controller, request);
+        withConfig(
+                cache -> {
+                    Map<String, Object> attrs = new HashMap<>();
+                    ArticleController controller =
+                            new ArticleController(
+                                    cache,
+                                    new ArticleService(cache, Log::new),
+                                    () ->
+                                            applicationConfig == null
+                                                    ? null
+                                                    : applicationConfig.getTokenService(),
+                                    () -> applicationConfig.getPlugin(PluginCorePlugin.class),
+                                    Log::new);
+                    FakeArticleService articleService = new FakeArticleService();
+                    ArticleDetailDTO detail = new ArticleDetailDTO();
+                    detail.setLogId(99L);
+                    articleService.detail = detail;
+                    setArticleService(controller, articleService);
+                    HttpRequest request = request("/hello-world.html", attrs);
+                    setControllerRequest(controller, request);
 
-            assertEquals("detail", controller.detail());
-            assertSame(detail, attrs.get("log"));
-            assertEquals("hello-world", articleService.lastId);
-            assertSame(request, articleService.lastRequest);
-        });
+                    assertEquals("detail", controller.detail());
+                    assertSame(detail, attrs.get("log"));
+                    assertEquals("hello-world", articleService.lastId);
+                    assertSame(request, articleService.lastRequest);
+                });
     }
 
     @Test
     public void shouldLeaveArticleDetailUnsetWhenServiceReturnsNull() throws Exception {
-        withConfig(cache -> {
-            Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController(cache, new ArticleService(cache), applicationConfig == null ? null : applicationConfig.getTokenService(), () -> applicationConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
-            setArticleService(controller, new FakeArticleService());
-            setControllerRequest(controller, request("/missing.html", attrs));
+        withConfig(
+                cache -> {
+                    Map<String, Object> attrs = new HashMap<>();
+                    ArticleController controller =
+                            new ArticleController(
+                                    cache,
+                                    new ArticleService(cache, Log::new),
+                                    () ->
+                                            applicationConfig == null
+                                                    ? null
+                                                    : applicationConfig.getTokenService(),
+                                    () -> applicationConfig.getPlugin(PluginCorePlugin.class),
+                                    Log::new);
+                    setArticleService(controller, new FakeArticleService());
+                    setControllerRequest(controller, request("/missing.html", attrs));
 
-            assertEquals("detail", controller.detail());
-            assertEquals(false, attrs.containsKey("log"));
-        });
+                    assertEquals("detail", controller.detail());
+                    assertEquals(false, attrs.containsKey("log"));
+                });
     }
 
     private void withConfig(ThrowingRunnable runnable) throws Exception {
@@ -288,8 +331,9 @@ public class ArticleControllerTest {
     }
 
     private static class FakeArticleService extends ArticleService {
-        private FakeArticleService() { super(new TestCacheService()); }
-
+        private FakeArticleService() {
+            super(new TestCacheService(), Log::new);
+        }
 
         private ArticleDetailDTO detail;
         private Object lastId;

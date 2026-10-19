@@ -9,6 +9,9 @@ import com.zrlog.business.plugin.RequestInfo;
 import com.zrlog.model.Log;
 import com.zrlog.plugin.BaseStaticSitePlugin;
 import com.zrlog.util.UserAgentUtils;
+
+import jakarta.inject.Inject;
+
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 
@@ -24,7 +27,12 @@ import java.util.logging.Logger;
 public class ArticleStatisticsRunnable extends BaseLockObject implements Runnable {
     private final Supplier<String> webCm;
 
-    public ArticleStatisticsRunnable(Supplier<String> webCm) {
+    private final jakarta.inject.Provider<DAO> statements;
+
+    @Inject
+    public ArticleStatisticsRunnable(
+            Supplier<String> webCm, jakarta.inject.Provider<DAO> statements) {
+        this.statements = statements;
         this.webCm = Objects.requireNonNull(webCm);
     }
 
@@ -40,7 +48,11 @@ public class ArticleStatisticsRunnable extends BaseLockObject implements Runnabl
      *
      */
     private void clickAdd(Long logId) throws SQLException {
-        new DAO().execute("update " + Log.TABLE_NAME + " set click = click + 1  where logId=?", logId);
+        statements
+                .get()
+                .execute(
+                        "update " + Log.TABLE_NAME + " set click = click + 1  where logId=?",
+                        logId);
     }
 
     @Override

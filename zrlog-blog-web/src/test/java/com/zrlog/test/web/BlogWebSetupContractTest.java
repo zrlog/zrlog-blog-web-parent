@@ -1,5 +1,9 @@
 package com.zrlog.test.web;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.hibegin.common.dao.DataSourceWrapper;
 import com.zrlog.blog.web.BlogWebSetup;
 import com.zrlog.blog.web.BlogWebSetupProvider;
@@ -11,22 +15,21 @@ import com.zrlog.blog.web.interceptor.BlogStaticResourceInterceptor;
 import com.zrlog.blog.web.plugin.ArticleStatisticsPluginImpl;
 import com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin;
 import com.zrlog.blog.web.plugin.TemplateDownloadPlugin;
+import com.zrlog.business.web.ServiceWebSetup;
 import com.zrlog.common.TokenService;
 import com.zrlog.common.ZrLogConfig;
+import com.zrlog.data.web.DataWebSetup;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSetup;
 import com.zrlog.web.WebSetupContext;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class BlogWebSetupContractTest {
 
@@ -70,7 +73,18 @@ public class BlogWebSetupContractTest {
     public void shouldExposeBlogPluginsWithOptionalPageStaticPlugin() throws Exception {
         TestZrLogConfig config = config();
 
-        Plugins withStatic = new BlogWebSetup(config, "/blog", true).getPlugins();
+        new DataWebSetup(config).setup();
+        new ServiceWebSetup(
+                        new WebSetupContext(
+                                config,
+                                new File("db.properties"),
+                                new File("install.lock"),
+                                "/blog",
+                                null))
+                .setup();
+        BlogWebSetup setup = new BlogWebSetup(config, "/blog", true);
+        setup.setup();
+        Plugins withStatic = setup.getPlugins();
         Plugins withoutStatic = new BlogWebSetup(config, "/blog", false).getPlugins();
 
         assertTrue(hasPlugin(withStatic, TemplateDownloadPlugin.class));

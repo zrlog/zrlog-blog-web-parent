@@ -5,19 +5,23 @@ import com.zrlog.business.plugin.ArticleStatisticsPlugin;
 import com.zrlog.business.plugin.RequestInfo;
 import com.zrlog.util.ThreadUtils;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
+@Singleton
 public class ArticleStatisticsPluginImpl implements ArticleStatisticsPlugin {
 
     private ScheduledExecutorService clickSchedule;
     private final ArticleStatisticsRunnable runnable;
 
-    public ArticleStatisticsPluginImpl(Supplier<String> webCm) {
-        this.runnable = new ArticleStatisticsRunnable(webCm);
+    @Inject
+    public ArticleStatisticsPluginImpl(ArticleStatisticsRunnable runnable) {
+        this.runnable = runnable;
     }
 
     @Override

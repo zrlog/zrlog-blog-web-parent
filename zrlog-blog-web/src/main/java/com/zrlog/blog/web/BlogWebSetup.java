@@ -9,21 +9,23 @@ import com.zrlog.blog.web.controller.api.BlogApiArticleController;
 import com.zrlog.blog.web.controller.api.BlogApiCacheController;
 import com.zrlog.blog.web.controller.api.BlogApiPublicController;
 import com.zrlog.blog.web.controller.page.ArticleController;
+import com.zrlog.blog.web.di.BlogComponent;
+import com.zrlog.blog.web.di.DaggerBlogComponent;
 import com.zrlog.blog.web.interceptor.BlogApiInterceptor;
 import com.zrlog.blog.web.interceptor.BlogPageInterceptor;
 import com.zrlog.blog.web.interceptor.BlogPluginInterceptor;
 import com.zrlog.blog.web.interceptor.BlogStaticResourceInterceptor;
-import com.zrlog.blog.web.plugin.ArticleStatisticsPluginImpl;
 import com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin;
 import com.zrlog.blog.web.plugin.TemplateDownloadPlugin;
 import com.zrlog.blog.web.template.ZrLogTemplateRender;
 import com.zrlog.blog.web.util.BlogNativeImageUtils;
+import com.zrlog.business.di.ServiceComponent;
 import com.zrlog.business.plugin.ArticleStatisticsPlugin;
 import com.zrlog.business.plugin.PluginCorePlugin;
 import com.zrlog.business.plugin.StaticSiteRenderer;
-import com.zrlog.business.service.CommonService;
 import com.zrlog.common.CacheService;
 import com.zrlog.common.ZrLogConfig;
+import com.zrlog.data.di.DataComponent;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSetup;
 import com.zrlog.web.WebSiteInfoProvider;
@@ -54,22 +56,65 @@ public class BlogWebSetup implements WebSetup {
 
     @Override
     public void setup() {
-        zrLogConfig.getServerConfig().getBindings()
-                .interceptor(BlogApiInterceptor.class, r -> new BlogApiInterceptor(zrLogConfig::isInstalled))
-                .interceptor(BlogStaticResourceInterceptor.class, r -> new BlogStaticResourceInterceptor(() -> zrLogConfig.getPlugin(BlogPageStaticSitePlugin.class)))
-                .interceptor(BlogPluginInterceptor.class, r -> new BlogPluginInterceptor(zrLogConfig::getTokenService, () -> zrLogConfig.getPlugin(PluginCorePlugin.class)))
-                .interceptor(BlogPageInterceptor.class, r -> new BlogPageInterceptor(request -> new ZrLogTemplateRender(
-                        request, r.get(CacheService.class), zrLogConfig.getTokenService(),
-                        zrLogConfig.getPlugin(PluginCorePlugin.class), zrLogConfig.getPlugin(TemplateDownloadPlugin.class),
-                        zrLogConfig.getPlugin(BlogPageStaticSitePlugin.class), zrLogConfig.getResponseConfig())))
-                .singleton(CommonService.class, r -> new CommonService(
-                        () -> r.get(CacheService.class).getPublicWebSiteInfo()))
-                .controller(BlogApiPublicController.class, (r, request, response) ->
-                        new BlogApiPublicController(r.get(CommonService.class)))
-                .singleton(ArticleService.class, r -> new ArticleService(r.get(CacheService.class)))
-                .controller(ArticleController.class, (r, request, response) -> new ArticleController(r.get(CacheService.class), r.get(ArticleService.class), zrLogConfig.getTokenService(), () -> zrLogConfig.getPlugin(PluginCorePlugin.class)))
-                .controller(BlogApiCacheController.class, (r, request, response) -> new BlogApiCacheController(r.get(CacheService.class)))
-                .controller(BlogApiArticleController.class, (r, request, response) -> new BlogApiArticleController(r.get(ArticleService.class)));
+        zrLogConfig
+                .getServerConfig()
+                .getBindings()
+                .interceptor(
+                        BlogApiInterceptor.class,
+                        r -> new BlogApiInterceptor(zrLogConfig::isInstalled))
+                .interceptor(
+                        BlogStaticResourceInterceptor.class,
+                        r ->
+                                new BlogStaticResourceInterceptor(
+                                        () ->
+                                                zrLogConfig.getPlugin(
+                                                        BlogPageStaticSitePlugin.class)))
+                .interceptor(
+                        BlogPluginInterceptor.class,
+                        r ->
+                                new BlogPluginInterceptor(
+                                        zrLogConfig::getTokenService,
+                                        () -> zrLogConfig.getPlugin(PluginCorePlugin.class)))
+                .interceptor(
+                        BlogPageInterceptor.class,
+                        r ->
+                                new BlogPageInterceptor(
+                                        request ->
+                                                new ZrLogTemplateRender(
+                                                        request,
+                                                        r.get(CacheService.class),
+                                                        zrLogConfig.getTokenService(),
+                                                        zrLogConfig.getPlugin(
+                                                                PluginCorePlugin.class),
+                                                        zrLogConfig.getPlugin(
+                                                                TemplateDownloadPlugin.class),
+                                                        zrLogConfig.getPlugin(
+                                                                BlogPageStaticSitePlugin.class),
+                                                        zrLogConfig.getResponseConfig())))
+                .singleton(
+                        BlogComponent.class,
+                        r ->
+                                DaggerBlogComponent.factory()
+                                        .create(
+                                                r.get(DataComponent.class),
+                                                r.get(ServiceComponent.class),
+                                                zrLogConfig::getTokenService,
+                                                () ->
+                                                        zrLogConfig.getPlugin(
+                                                                PluginCorePlugin.class)))
+                .singleton(ArticleService.class, r -> r.get(BlogComponent.class).articles())
+                .controller(
+                        BlogApiPublicController.class,
+                        (r, request, response) -> r.get(BlogComponent.class).publicApi())
+                .controller(
+                        ArticleController.class,
+                        (r, request, response) -> r.get(BlogComponent.class).page())
+                .controller(
+                        BlogApiCacheController.class,
+                        (r, request, response) -> r.get(BlogComponent.class).cacheApi())
+                .controller(
+                        BlogApiArticleController.class,
+                        (r, request, response) -> r.get(BlogComponent.class).articleApi());
         List<Class<? extends Interceptor>> interceptors = zrLogConfig.getServerConfig().getInterceptors();
         interceptors.add(BlogPluginInterceptor.class);
         interceptors.add(BlogStaticResourceInterceptor.class);
@@ -89,12 +134,33 @@ public class BlogWebSetup implements WebSetup {
         if (enablePageStatic) {
             ApplicationContext context = new ApplicationContext(zrLogConfig.getServerConfig());
             context.init();
-            plugins.add(new BlogPageStaticSitePlugin(new StaticSiteRenderer(zrLogConfig.getRequestConfig(),
-                    zrLogConfig.getResponseConfig(), context),
-                    () -> zrLogConfig.getWebSetup(WebSiteInfoProvider.class).getPublicWebSiteInfo(), contextPath));
+            plugins.add(
+                    new BlogPageStaticSitePlugin(
+                            new StaticSiteRenderer(
+                                    zrLogConfig.getRequestConfig(),
+                                    zrLogConfig.getResponseConfig(),
+                                    context),
+                            () ->
+                                    zrLogConfig
+                                            .getWebSetup(WebSiteInfoProvider.class)
+                                            .getPublicWebSiteInfo(),
+                            contextPath,
+                            () ->
+                                    zrLogConfig
+                                            .getServerConfig()
+                                            .getBindings()
+                                            .build()
+                                            .get(DataComponent.class)
+                                            .website()
+                                            .faviconBase64DTO()));
         }
-        plugins.add(new ArticleStatisticsPluginImpl(() -> zrLogConfig.getServerConfig().getBindings().build()
-                .get(CacheService.class).getPublicWebSiteInfo().getWebCm()));
+        plugins.add(
+                zrLogConfig
+                        .getServerConfig()
+                        .getBindings()
+                        .build()
+                        .get(BlogComponent.class)
+                        .statistics());
         return plugins;
     }
 }

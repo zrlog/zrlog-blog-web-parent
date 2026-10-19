@@ -1,5 +1,8 @@
 package com.zrlog.test.web.controller.api;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.web.Controller;
@@ -9,16 +12,18 @@ import com.zrlog.blog.web.controller.api.BlogApiArticleController;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
+import com.zrlog.model.Comment;
+import com.zrlog.model.Log;
 import com.zrlog.test.support.InMemoryBlogDatabase;
+
+import org.junit.Test;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 public class BlogApiArticleControllerDatabaseTest {
 
@@ -27,7 +32,9 @@ public class BlogApiArticleControllerDatabaseTest {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
             seedArticles(database);
             database.insertComment(1, 2, "api comment");
-            BlogApiArticleController controller = new BlogApiArticleController(new ArticleService(database.cacheService()));
+            BlogApiArticleController controller =
+                    new BlogApiArticleController(
+                            new ArticleService(database.cacheService(), Log::new), Comment::new);
 
             setControllerRequest(controller, request(Map.of("id", "hello-world")));
             ApiStandardResponse<ArticleDetailDTO> detail = controller.detail();

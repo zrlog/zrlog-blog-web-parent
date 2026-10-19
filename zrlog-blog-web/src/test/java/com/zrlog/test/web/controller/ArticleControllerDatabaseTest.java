@@ -1,13 +1,21 @@
 package com.zrlog.test.web.controller;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.http.HttpMethod;
 import com.hibegin.http.server.api.HttpRequest;
 import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.web.controller.page.ArticleController;
+import com.zrlog.business.plugin.PluginCorePlugin;
 import com.zrlog.common.CacheService;
+import com.zrlog.common.ZrLogConfig;
 import com.zrlog.data.dto.ArticleBasicDTO;
+import com.zrlog.model.Log;
 import com.zrlog.test.support.InMemoryBlogDatabase;
+
 import org.junit.Test;
 
 import java.lang.reflect.Proxy;
@@ -17,14 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 public class ArticleControllerDatabaseTest {
 
-    private com.zrlog.common.ZrLogConfig applicationConfig;
+    private ZrLogConfig applicationConfig;
 
     @Test
     public void shouldRenderIndexPageFromInMemoryDatabase() throws Exception {
@@ -117,9 +120,16 @@ public class ArticleControllerDatabaseTest {
     }
 
     private ArticleController controller(CacheService cache, HttpRequest httpRequest) {
-        return new ArticleController(cache, new ArticleService(cache), applicationConfig == null ? null : applicationConfig.getTokenService(), () -> applicationConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class)) {{
-            this.request = httpRequest;
-        }};
+        return new ArticleController(
+                cache,
+                new ArticleService(cache, Log::new),
+                () -> applicationConfig == null ? null : applicationConfig.getTokenService(),
+                () -> applicationConfig.getPlugin(PluginCorePlugin.class),
+                Log::new) {
+            {
+                this.request = httpRequest;
+            }
+        };
     }
 
     @SuppressWarnings("unchecked")

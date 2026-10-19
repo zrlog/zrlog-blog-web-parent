@@ -22,6 +22,9 @@ import com.zrlog.util.I18nUtil;
 import com.zrlog.util.ParseUtil;
 import com.zrlog.util.ZrLogUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -32,12 +35,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
+@Singleton
 public class ArticleService {
 
     private final CacheService cacheService;
 
-    public ArticleService(CacheService cacheService) {
+    private final jakarta.inject.Provider<Log> articles;
+
+    @Inject
+    public ArticleService(CacheService cacheService, jakarta.inject.Provider<Log> articles) {
         this.cacheService = cacheService;
+        this.articles = articles;
     }
 
     public enum ArticleListOrder {
@@ -77,7 +85,14 @@ public class ArticleService {
     }
 
     public ArticleDetailDTO detail(Object idOrAlias, HttpRequest request) throws SQLException {
-        ArticleDetailDTO log = new Log().findByIdOrAlias(idOrAlias, Boolean.TRUE.equals(cacheService.getPublicWebSiteInfo().getDisable_comment_status()));
+        ArticleDetailDTO log =
+                articles.get()
+                        .findByIdOrAlias(
+                                idOrAlias,
+                                Boolean.TRUE.equals(
+                                        cacheService
+                                                .getPublicWebSiteInfo()
+                                                .getDisable_comment_status()));
         if (Objects.isNull(log)) {
             return null;
         }
@@ -188,7 +203,7 @@ public class ArticleService {
 
     public PageData<ArticleBasicDTO> pageByKeywords(PageRequest pageRequest, String keywords, HttpRequest request,
                                                      ArticleListOrder listOrder) {
-        Log log = new Log();
+        Log log = articles.get();
         PageData<ArticleBasicDTO> data = StringUtils.isEmpty(keywords)
                 && listOrder == ArticleListOrder.STICKY_FIRST
                 ? log.visitorFindHome(pageRequest)

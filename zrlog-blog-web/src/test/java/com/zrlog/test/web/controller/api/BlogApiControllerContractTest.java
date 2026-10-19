@@ -1,5 +1,9 @@
 package com.zrlog.test.web.controller.api;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
 import com.hibegin.common.dao.DAO;
 import com.hibegin.common.dao.DataSourceWrapper;
 import com.hibegin.common.dao.dto.PageData;
@@ -7,8 +11,8 @@ import com.hibegin.common.dao.dto.PageRequest;
 import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.business.rest.response.ApiStandardResponse;
-import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
 import com.zrlog.blog.business.service.ArticleService;
+import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
 import com.zrlog.blog.web.controller.api.BlogApiArticleController;
 import com.zrlog.blog.web.controller.api.BlogApiCacheController;
 import com.zrlog.blog.web.controller.api.BlogApiPublicController;
@@ -23,7 +27,10 @@ import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
+import com.zrlog.model.Comment;
+import com.zrlog.model.Log;
 import com.zrlog.util.I18nUtil;
+
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
 import org.junit.Rule;
@@ -38,10 +45,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
 
 public class BlogApiControllerContractTest {
 
@@ -106,7 +109,8 @@ public class BlogApiControllerContractTest {
     @Test
     public void shouldReturnArticleDetailFromArticleService() throws Exception {
         FakeArticleService articleService = new FakeArticleService();
-        BlogApiArticleController controller = new BlogApiArticleController(articleService);
+        BlogApiArticleController controller =
+                new BlogApiArticleController(articleService, Comment::new);
         ArticleDetailDTO detail = new ArticleDetailDTO();
         detail.setLogId(7L);
         articleService.detail = detail;
@@ -123,7 +127,8 @@ public class BlogApiControllerContractTest {
     @Test
     public void shouldReturnArticlePageDataFromArticleService() throws Exception {
         FakeArticleService articleService = new FakeArticleService();
-        BlogApiArticleController controller = new BlogApiArticleController(articleService);
+        BlogApiArticleController controller =
+                new BlogApiArticleController(articleService, Comment::new);
         ArticleBasicDTO row = new ArticleBasicDTO();
         row.setLogId(8L);
         articleService.pageData = new PageData<>(1L, List.of(row), 2L, 5L);
@@ -143,7 +148,8 @@ public class BlogApiControllerContractTest {
     @Test
     public void shouldRequestNewestFirstArticlePageForFeed() throws Exception {
         FakeArticleService articleService = new FakeArticleService();
-        BlogApiArticleController controller = new BlogApiArticleController(articleService);
+        BlogApiArticleController controller =
+                new BlogApiArticleController(articleService, Comment::new);
         setControllerRequest(controller, request(Map.of("feed", "true")));
 
         controller.index();
@@ -153,7 +159,8 @@ public class BlogApiControllerContractTest {
 
     @Test
     public void shouldReturnVisitorCommentsFromDao() throws Exception {
-        BlogApiArticleController controller = new BlogApiArticleController(new FakeArticleService());
+        BlogApiArticleController controller =
+                new BlogApiArticleController(new FakeArticleService(), Comment::new);
         FakeCommentQueryRunner queryRunner = new FakeCommentQueryRunner();
         DataSourceWrapper previousDataSource = setDefaultDataSource(dataSource(queryRunner));
         try {
@@ -354,8 +361,9 @@ public class BlogApiControllerContractTest {
     }
 
     private static class FakeArticleService extends ArticleService {
-        private FakeArticleService() { super(org.mockito.Mockito.mock(CacheService.class)); }
-
+        private FakeArticleService() {
+            super(org.mockito.Mockito.mock(CacheService.class), Log::new);
+        }
 
         private ArticleDetailDTO detail;
         private PageData<ArticleBasicDTO> pageData = new PageData<>(0L, new ArrayList<>());

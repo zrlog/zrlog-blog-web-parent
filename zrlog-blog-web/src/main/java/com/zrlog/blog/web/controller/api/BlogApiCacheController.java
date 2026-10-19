@@ -8,10 +8,13 @@ import com.zrlog.blog.business.rest.response.ApiStandardResponse;
 import com.zrlog.common.CacheService;
 import com.zrlog.common.cache.vo.BaseDataInitVO;
 
+import jakarta.inject.Inject;
+
 public class BlogApiCacheController extends Controller {
 
     private final CacheService cacheService;
 
+    @Inject
     public BlogApiCacheController(CacheService cacheService) {
         this.cacheService = cacheService;
     }

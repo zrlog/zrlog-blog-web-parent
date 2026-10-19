@@ -13,6 +13,9 @@ import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
 import com.zrlog.model.Comment;
+
+import jakarta.inject.Inject;
+
 import java.sql.SQLException;
 import java.util.List;
 
@@ -20,7 +23,12 @@ public class BlogApiArticleController extends Controller {
 
     private final ArticleService articleService;
 
-    public BlogApiArticleController(ArticleService articleService) {
+    private final jakarta.inject.Provider<Comment> comments;
+
+    @Inject
+    public BlogApiArticleController(
+            ArticleService articleService, jakarta.inject.Provider<Comment> comments) {
+        this.comments = comments;
         this.articleService = articleService;
     }
 
@@ -44,6 +52,8 @@ public class BlogApiArticleController extends Controller {
     @ResponseBody
     @RequestMethod(method = HttpMethod.GET)
     public ApiStandardResponse<List<VisitorCommentDTO>> comment() throws SQLException {
-        return new ApiStandardResponse<>(new Comment().visitorFindAllByLogId(Integer.parseInt(request.getParaToStr("id", ""))));
+        return new ApiStandardResponse<>(
+                comments.get()
+                        .visitorFindAllByLogId(Integer.parseInt(request.getParaToStr("id", ""))));
     }
 }

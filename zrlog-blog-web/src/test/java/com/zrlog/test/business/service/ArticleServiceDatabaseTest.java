@@ -1,24 +1,26 @@
 package com.zrlog.test.business.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.common.dao.dto.PageRequestImpl;
 import com.hibegin.http.server.api.HttpRequest;
-import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
 import com.zrlog.blog.business.service.ArticleService;
+import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
+import com.zrlog.model.Log;
 import com.zrlog.test.support.InMemoryBlogDatabase;
+
 import org.junit.Test;
 
 import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class ArticleServiceDatabaseTest {
 
@@ -28,7 +30,9 @@ public class ArticleServiceDatabaseTest {
             seedThreePublishedArticles(database);
             database.insertComment(1, 2, "first comment");
 
-            ArticleDetailDTO detail = new ArticleService(database.cacheService()).detail("hello-world", request("/blog"));
+            ArticleDetailDTO detail =
+                    new ArticleService(database.cacheService(), Log::new)
+                            .detail("hello-world", request("/blog"));
 
             assertNotNull(detail);
             assertEquals(Long.valueOf(2), detail.getId());
@@ -58,7 +62,7 @@ public class ArticleServiceDatabaseTest {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
             seedThreePublishedArticles(database);
             database.insertComment(1, 2, "first comment");
-            ArticleService service = new ArticleService(database.cacheService());
+            ArticleService service = new ArticleService(database.cacheService(), Log::new);
             var site = database.cacheService().getPublicWebSiteInfo();
             site.setHost("configured.example");
             site.setGenerator_html_status(true);
@@ -90,9 +94,13 @@ public class ArticleServiceDatabaseTest {
             database.insertArticle(3, "other-post", "Other Post", "Other content", "other",
                     "2026-06-03 10:00:00", false, false);
 
-            PageData<ArticleBasicDTO> data = new ArticleService(database.cacheService())
-                    .pageByKeywords(new PageRequestImpl(1L, 10L), "Java", request("/blog"),
-                            ArticleListOrder.STICKY_FIRST);
+            PageData<ArticleBasicDTO> data =
+                    new ArticleService(database.cacheService(), Log::new)
+                            .pageByKeywords(
+                                    new PageRequestImpl(1L, 10L),
+                                    "Java",
+                                    request("/blog"),
+                                    ArticleListOrder.STICKY_FIRST);
 
             assertEquals(1L, data.getTotalElements());
             assertEquals("Java", data.getKey());
@@ -116,7 +124,7 @@ public class ArticleServiceDatabaseTest {
             database.insertArticle(3, "other-post", "Other Post", "Other content", "other",
                     "2026-06-03 10:00:00", false, false);
             database.update("update log set sticky=? where logId=?", 1, 1);
-            ArticleService service = new ArticleService(database.cacheService());
+            ArticleService service = new ArticleService(database.cacheService(), Log::new);
 
             PageData<ArticleBasicDTO> home = service.pageByKeywords(
                     new PageRequestImpl(1L, 10L), "", request("/blog"), ArticleListOrder.STICKY_FIRST);

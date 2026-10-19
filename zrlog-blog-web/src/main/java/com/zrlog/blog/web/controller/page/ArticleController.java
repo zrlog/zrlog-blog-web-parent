@@ -25,6 +25,8 @@ import com.zrlog.model.Log;
 import com.zrlog.util.I18nUtil;
 import com.zrlog.util.ParseUtil;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
@@ -38,11 +40,19 @@ public class ArticleController extends Controller {
     private static final Logger LOGGER = LoggerUtil.getLogger(ArticleController.class);
     private final ArticleService articleService;
     private final CacheService cacheService;
-    private final TokenService tokenService;
+    private final Supplier<TokenService> tokenService;
     private final Supplier<PluginCorePlugin> pluginCore;
 
-    public ArticleController(CacheService cacheService, ArticleService articleService, TokenService tokenService,
-                             Supplier<PluginCorePlugin> pluginCore) {
+    private final jakarta.inject.Provider<Log> articles;
+
+    @Inject
+    public ArticleController(
+            CacheService cacheService,
+            ArticleService articleService,
+            Supplier<TokenService> tokenService,
+            Supplier<PluginCorePlugin> pluginCore,
+            jakarta.inject.Provider<Log> articles) {
+        this.articles = articles;
         this.tokenService = tokenService;
         this.pluginCore = pluginCore;
         this.cacheService = cacheService;
@@ -77,7 +87,7 @@ public class ArticleController extends Controller {
     @RequestMethod
     public String index() {
         PageRequest pageRequest = new PageRequestImpl(parseUriInfo(request.getUri()).getPage(), cacheService.getPublicWebSiteInfo().getRows());
-        PageData<ArticleBasicDTO> data = new Log().visitorFindHome(pageRequest);
+        PageData<ArticleBasicDTO> data = articles.get().visitorFindHome(pageRequest);
         setPageDataInfo("all-", data, pageRequest);
         return "index";
     }
@@ -101,7 +111,7 @@ public class ArticleController extends Controller {
         }
         Long rows = cacheService.getPublicWebSiteInfo().getRows();
         PageRequest pageRequest = new PageRequestImpl(uriInfoVO.getPage(), rows);
-        data = new Log().visitorFind(pageRequest, key);
+        data = articles.get().visitorFind(pageRequest, key);
         // 记录回话的Key
         request.getAttr().put("key", WebTools.htmlEncode(key));
         request.getAttr().put("tipsType", I18nUtil.getBlogStringFromRes("search"));
@@ -118,7 +128,10 @@ public class ArticleController extends Controller {
         request.getAttr().put("tipsName", uriInfoVO.getKey());
 
         Long rows = cacheService.getPublicWebSiteInfo().getRows();
-        setPageDataInfo("record/" + uriInfoVO.getKey() + "-", new Log().findByDate(uriInfoVO.getPage(), rows, uriInfoVO.getKey()), new PageRequestImpl(uriInfoVO.getPage(), rows));
+        setPageDataInfo(
+                "record/" + uriInfoVO.getKey() + "-",
+                articles.get().findByDate(uriInfoVO.getPage(), rows, uriInfoVO.getKey()),
+                new PageRequestImpl(uriInfoVO.getPage(), rows));
         return "page";
     }
 
@@ -130,7 +143,8 @@ public class ArticleController extends Controller {
     @RequestMethod(method = HttpMethod.POST)
     public void saveComment() throws IOException, URISyntaxException, InterruptedException {
         PluginCorePlugin pluginCorePlugin = pluginCore.get();
-        AdminTokenVO adminTokenVO = tokenService == null ? null : tokenService.getAdminTokenVO(request);
+        TokenService tokens = tokenService.get();
+        AdminTokenVO adminTokenVO = tokens == null ? null : tokens.getAdminTokenVO(request);
         pluginCorePlugin.accessPlugin("/p/comment/addComment", request, response, adminTokenVO);
     }
 
@@ -172,7 +186,10 @@ public class ArticleController extends Controller {
     public String sort() throws SQLException {
         ArticleUriInfoVO uriInfoVO = parseUriInfo(request.getUri());
         Long rows = cacheService.getPublicWebSiteInfo().getRows();
-        setPageDataInfo("sort/" + uriInfoVO.getKey() + "-", new Log().findByTypeAlias(uriInfoVO.getPage(), rows, uriInfoVO.getKey()), new PageRequestImpl(uriInfoVO.getPage(), rows));
+        setPageDataInfo(
+                "sort/" + uriInfoVO.getKey() + "-",
+                articles.get().findByTypeAlias(uriInfoVO.getPage(), rows, uriInfoVO.getKey()),
+                new PageRequestImpl(uriInfoVO.getPage(), rows));
         request.getAttr().put("tipsType", I18nUtil.getBlogStringFromRes("category"));
         Optional<TypeDTO> first = cacheService.getArticleTypes().stream().filter(e -> Objects.equals(e.getAlias(), uriInfoVO.getKey())).findFirst();
         if (first.isPresent()) {
@@ -188,7 +205,10 @@ public class ArticleController extends Controller {
         ArticleUriInfoVO uriInfoVO = parseUriInfo(request.getUri());
         String tag = uriInfoVO.getKey();
         Long rows = cacheService.getPublicWebSiteInfo().getRows();
-        setPageDataInfo("tag/" + tag + "-", new Log().findByTag(uriInfoVO.getPage(), rows, tag), new PageRequestImpl(uriInfoVO.getPage(), rows));
+        setPageDataInfo(
+                "tag/" + tag + "-",
+                articles.get().findByTag(uriInfoVO.getPage(), rows, tag),
+                new PageRequestImpl(uriInfoVO.getPage(), rows));
         getRequest().getAttr().put("tipsType", I18nUtil.getBlogStringFromRes("tag"));
         getRequest().getAttr().put("tipsName", tag);
         return "page";
