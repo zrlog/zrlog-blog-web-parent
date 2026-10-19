@@ -14,8 +14,6 @@ import com.zrlog.blog.web.controller.api.BlogApiCacheController;
 import com.zrlog.blog.web.controller.api.BlogApiPublicController;
 import com.zrlog.business.service.CommonService;
 import com.zrlog.common.CacheService;
-import com.zrlog.common.Constants;
-import com.zrlog.common.ZrLogConfig;
 import com.zrlog.common.cache.dto.TagDTO;
 import com.zrlog.common.cache.dto.TypeDTO;
 import com.zrlog.common.cache.dto.UserBasicDTO;
@@ -175,14 +173,11 @@ public class BlogApiControllerContractTest {
     }
 
     private void withConfig(CacheService cacheService, ThrowingRunnable runnable) throws Exception {
-        ZrLogConfig previousConfig = Constants.zrLogConfig;
         String previousRootPath = System.getProperty("sws.root.path");
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-blog-api").getAbsolutePath());
-            Constants.zrLogConfig = null;
             runnable.run();
         } finally {
-            Constants.zrLogConfig = previousConfig;
             restoreProperty("sws.root.path", previousRootPath);
         }
     }
@@ -300,7 +295,6 @@ public class BlogApiControllerContractTest {
     }
 
     private static class FakeCacheService implements CacheService {
-
         private final BaseDataInitVO initData;
         private final PublicWebSiteInfo publicWebSiteInfo;
 
@@ -391,7 +385,6 @@ public class BlogApiControllerContractTest {
     }
 
     private static class FakeCommentQueryRunner extends QueryRunner {
-
         private String sql;
         private Object[] params = new Object[0];
 

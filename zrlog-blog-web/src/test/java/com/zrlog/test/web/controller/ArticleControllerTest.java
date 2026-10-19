@@ -6,7 +6,6 @@ import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.common.CacheService;
-import com.zrlog.common.Constants;
 import com.zrlog.common.TokenService;
 import com.zrlog.common.ZrLogConfig;
 import com.zrlog.common.cache.dto.TagDTO;
@@ -34,6 +33,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 
 public class ArticleControllerTest {
+
+    private com.zrlog.common.ZrLogConfig applicationConfig;
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -79,7 +80,7 @@ public class ArticleControllerTest {
     public void shouldReturnStaticPageNamesForSimplePages() throws Exception {
         withConfig(cache -> {
             Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController(cache, new ArticleService(cache), com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
+            ArticleController controller = new ArticleController(cache, new ArticleService(cache), applicationConfig == null ? null : applicationConfig.getTokenService(), () -> applicationConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
             setControllerRequest(controller, request("/link", attrs));
 
             assertEquals("links", controller.link());
@@ -95,7 +96,7 @@ public class ArticleControllerTest {
     public void shouldPrepareTagsPageWithoutArticleRows() throws Exception {
         withConfig(cache -> {
             Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController(cache, new ArticleService(cache), com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
+            ArticleController controller = new ArticleController(cache, new ArticleService(cache), applicationConfig == null ? null : applicationConfig.getTokenService(), () -> applicationConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
             setControllerRequest(controller, request("/tags", attrs));
 
             assertEquals("tags", controller.tags());
@@ -108,7 +109,7 @@ public class ArticleControllerTest {
     public void shouldAttachArticleDetailWhenServiceReturnsResult() throws Exception {
         withConfig(cache -> {
             Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController(cache, new ArticleService(cache), com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
+            ArticleController controller = new ArticleController(cache, new ArticleService(cache), applicationConfig == null ? null : applicationConfig.getTokenService(), () -> applicationConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
             FakeArticleService articleService = new FakeArticleService();
             ArticleDetailDTO detail = new ArticleDetailDTO();
             detail.setLogId(99L);
@@ -128,7 +129,7 @@ public class ArticleControllerTest {
     public void shouldLeaveArticleDetailUnsetWhenServiceReturnsNull() throws Exception {
         withConfig(cache -> {
             Map<String, Object> attrs = new HashMap<>();
-            ArticleController controller = new ArticleController(cache, new ArticleService(cache), com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
+            ArticleController controller = new ArticleController(cache, new ArticleService(cache), applicationConfig == null ? null : applicationConfig.getTokenService(), () -> applicationConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
             setArticleService(controller, new FakeArticleService());
             setControllerRequest(controller, request("/missing.html", attrs));
 
@@ -138,14 +139,12 @@ public class ArticleControllerTest {
     }
 
     private void withConfig(ThrowingRunnable runnable) throws Exception {
-        ZrLogConfig previousConfig = Constants.zrLogConfig;
         String previousRootPath = System.getProperty("sws.root.path");
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder().getAbsolutePath());
-            Constants.zrLogConfig = new TestZrLogConfig();
-            runnable.run(((TestZrLogConfig) Constants.zrLogConfig).cacheForTest());
+            applicationConfig = new TestZrLogConfig();
+            runnable.run(((TestZrLogConfig) applicationConfig).cacheForTest());
         } finally {
-            Constants.zrLogConfig = previousConfig;
             restoreProperty("sws.root.path", previousRootPath);
         }
     }
@@ -199,7 +198,6 @@ public class ArticleControllerTest {
     }
 
     private static class TestZrLogConfig extends ZrLogConfig {
-
         TestZrLogConfig() {
             super(18080, null, "");
         }
@@ -240,7 +238,6 @@ public class ArticleControllerTest {
     }
 
     private static class TestCacheService implements CacheService {
-
         @Override
         public long getCurrentSqlVersion() {
             return 0;

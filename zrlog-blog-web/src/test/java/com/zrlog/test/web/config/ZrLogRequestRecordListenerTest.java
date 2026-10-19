@@ -5,8 +5,6 @@ import com.hibegin.http.server.api.HttpRequest;
 import com.zrlog.blog.web.config.ZrLogRequestRecordListener;
 import com.zrlog.business.plugin.ArticleStatisticsPlugin;
 import com.zrlog.business.plugin.RequestInfo;
-import com.zrlog.common.Constants;
-import com.zrlog.common.ZrLogConfig;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import org.junit.Test;
 
@@ -90,13 +88,7 @@ public class ZrLogRequestRecordListenerTest {
 
     private void withConfig(boolean installed, FakeArticleStatisticsPlugin plugin,
                             java.util.function.Consumer<ZrLogRequestRecordListener> action) {
-        ZrLogConfig previousConfig = Constants.zrLogConfig;
-        try {
-            Constants.zrLogConfig = null;
-            action.accept(new ZrLogRequestRecordListener(() -> installed, () -> plugin));
-        } finally {
-            Constants.zrLogConfig = previousConfig;
-        }
+        action.accept(new ZrLogRequestRecordListener(() -> installed, () -> plugin));
     }
 
     private static HttpRequest request(HttpMethod method, String uri, Map<String, Object> attrs,
@@ -137,7 +129,6 @@ public class ZrLogRequestRecordListenerTest {
     }
 
     private static class FakeArticleStatisticsPlugin implements ArticleStatisticsPlugin {
-
         private RequestInfo lastRequestInfo;
 
         @Override

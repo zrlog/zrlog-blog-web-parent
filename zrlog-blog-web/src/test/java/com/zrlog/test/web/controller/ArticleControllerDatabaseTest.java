@@ -24,9 +24,12 @@ import static org.junit.Assert.assertTrue;
 
 public class ArticleControllerDatabaseTest {
 
+    private com.zrlog.common.ZrLogConfig applicationConfig;
+
     @Test
     public void shouldRenderIndexPageFromInMemoryDatabase() throws Exception {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
+            applicationConfig = database.config();
             seedArticles(database);
             database.update("update log set sticky=? where logId=?", 2, 1);
             database.update("update log set sticky=? where logId=?", 1, 4);
@@ -53,6 +56,7 @@ public class ArticleControllerDatabaseTest {
     @Test
     public void shouldRenderSearchPageFromRealDao() throws Exception {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
+            applicationConfig = database.config();
             seedArticles(database);
             Map<String, Object> attrs = new HashMap<>();
 
@@ -72,6 +76,7 @@ public class ArticleControllerDatabaseTest {
     @Test
     public void shouldRenderCategoryTagAndRecordPagesFromRealDao() throws Exception {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
+            applicationConfig = database.config();
             seedArticles(database);
             database.update("update log set sticky=? where logId=?", 10, 1);
 
@@ -98,6 +103,7 @@ public class ArticleControllerDatabaseTest {
     @Test
     public void shouldRenderArchivesPageWithoutUnboundedArticleQuery() throws Exception {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
+            applicationConfig = database.config();
             seedArticles(database);
             Map<String, Object> attrs = new HashMap<>();
 
@@ -110,8 +116,8 @@ public class ArticleControllerDatabaseTest {
         }
     }
 
-    private static ArticleController controller(CacheService cache, HttpRequest httpRequest) {
-        return new ArticleController(cache, new ArticleService(cache), com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class)) {{
+    private ArticleController controller(CacheService cache, HttpRequest httpRequest) {
+        return new ArticleController(cache, new ArticleService(cache), applicationConfig == null ? null : applicationConfig.getTokenService(), () -> applicationConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class)) {{
             this.request = httpRequest;
         }};
     }

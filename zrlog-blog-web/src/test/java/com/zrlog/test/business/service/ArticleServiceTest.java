@@ -4,7 +4,6 @@ import com.hibegin.common.dao.DataSourceWrapper;
 import com.hibegin.http.server.api.HttpRequest;
 import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.common.CacheService;
-import com.zrlog.common.Constants;
 import com.zrlog.common.TokenService;
 import com.zrlog.common.ZrLogConfig;
 import com.zrlog.common.cache.dto.TagDTO;
@@ -28,6 +27,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class ArticleServiceTest {
+
+    private com.zrlog.common.ZrLogConfig applicationConfig;
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -108,14 +109,12 @@ public class ArticleServiceTest {
     }
 
     private void withConfig(PublicWebSiteInfo publicWebSiteInfo, ThrowingRunnable runnable) throws Exception {
-        ZrLogConfig previousConfig = Constants.zrLogConfig;
         String previousRootPath = System.getProperty("sws.root.path");
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder().getAbsolutePath());
-            Constants.zrLogConfig = new ArticleZrLogConfig(publicWebSiteInfo);
-            runnable.run(((ArticleZrLogConfig) Constants.zrLogConfig).cacheForTest());
+            applicationConfig = new ArticleZrLogConfig(publicWebSiteInfo);
+            runnable.run(((ArticleZrLogConfig) applicationConfig).cacheForTest());
         } finally {
-            Constants.zrLogConfig = previousConfig;
             restoreProperty("sws.root.path", previousRootPath);
         }
     }
@@ -154,7 +153,6 @@ public class ArticleServiceTest {
     }
 
     private static class ArticleZrLogConfig extends ZrLogConfig {
-
         private final PublicWebSiteInfo publicWebSiteInfo;
 
         ArticleZrLogConfig(PublicWebSiteInfo publicWebSiteInfo) {
@@ -198,7 +196,6 @@ public class ArticleServiceTest {
     }
 
     private static class ArticleCacheService implements CacheService {
-
         private final PublicWebSiteInfo publicWebSiteInfo;
 
         ArticleCacheService(PublicWebSiteInfo publicWebSiteInfo) {

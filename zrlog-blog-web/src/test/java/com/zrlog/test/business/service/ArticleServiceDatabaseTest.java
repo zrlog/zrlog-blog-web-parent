@@ -60,7 +60,6 @@ public class ArticleServiceDatabaseTest {
             database.insertComment(1, 2, "first comment");
             ArticleService service = new ArticleService(database.cacheService());
             var site = database.cacheService().getPublicWebSiteInfo();
-            com.zrlog.common.Constants.zrLogConfig = null;
             site.setHost("configured.example");
             site.setGenerator_html_status(true);
             site.setDisable_comment_status(true);

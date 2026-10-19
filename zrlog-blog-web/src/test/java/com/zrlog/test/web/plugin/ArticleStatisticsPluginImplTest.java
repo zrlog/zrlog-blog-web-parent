@@ -3,8 +3,6 @@ package com.zrlog.test.web.plugin;
 import com.zrlog.blog.web.plugin.ArticleStatisticsPluginImpl;
 import com.zrlog.blog.web.plugin.ArticleStatisticsRunnable;
 import com.zrlog.business.plugin.RequestInfo;
-import com.zrlog.common.Constants;
-import com.zrlog.common.ZrLogConfig;
 import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.plugin.BaseStaticSitePlugin;
 import com.zrlog.test.support.InMemoryBlogDatabase;
@@ -146,14 +144,11 @@ public class ArticleStatisticsPluginImplTest {
     }
 
     private void withoutGlobalConfig(ThrowingRunnable runnable) throws Exception {
-        ZrLogConfig previousConfig = Constants.zrLogConfig;
         String previousRootPath = System.getProperty("sws.root.path");
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-statistics").getAbsolutePath());
-            Constants.zrLogConfig = null;
             runnable.run();
         } finally {
-            Constants.zrLogConfig = previousConfig;
             restoreProperty("sws.root.path", previousRootPath);
         }
     }

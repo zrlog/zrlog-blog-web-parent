@@ -74,10 +74,10 @@ public class MemoryApplication {
         System.getProperties().put("sws.run.mode", "dev");
         int port = resolvePort(args);
         boolean installedDefault = isInstalledDefaultMode(args);
-        prepareRuntime(port, !installedDefault);
-        WebServerBuilder build = new WebServerBuilder.Builder().config(Constants.zrLogConfig).build();
+        DevZrLogConfig config = prepareRuntime(port, !installedDefault);
+        WebServerBuilder build = new WebServerBuilder.Builder().config(config).build();
         LOGGER.info("Start ZrLog blog memory application at http://127.0.0.1:" + port
-                + Constants.zrLogConfig.getServerConfig().getContextPath() + "/, root=" + PathUtil.getRootPath()
+                + config.getServerConfig().getContextPath() + "/, root=" + PathUtil.getRootPath()
                 + ", content=" + (installedDefault ? "installed-default" : "review-fixture"));
         build.start();
     }
@@ -97,7 +97,6 @@ public class MemoryApplication {
         installFromConfig(installConfig);
 
         DevZrLogConfig config = new MemoryZrLogConfig(port, null, installConfig.getContextPath());
-        Constants.zrLogConfig = config;
         if (seedReviewFixture) {
             seedReviewContent((DataSourceWrapper) config.getDataSource(), readReviewContent());
             copyMemoryAssets(rootPath);
@@ -231,7 +230,6 @@ public class MemoryApplication {
     }
 
     private static class MemoryZrLogConfig extends DevZrLogConfig {
-
         @Override
         public boolean isTest() { return true; }
 
@@ -250,7 +248,6 @@ public class MemoryApplication {
     }
 
     private static class MemoryInstallConfig extends DefaultInstallConfig {
-
         @Override
         public String defaultTemplatePath() {
             return Constants.getDefaultTemplatePath();
@@ -268,7 +265,6 @@ public class MemoryApplication {
     }
 
     private static class MemoryPluginCorePlugin implements PluginCorePlugin {
-
         @Override
         public boolean refreshCache(String cacheVersion, HttpRequest request) {
             return false;

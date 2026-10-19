@@ -16,7 +16,6 @@ import com.zrlog.blog.web.interceptor.BlogStaticResourceInterceptor;
 import com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin;
 import com.zrlog.business.exception.MissingInstallException;
 import com.zrlog.business.plugin.PluginCorePlugin;
-import com.zrlog.common.Constants;
 import com.zrlog.common.TokenService;
 import com.zrlog.common.ZrLogConfig;
 import com.zrlog.common.vo.AdminTokenVO;
@@ -50,6 +49,8 @@ import static org.mockito.Mockito.when;
 
 public class BlogInterceptorRoutingTest {
 
+    private com.zrlog.common.ZrLogConfig applicationConfig;
+
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -64,7 +65,7 @@ public class BlogInterceptorRoutingTest {
 
     @Test
     public void shouldMatchBlogPluginRequests() {
-        BlogPluginInterceptor interceptor = new BlogPluginInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
+        BlogPluginInterceptor interceptor = new BlogPluginInterceptor(() -> applicationConfig.getTokenService(), () -> applicationConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
 
         assertTrue(interceptor.isHandleAble(request("/plugin/comment/static/main.js")));
         assertTrue(interceptor.isHandleAble(request("/p/comment")));
@@ -84,7 +85,7 @@ public class BlogInterceptorRoutingTest {
 
     @Test
     public void shouldSkipAdminAndStaticPluginRequestsForStaticResources() {
-        BlogStaticResourceInterceptor interceptor = new BlogStaticResourceInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class));
+        BlogStaticResourceInterceptor interceptor = new BlogStaticResourceInterceptor(() -> applicationConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class));
 
         assertFalse(interceptor.isHandleAble(request("/admin/login")));
         assertFalse(interceptor.isHandleAble(request("/error/404.html")));
@@ -104,7 +105,7 @@ public class BlogInterceptorRoutingTest {
             assertTrue(StaticFileCacheUtils.getInstance().getFileFlagFirstByCache("assets/app.css").length() > 0);
             CapturedResponse capturedResponse = new CapturedResponse();
 
-            boolean continueChain = new BlogStaticResourceInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class))
+            boolean continueChain = new BlogStaticResourceInterceptor(() -> applicationConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class))
                     .doInterceptor(request("/assets/app.css"), capturedResponse.response());
 
             assertFalse(continueChain);
@@ -121,7 +122,7 @@ public class BlogInterceptorRoutingTest {
     public void shouldRenderClasspathStaticResourceAndStopInterceptorChain() {
         CapturedResponse capturedResponse = new CapturedResponse();
 
-        boolean continueChain = new BlogStaticResourceInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class))
+        boolean continueChain = new BlogStaticResourceInterceptor(() -> applicationConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class))
                 .doInterceptor(request("/assets/css/markdown.css"), capturedResponse.response());
 
         assertFalse(continueChain);
@@ -132,18 +133,16 @@ public class BlogInterceptorRoutingTest {
 
     @Test
     public void shouldContinueInterceptorChainWhenStaticResourceIsMissing() throws Exception {
-        ZrLogConfig previousConfig = Constants.zrLogConfig;
         String previousRootPath = System.getProperty("sws.root.path");
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-blog-static").getAbsolutePath());
-            Constants.zrLogConfig = new NotInstalledZrLogConfig();
+            applicationConfig = new NotInstalledZrLogConfig();
 
-            boolean continueChain = new BlogStaticResourceInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class))
+            boolean continueChain = new BlogStaticResourceInterceptor(() -> applicationConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class))
                     .doInterceptor(request("/missing.css"), new CapturedResponse().response());
 
             assertTrue(continueChain);
         } finally {
-            Constants.zrLogConfig = previousConfig;
             restoreProperty("sws.root.path", previousRootPath);
         }
     }
@@ -157,7 +156,7 @@ public class BlogInterceptorRoutingTest {
         CapturedResponse capturedResponse = new CapturedResponse();
 
         withStaticSiteConfig(staticSitePlugin, () -> {
-            boolean continueChain = new BlogStaticResourceInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class))
+            boolean continueChain = new BlogStaticResourceInterceptor(() -> applicationConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class))
                     .doInterceptor(request("/hello-world.html"), capturedResponse.response());
 
             assertFalse(continueChain);
@@ -170,7 +169,7 @@ public class BlogInterceptorRoutingTest {
         FakePluginCorePlugin plugin = new FakePluginCorePlugin(true);
         CapturedResponse capturedResponse = new CapturedResponse();
         withPluginConfig(plugin, () -> {
-            boolean continueChain = new BlogPluginInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class))
+            boolean continueChain = new BlogPluginInterceptor(() -> applicationConfig.getTokenService(), () -> applicationConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class))
                     .doInterceptor(request("/plugin/comment/static/main.js"), capturedResponse.response());
 
             assertFalse(continueChain);
@@ -185,7 +184,7 @@ public class BlogInterceptorRoutingTest {
         FakePluginCorePlugin plugin = new FakePluginCorePlugin(false);
         CapturedResponse capturedResponse = new CapturedResponse();
         withPluginConfig(plugin, () -> {
-            boolean continueChain = new BlogPluginInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class))
+            boolean continueChain = new BlogPluginInterceptor(() -> applicationConfig.getTokenService(), () -> applicationConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class))
                     .doInterceptor(request("/api/p/comment"), capturedResponse.response());
 
             assertFalse(continueChain);
@@ -221,15 +220,13 @@ public class BlogInterceptorRoutingTest {
 
     @Test(expected = MissingInstallException.class)
     public void shouldRejectApiRequestsWhenBlogIsNotInstalled() throws Exception {
-        ZrLogConfig previousConfig = Constants.zrLogConfig;
         String previousRootPath = System.getProperty("sws.root.path");
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-blog-api").getAbsolutePath());
-            Constants.zrLogConfig = new NotInstalledZrLogConfig();
+            applicationConfig = new NotInstalledZrLogConfig();
 
             new BlogApiInterceptor(() -> false).doInterceptor(request("/api/article/detail"), null);
         } finally {
-            Constants.zrLogConfig = previousConfig;
             restoreProperty("sws.root.path", previousRootPath);
         }
     }
@@ -332,43 +329,37 @@ public class BlogInterceptorRoutingTest {
     }
 
     private void withPluginConfig(FakePluginCorePlugin plugin, ThrowingRunnable runnable) throws Exception {
-        ZrLogConfig previousConfig = Constants.zrLogConfig;
         String previousRootPath = System.getProperty("sws.root.path");
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-blog-plugin").getAbsolutePath());
-            Constants.zrLogConfig = new PluginZrLogConfig(plugin);
+            applicationConfig = new PluginZrLogConfig(plugin);
             runnable.run();
         } finally {
-            Constants.zrLogConfig = previousConfig;
             restoreProperty("sws.root.path", previousRootPath);
         }
     }
 
     private void withStaticSiteConfig(BlogPageStaticSitePlugin plugin, ThrowingRunnable runnable) throws Exception {
-        ZrLogConfig previousConfig = Constants.zrLogConfig;
         String previousRootPath = System.getProperty("sws.root.path");
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-blog-static-cache").getAbsolutePath());
-            Constants.zrLogConfig = new StaticSiteZrLogConfig(plugin);
+            applicationConfig = new StaticSiteZrLogConfig(plugin);
             runnable.run();
         } finally {
-            Constants.zrLogConfig = previousConfig;
             restoreProperty("sws.root.path", previousRootPath);
         }
     }
 
     private void withInstalledConfig(ThrowingRunnable runnable) throws Exception {
-        ZrLogConfig previousConfig = Constants.zrLogConfig;
         String previousRootPath = System.getProperty("sws.root.path");
         try {
             Path rootPath = temporaryFolder.newFolder("zrlog-blog-api-installed").toPath();
             Files.createDirectories(rootPath.resolve("conf"));
             Files.writeString(rootPath.resolve("conf/db.properties"), "");
             System.setProperty("sws.root.path", rootPath.toString());
-            Constants.zrLogConfig = new InstalledZrLogConfig();
+            applicationConfig = new InstalledZrLogConfig();
             runnable.run();
         } finally {
-            Constants.zrLogConfig = previousConfig;
             restoreProperty("sws.root.path", previousRootPath);
         }
     }
@@ -378,7 +369,6 @@ public class BlogInterceptorRoutingTest {
     }
 
     public static class TestPageController extends Controller {
-
         private static String lastMethod;
 
         public Object article() {
@@ -418,7 +408,6 @@ public class BlogInterceptorRoutingTest {
     }
 
     public static class TestApiController extends Controller {
-
         private static boolean handled;
 
         public Object ping() {
@@ -428,7 +417,6 @@ public class BlogInterceptorRoutingTest {
     }
 
     private static class NotInstalledZrLogConfig extends ZrLogConfig {
-
         NotInstalledZrLogConfig() {
             super(18080, null, "");
         }
@@ -455,7 +443,6 @@ public class BlogInterceptorRoutingTest {
     }
 
     private static class InstalledZrLogConfig extends NotInstalledZrLogConfig {
-
         @Override
         public boolean isInstalled() {
             return true;
@@ -463,7 +450,6 @@ public class BlogInterceptorRoutingTest {
     }
 
     private static class PluginZrLogConfig extends NotInstalledZrLogConfig {
-
         private final FakePluginCorePlugin plugin;
 
         PluginZrLogConfig(FakePluginCorePlugin plugin) {
@@ -480,7 +466,6 @@ public class BlogInterceptorRoutingTest {
     }
 
     private static class StaticSiteZrLogConfig extends NotInstalledZrLogConfig {
-
         private final BlogPageStaticSitePlugin plugin;
 
         StaticSiteZrLogConfig(BlogPageStaticSitePlugin plugin) {
@@ -497,7 +482,6 @@ public class BlogInterceptorRoutingTest {
     }
 
     private static class FakePluginCorePlugin implements PluginCorePlugin {
-
         private final boolean accessResult;
         private String lastUri;
         private AdminTokenVO lastAdminToken;
@@ -556,7 +540,6 @@ public class BlogInterceptorRoutingTest {
     }
 
     private static class CapturedResponse {
-
         private final Map<String, String> addedHeaders = new HashMap<>();
         private File writtenFile;
         private Integer code;

@@ -31,8 +31,8 @@ public class Application {
     }
 
     public static void main(String[] args) {
-        Constants.zrLogConfig = new DevZrLogConfig(7080, null, "");
-        WebServerBuilder build = new WebServerBuilder.Builder().config(Constants.zrLogConfig).build();
+        DevZrLogConfig config = new DevZrLogConfig(7080, null, "");
+        WebServerBuilder build = new WebServerBuilder.Builder().config(config).build();
         build.start();
     }
 }

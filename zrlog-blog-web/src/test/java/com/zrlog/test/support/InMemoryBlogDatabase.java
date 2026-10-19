@@ -26,15 +26,14 @@ public class InMemoryBlogDatabase implements AutoCloseable {
 
     private final DataSourceWrapper dataSource;
     private final ZrLogTestDatabase database;
-    private final ZrLogConfig previousConfig;
+    private final ZrLogConfig config;
     private final TestCacheService cacheService;
 
     private InMemoryBlogDatabase() throws Exception {
-        this.previousConfig = Constants.zrLogConfig;
         this.cacheService = new TestCacheService();
         this.database = ZrLogTestDatabase.open();
         this.dataSource = database.dataSource();
-        Constants.zrLogConfig = new TestZrLogConfig(cacheService);
+        this.config = new TestZrLogConfig(cacheService);
         seedBaseData();
     }
 
@@ -44,6 +43,10 @@ public class InMemoryBlogDatabase implements AutoCloseable {
 
     public TestCacheService cacheService() {
         return cacheService;
+    }
+
+    public ZrLogConfig config() {
+        return config;
     }
 
     public int update(String sql, Object... params) throws SQLException {
@@ -92,15 +95,10 @@ public class InMemoryBlogDatabase implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        try {
-            database.close();
-        } finally {
-            Constants.zrLogConfig = previousConfig;
-        }
+        database.close();
     }
 
     private static class TestZrLogConfig extends ZrLogConfig {
-
         private final TestCacheService cacheService;
 
         TestZrLogConfig(TestCacheService cacheService) {
@@ -144,7 +142,6 @@ public class InMemoryBlogDatabase implements AutoCloseable {
     }
 
     public static class TestCacheService implements CacheService {
-
         private final BaseDataInitVO initData = new BaseDataInitVO();
         private final PublicWebSiteInfo publicWebSiteInfo = new PublicWebSiteInfo();
         private final List<TypeDTO> articleTypes = new ArrayList<>();
