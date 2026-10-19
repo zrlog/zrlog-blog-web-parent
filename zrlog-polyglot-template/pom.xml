@@ -53,6 +53,7 @@
                             <release>11</release>
                             <includes>
                                 <include>com/zrlog/blog/polyglot/markdown/MarkdownJsRenderer.java</include>
+                                <include>com/zrlog/blog/polyglot/markdown/PolyglotMarkdownRenderer.java</include>
                             </includes>
                         </configuration>
                     </execution>
@@ -65,6 +66,7 @@
                         <configuration>
                             <excludes>
                                 <exclude>com/zrlog/blog/polyglot/markdown/MarkdownJsRenderer.java</exclude>
+                                <exclude>com/zrlog/blog/polyglot/markdown/PolyglotMarkdownRenderer.java</exclude>
                             </excludes>
                         </configuration>
                     </execution>
