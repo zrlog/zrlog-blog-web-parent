@@ -1,14 +1,14 @@
 package com.zrlog.test.web.interceptor;
 
+import com.hibegin.common.dao.DataSourceWrapper;
+import com.hibegin.common.util.http.handle.CloseResponseHandle;
+import com.hibegin.http.HttpMethod;
 import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.api.HttpResponse;
 import com.hibegin.http.server.config.RequestConfig;
 import com.hibegin.http.server.config.ServerConfig;
 import com.hibegin.http.server.web.Controller;
 import com.hibegin.http.server.web.Router;
-import com.hibegin.common.dao.DataSourceWrapper;
-import com.hibegin.common.util.http.handle.CloseResponseHandle;
-import com.hibegin.http.HttpMethod;
 import com.zrlog.blog.web.interceptor.BlogApiInterceptor;
 import com.zrlog.blog.web.interceptor.BlogPageInterceptor;
 import com.zrlog.blog.web.interceptor.BlogPluginInterceptor;
@@ -20,8 +20,8 @@ import com.zrlog.common.Constants;
 import com.zrlog.common.TokenService;
 import com.zrlog.common.ZrLogConfig;
 import com.zrlog.common.vo.AdminTokenVO;
-import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.BaseStaticSitePlugin;
+import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.util.StaticFileCacheUtils;
 import org.junit.Rule;
@@ -55,7 +55,7 @@ public class BlogInterceptorRoutingTest {
 
     @Test
     public void shouldMatchBlogApiRequests() {
-        BlogApiInterceptor interceptor = new BlogApiInterceptor();
+        BlogApiInterceptor interceptor = new BlogApiInterceptor(() -> true);
 
         assertTrue(interceptor.isHandleAble(request("/api")));
         assertTrue(interceptor.isHandleAble(request("/api/article/detail")));
@@ -64,7 +64,7 @@ public class BlogInterceptorRoutingTest {
 
     @Test
     public void shouldMatchBlogPluginRequests() {
-        BlogPluginInterceptor interceptor = new BlogPluginInterceptor();
+        BlogPluginInterceptor interceptor = new BlogPluginInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class));
 
         assertTrue(interceptor.isHandleAble(request("/plugin/comment/static/main.js")));
         assertTrue(interceptor.isHandleAble(request("/p/comment")));
@@ -75,7 +75,7 @@ public class BlogInterceptorRoutingTest {
 
     @Test
     public void shouldMatchBlogPageRequests() {
-        BlogPageInterceptor interceptor = new BlogPageInterceptor();
+        BlogPageInterceptor interceptor = new BlogPageInterceptor(renderRequest -> { throw new AssertionError("No template should be rendered for this route"); });
 
         assertTrue(interceptor.isHandleAble(request("/")));
         assertTrue(interceptor.isHandleAble(request("/article.html")));
@@ -84,7 +84,7 @@ public class BlogInterceptorRoutingTest {
 
     @Test
     public void shouldSkipAdminAndStaticPluginRequestsForStaticResources() {
-        BlogStaticResourceInterceptor interceptor = new BlogStaticResourceInterceptor();
+        BlogStaticResourceInterceptor interceptor = new BlogStaticResourceInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class));
 
         assertFalse(interceptor.isHandleAble(request("/admin/login")));
         assertFalse(interceptor.isHandleAble(request("/error/404.html")));
@@ -104,7 +104,7 @@ public class BlogInterceptorRoutingTest {
             assertTrue(StaticFileCacheUtils.getInstance().getFileFlagFirstByCache("assets/app.css").length() > 0);
             CapturedResponse capturedResponse = new CapturedResponse();
 
-            boolean continueChain = new BlogStaticResourceInterceptor()
+            boolean continueChain = new BlogStaticResourceInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class))
                     .doInterceptor(request("/assets/app.css"), capturedResponse.response());
 
             assertFalse(continueChain);
@@ -121,7 +121,7 @@ public class BlogInterceptorRoutingTest {
     public void shouldRenderClasspathStaticResourceAndStopInterceptorChain() {
         CapturedResponse capturedResponse = new CapturedResponse();
 
-        boolean continueChain = new BlogStaticResourceInterceptor()
+        boolean continueChain = new BlogStaticResourceInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class))
                 .doInterceptor(request("/assets/css/markdown.css"), capturedResponse.response());
 
         assertFalse(continueChain);
@@ -138,7 +138,7 @@ public class BlogInterceptorRoutingTest {
             System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-blog-static").getAbsolutePath());
             Constants.zrLogConfig = new NotInstalledZrLogConfig();
 
-            boolean continueChain = new BlogStaticResourceInterceptor()
+            boolean continueChain = new BlogStaticResourceInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class))
                     .doInterceptor(request("/missing.css"), new CapturedResponse().response());
 
             assertTrue(continueChain);
@@ -157,7 +157,7 @@ public class BlogInterceptorRoutingTest {
         CapturedResponse capturedResponse = new CapturedResponse();
 
         withStaticSiteConfig(staticSitePlugin, () -> {
-            boolean continueChain = new BlogStaticResourceInterceptor()
+            boolean continueChain = new BlogStaticResourceInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.blog.web.plugin.BlogPageStaticSitePlugin.class))
                     .doInterceptor(request("/hello-world.html"), capturedResponse.response());
 
             assertFalse(continueChain);
@@ -170,7 +170,7 @@ public class BlogInterceptorRoutingTest {
         FakePluginCorePlugin plugin = new FakePluginCorePlugin(true);
         CapturedResponse capturedResponse = new CapturedResponse();
         withPluginConfig(plugin, () -> {
-            boolean continueChain = new BlogPluginInterceptor()
+            boolean continueChain = new BlogPluginInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class))
                     .doInterceptor(request("/plugin/comment/static/main.js"), capturedResponse.response());
 
             assertFalse(continueChain);
@@ -185,7 +185,7 @@ public class BlogInterceptorRoutingTest {
         FakePluginCorePlugin plugin = new FakePluginCorePlugin(false);
         CapturedResponse capturedResponse = new CapturedResponse();
         withPluginConfig(plugin, () -> {
-            boolean continueChain = new BlogPluginInterceptor()
+            boolean continueChain = new BlogPluginInterceptor(() -> com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class))
                     .doInterceptor(request("/api/p/comment"), capturedResponse.response());
 
             assertFalse(continueChain);
@@ -199,7 +199,7 @@ public class BlogInterceptorRoutingTest {
         ServerConfig serverConfig = new ServerConfig();
         CapturedResponse capturedResponse = new CapturedResponse();
 
-        boolean continueChain = new BlogPageInterceptor()
+        boolean continueChain = new BlogPageInterceptor(renderRequest -> { throw new AssertionError("No template should be rendered for this route"); })
                 .doInterceptor(request("/missing", null, serverConfig), capturedResponse.response());
 
         assertFalse(continueChain);
@@ -227,7 +227,7 @@ public class BlogInterceptorRoutingTest {
             System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-blog-api").getAbsolutePath());
             Constants.zrLogConfig = new NotInstalledZrLogConfig();
 
-            new BlogApiInterceptor().doInterceptor(request("/api/article/detail"), null);
+            new BlogApiInterceptor(() -> false).doInterceptor(request("/api/article/detail"), null);
         } finally {
             Constants.zrLogConfig = previousConfig;
             restoreProperty("sws.root.path", previousRootPath);
@@ -243,7 +243,7 @@ public class BlogInterceptorRoutingTest {
         TestApiController.handled = false;
 
         withInstalledConfig(() -> {
-            boolean continueChain = new BlogApiInterceptor().doInterceptor(
+            boolean continueChain = new BlogApiInterceptor(() -> true).doInterceptor(
                     request("/api/ping", null, new ServerConfig(), requestConfig, HttpMethod.GET),
                     new CapturedResponse().response());
 
@@ -316,7 +316,7 @@ public class BlogInterceptorRoutingTest {
             throws Exception {
         TestPageController.lastMethod = null;
 
-        boolean continueChain = new BlogPageInterceptor()
+        boolean continueChain = new BlogPageInterceptor(renderRequest -> { throw new AssertionError("No template should be rendered for this route"); })
                 .doInterceptor(request(uri, null, serverConfig), new CapturedResponse().response());
 
         assertFalse(continueChain);

@@ -1,24 +1,17 @@
 package com.zrlog.test.web.config;
 
-import com.hibegin.common.dao.DataSourceWrapper;
 import com.hibegin.http.HttpMethod;
 import com.hibegin.http.server.api.HttpRequest;
 import com.zrlog.blog.web.config.ZrLogRequestRecordListener;
 import com.zrlog.business.plugin.ArticleStatisticsPlugin;
 import com.zrlog.business.plugin.RequestInfo;
 import com.zrlog.common.Constants;
-import com.zrlog.common.TokenService;
 import com.zrlog.common.ZrLogConfig;
 import com.zrlog.data.dto.ArticleDetailDTO;
-import com.zrlog.plugin.IPlugin;
-import com.zrlog.plugin.Plugins;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -27,9 +20,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class ZrLogRequestRecordListenerTest {
-
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
     public void shouldRecordHandledArticlePage() throws Exception {
@@ -43,8 +33,7 @@ public class ZrLogRequestRecordListenerTest {
         headers.put("X-Real-IP", "203.0.113.9");
         long createTime = System.currentTimeMillis() - 25L;
 
-        withConfig(true, plugin, () -> new ZrLogRequestRecordListener()
-                .onHandled(request(HttpMethod.GET, "/hello-world", attrs, headers, createTime), null));
+        withConfig(true, plugin, listener -> listener.onHandled(request(HttpMethod.GET, "/hello-world", attrs, headers, createTime), null));
 
         assertNotNull(plugin.lastRequestInfo);
         assertEquals(Long.valueOf(99L), plugin.lastRequestInfo.getArticleId());
@@ -63,30 +52,50 @@ public class ZrLogRequestRecordListenerTest {
         Map<String, Object> attrs = new HashMap<>();
         attrs.put("log", article);
 
-        withConfig(false, plugin, () -> new ZrLogRequestRecordListener()
-                .onHandled(request(HttpMethod.GET, "/hello-world", attrs, Map.of(), System.currentTimeMillis()), null));
+        withConfig(false, plugin, listener -> listener.onHandled(request(HttpMethod.GET, "/hello-world", attrs, Map.of(), System.currentTimeMillis()), null));
         assertNull(plugin.lastRequestInfo);
 
-        withConfig(true, plugin, () -> new ZrLogRequestRecordListener()
-                .onHandled(request(HttpMethod.POST, "/hello-world", attrs, Map.of(), System.currentTimeMillis()), null));
+        withConfig(true, plugin, listener -> listener.onHandled(request(HttpMethod.POST, "/hello-world", attrs, Map.of(), System.currentTimeMillis()), null));
         assertNull(plugin.lastRequestInfo);
 
-        withConfig(true, plugin, () -> new ZrLogRequestRecordListener()
-                .onHandled(request(HttpMethod.GET, "/assets/app.js", attrs, Map.of(), System.currentTimeMillis()), null));
+        withConfig(true, plugin, listener -> listener.onHandled(request(HttpMethod.GET, "/assets/app.js", attrs, Map.of(), System.currentTimeMillis()), null));
         assertNull(plugin.lastRequestInfo);
     }
 
+    @Test
+    public void shouldFollowInstallationAndStatisticsReplacementForTheSameListener() {
+        var installed = new java.util.concurrent.atomic.AtomicBoolean();
+        var statistics = new java.util.concurrent.atomic.AtomicReference<ArticleStatisticsPlugin>();
+        ZrLogRequestRecordListener listener = new ZrLogRequestRecordListener(installed::get, statistics::get);
+        ArticleDetailDTO article = new ArticleDetailDTO();
+        article.setLogId(42L);
+        HttpRequest request = request(HttpMethod.GET, "/article", Map.of("log", article), Map.of(), System.currentTimeMillis());
+        FakeArticleStatisticsPlugin first = new FakeArticleStatisticsPlugin();
+        statistics.set(first);
+        listener.onHandled(request, null);
+        assertNull(first.lastRequestInfo);
+        installed.set(true);
+        listener.onHandled(request, null);
+        assertEquals(Long.valueOf(42L), first.lastRequestInfo.getArticleId());
+        FakeArticleStatisticsPlugin replacement = new FakeArticleStatisticsPlugin();
+        statistics.set(replacement);
+        article.setLogId(43L);
+        listener.onHandled(request, null);
+        assertEquals(Long.valueOf(42L), first.lastRequestInfo.getArticleId());
+        assertEquals(Long.valueOf(43L), replacement.lastRequestInfo.getArticleId());
+        statistics.set(null);
+        listener.onHandled(request, null);
+        assertEquals(Long.valueOf(43L), replacement.lastRequestInfo.getArticleId());
+    }
+
     private void withConfig(boolean installed, FakeArticleStatisticsPlugin plugin,
-                            ThrowingRunnable runnable) throws Exception {
+                            java.util.function.Consumer<ZrLogRequestRecordListener> action) {
         ZrLogConfig previousConfig = Constants.zrLogConfig;
-        String previousRootPath = System.getProperty("sws.root.path");
         try {
-            System.setProperty("sws.root.path", temporaryFolder.newFolder().getAbsolutePath());
-            Constants.zrLogConfig = new RecordZrLogConfig(installed, plugin);
-            runnable.run();
+            Constants.zrLogConfig = null;
+            action.accept(new ZrLogRequestRecordListener(() -> installed, () -> plugin));
         } finally {
             Constants.zrLogConfig = previousConfig;
-            restoreProperty("sws.root.path", previousRootPath);
         }
     }
 
@@ -125,58 +134,6 @@ public class ZrLogRequestRecordListenerTest {
                     }
                     return null;
                 });
-    }
-
-    private static void restoreProperty(String key, String value) {
-        if (value == null) {
-            System.clearProperty(key);
-        } else {
-            System.setProperty(key, value);
-        }
-    }
-
-    private interface ThrowingRunnable {
-        void run() throws Exception;
-    }
-
-    private static class RecordZrLogConfig extends ZrLogConfig {
-
-        private final boolean installed;
-        private final FakeArticleStatisticsPlugin plugin;
-
-        RecordZrLogConfig(boolean installed, FakeArticleStatisticsPlugin plugin) {
-            super(18080, null, "");
-            this.installed = installed;
-            this.plugin = plugin;
-        }
-
-        @Override
-        public boolean isInstalled() {
-            return installed;
-        }
-
-        @Override
-        public DataSourceWrapper configDatabase() {
-            return null;
-        }
-
-        @Override
-        public <T extends IPlugin> T getPlugin(Class<T> pluginClass) {
-            if (pluginClass.isInstance(plugin)) {
-                return pluginClass.cast(plugin);
-            }
-            return null;
-        }
-
-        @Override
-        protected TokenService initTokenService() {
-            return null;
-        }
-
-        @Override
-        public List<IPlugin> getBasePluginList() {
-            return new Plugins();
-        }
     }
 
     private static class FakeArticleStatisticsPlugin implements ArticleStatisticsPlugin {

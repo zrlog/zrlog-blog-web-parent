@@ -17,6 +17,9 @@ public class BlogWebSetupProvider implements WebSetupProvider {
     }
 
     @Override
+    public java.util.Set<String> requiredModules() { return java.util.Set.of("data", "services"); }
+
+    @Override
     public WebSetup create(WebSetupContext context) {
         return new BlogWebSetup(context.getZrLogConfig(), context.getContextPath(), true);
     }

@@ -7,14 +7,14 @@ import com.hibegin.common.dao.dto.PageRequest;
 import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.business.rest.response.ApiStandardResponse;
-import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
+import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.web.controller.api.BlogApiArticleController;
 import com.zrlog.blog.web.controller.api.BlogApiCacheController;
 import com.zrlog.blog.web.controller.api.BlogApiPublicController;
+import com.zrlog.business.service.CommonService;
 import com.zrlog.common.CacheService;
 import com.zrlog.common.Constants;
-import com.zrlog.common.TokenService;
 import com.zrlog.common.ZrLogConfig;
 import com.zrlog.common.cache.dto.TagDTO;
 import com.zrlog.common.cache.dto.TypeDTO;
@@ -25,8 +25,6 @@ import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
-import com.zrlog.plugin.IPlugin;
-import com.zrlog.plugin.Plugins;
 import com.zrlog.util.I18nUtil;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
@@ -35,13 +33,13 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Proxy;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.lang.reflect.Proxy;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -56,8 +54,9 @@ public class BlogApiControllerContractTest {
     public void shouldReturnCacheInitDataFromConfiguredCacheService() throws Exception {
         BaseDataInitVO initData = new BaseDataInitVO();
         initData.setVersion(99L);
-        withConfig(new FakeCacheService(initData), () -> {
-            ApiStandardResponse<BaseDataInitVO> response = new BlogApiCacheController().index();
+        FakeCacheService cacheService = new FakeCacheService(initData);
+        withConfig(cacheService, () -> {
+            ApiStandardResponse<BaseDataInitVO> response = new BlogApiCacheController(cacheService).index();
 
             assertSame(initData, response.getData());
         });
@@ -67,7 +66,7 @@ public class BlogApiControllerContractTest {
     public void shouldReturnEmptyBlogResourceWhenI18nContextIsMissing() {
         I18nUtil.threadLocal.remove();
 
-        ApiStandardResponse<Map<String, Object>> response = new BlogApiPublicController().blogResource();
+        ApiStandardResponse<Map<String, Object>> response = new BlogApiPublicController(new CommonService(() -> new PublicWebSiteInfo())).blogResource();
 
         assertTrue(response.getData().isEmpty());
     }
@@ -88,11 +87,12 @@ public class BlogApiControllerContractTest {
         I18nUtil.threadLocal.set(i18nVO);
         try {
             withConfig(new FakeCacheService(initData, publicWebSiteInfo), () -> {
-                BlogApiPublicController controller = new BlogApiPublicController();
+                BlogApiPublicController controller = new BlogApiPublicController(new CommonService(() -> publicWebSiteInfo));
                 setControllerRequest(controller, request("/blog", "blog.example.com"));
 
                 ApiStandardResponse<Map<String, Object>> response = controller.blogResource();
 
+                assertEquals(Map.of("comment", "Comment"), blog);
                 assertEquals("Comment", response.getData().get("comment"));
                 assertEquals("ZrLog", response.getData().get("websiteTitle"));
                 assertEquals("//blog.example.com/blog/", response.getData().get("homeUrl"));
@@ -107,12 +107,11 @@ public class BlogApiControllerContractTest {
 
     @Test
     public void shouldReturnArticleDetailFromArticleService() throws Exception {
-        BlogApiArticleController controller = new BlogApiArticleController();
         FakeArticleService articleService = new FakeArticleService();
+        BlogApiArticleController controller = new BlogApiArticleController(articleService);
         ArticleDetailDTO detail = new ArticleDetailDTO();
         detail.setLogId(7L);
         articleService.detail = detail;
-        setArticleService(controller, articleService);
         HttpRequest request = request(Map.of("id", "hello-world"));
         setControllerRequest(controller, request);
 
@@ -125,12 +124,11 @@ public class BlogApiControllerContractTest {
 
     @Test
     public void shouldReturnArticlePageDataFromArticleService() throws Exception {
-        BlogApiArticleController controller = new BlogApiArticleController();
         FakeArticleService articleService = new FakeArticleService();
+        BlogApiArticleController controller = new BlogApiArticleController(articleService);
         ArticleBasicDTO row = new ArticleBasicDTO();
         row.setLogId(8L);
         articleService.pageData = new PageData<>(1L, List.of(row), 2L, 5L);
-        setArticleService(controller, articleService);
         HttpRequest request = request(Map.of("key", "zrlog", "page", "2", "size", "5", "sort", "logId,asc"));
         setControllerRequest(controller, request);
 
@@ -146,9 +144,8 @@ public class BlogApiControllerContractTest {
 
     @Test
     public void shouldRequestNewestFirstArticlePageForFeed() throws Exception {
-        BlogApiArticleController controller = new BlogApiArticleController();
         FakeArticleService articleService = new FakeArticleService();
-        setArticleService(controller, articleService);
+        BlogApiArticleController controller = new BlogApiArticleController(articleService);
         setControllerRequest(controller, request(Map.of("feed", "true")));
 
         controller.index();
@@ -158,7 +155,7 @@ public class BlogApiControllerContractTest {
 
     @Test
     public void shouldReturnVisitorCommentsFromDao() throws Exception {
-        BlogApiArticleController controller = new BlogApiArticleController();
+        BlogApiArticleController controller = new BlogApiArticleController(new FakeArticleService());
         FakeCommentQueryRunner queryRunner = new FakeCommentQueryRunner();
         DataSourceWrapper previousDataSource = setDefaultDataSource(dataSource(queryRunner));
         try {
@@ -182,7 +179,7 @@ public class BlogApiControllerContractTest {
         String previousRootPath = System.getProperty("sws.root.path");
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-blog-api").getAbsolutePath());
-            Constants.zrLogConfig = new CacheZrLogConfig(cacheService);
+            Constants.zrLogConfig = null;
             runnable.run();
         } finally {
             Constants.zrLogConfig = previousConfig;
@@ -302,41 +299,6 @@ public class BlogApiControllerContractTest {
         void run() throws Exception;
     }
 
-    private static class CacheZrLogConfig extends ZrLogConfig {
-
-        private final CacheService cacheService;
-
-        CacheZrLogConfig(CacheService cacheService) {
-            super(18080, null, "");
-            this.cacheService = cacheService;
-        }
-
-        @Override
-        public boolean isInstalled() {
-            return false;
-        }
-
-        @Override
-        public DataSourceWrapper configDatabase() {
-            return null;
-        }
-
-        @Override
-        public CacheService getCacheService() {
-            return cacheService;
-        }
-
-        @Override
-        protected TokenService initTokenService() {
-            return null;
-        }
-
-        @Override
-        public List<IPlugin> getBasePluginList() {
-            return new Plugins();
-        }
-    }
-
     private static class FakeCacheService implements CacheService {
 
         private final BaseDataInitVO initData;
@@ -398,6 +360,8 @@ public class BlogApiControllerContractTest {
     }
 
     private static class FakeArticleService extends ArticleService {
+        private FakeArticleService() { super(org.mockito.Mockito.mock(CacheService.class)); }
+
 
         private ArticleDetailDTO detail;
         private PageData<ArticleBasicDTO> pageData = new PageData<>(0L, new ArrayList<>());

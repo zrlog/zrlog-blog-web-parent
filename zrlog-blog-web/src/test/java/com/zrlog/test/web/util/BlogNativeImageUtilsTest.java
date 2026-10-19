@@ -1,6 +1,7 @@
 package com.zrlog.test.web.util;
 
 import com.hibegin.common.dao.DataSourceWrapper;
+import com.zrlog.blog.web.BlogWebSetup;
 import com.zrlog.blog.web.util.BlogNativeImageUtils;
 import com.zrlog.common.TokenService;
 import com.zrlog.common.ZrLogConfig;
@@ -15,6 +16,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.junit.Assert.assertEquals;
+
 public class BlogNativeImageUtilsTest {
 
     @Rule
@@ -26,7 +29,7 @@ public class BlogNativeImageUtilsTest {
     }
 
     @Test
-    public void shouldCompleteBlogNativeRegistrationWithConfiguredServer() throws Exception {
+    public void shouldSampleNativeTemplatesAfterModulesHaveRegisteredTheirBindings() throws Exception {
         String previousRootPath = System.getProperty("sws.root.path");
         String previousPolyglotWarning = System.getProperty("polyglot.engine.WarnInterpreterOnly");
         Logger rootLogger = Logger.getLogger("");
@@ -41,7 +44,14 @@ public class BlogNativeImageUtilsTest {
                 previousHandlerLevels[i] = handlers[i].getLevel();
                 handlers[i].setLevel(Level.OFF);
             }
-            BlogNativeImageUtils.reg(new TestZrLogConfig());
+            TestZrLogConfig config = new TestZrLogConfig();
+            config.getServerConfig().setNativeImageAgent(true);
+            BlogWebSetup blog = new BlogWebSetup(config, "", false);
+            config.getServerConfig().getBindings().instance(String.class, "later module");
+            blog.setup();
+            var startupCallbacks = config.getServerConfig().getOnCreateSuccessHandles();
+            startupCallbacks.get(startupCallbacks.size() - 1).call();
+            assertEquals("later module", config.getServerConfig().getBindings().build().get(String.class));
         } finally {
             rootLogger.setLevel(previousRootLevel);
             for (int i = 0; i < handlers.length; i++) {

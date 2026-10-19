@@ -15,7 +15,16 @@ import java.util.Objects;
  * 静态化文章页，加快文章页的响应，压缩 html 文本，提供自定义插件标签的解析
  */
 public class BlogPageInterceptor implements HandleAbleInterceptor {
+    @FunctionalInterface
+    public interface RenderFactory {
+        ZrLogTemplateRender create(HttpRequest request) throws Exception;
+    }
 
+    private final RenderFactory renderFactory;
+
+    public BlogPageInterceptor(RenderFactory renderFactory) {
+        this.renderFactory = Objects.requireNonNull(renderFactory);
+    }
 
     @Override
     public boolean doInterceptor(HttpRequest request, HttpResponse response) throws Exception {
@@ -48,7 +57,7 @@ public class BlogPageInterceptor implements HandleAbleInterceptor {
         }
         Object invoke = method.invoke(Controller.buildController(method, request, response));
         if (Objects.nonNull(invoke)) {
-            ZrLogTemplateRender render = new ZrLogTemplateRender(request);
+            ZrLogTemplateRender render = renderFactory.create(request);
             String htmlStr = render.renderByTemplateName(invoke.toString());
             if (render.isNotFound()) {
                 response.setContentType("text/html;charset=UTF-8");

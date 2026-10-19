@@ -1,6 +1,5 @@
 package com.zrlog.blog.business.service;
 
-import com.zrlog.common.Constants;
 import com.zrlog.data.dto.ArticleBasicDTO;
 
 import java.util.Objects;
@@ -14,8 +13,8 @@ public class CommentService {
         return m.matches();
     }
 
-    boolean isAllowComment(ArticleBasicDTO articleBasicDTO) {
-        if (Constants.zrLogConfig.getCacheService().getPublicWebSiteInfo().getDisable_comment_status()) {
+    boolean isAllowComment(ArticleBasicDTO articleBasicDTO, boolean commentsDisabled) {
+        if (commentsDisabled) {
             return false;
         }
         return Objects.equals(articleBasicDTO.getCanComment(), true);

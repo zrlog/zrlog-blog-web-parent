@@ -3,8 +3,8 @@ package com.zrlog.test.business.service;
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.common.dao.dto.PageRequestImpl;
 import com.hibegin.http.server.api.HttpRequest;
-import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
+import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.test.support.InMemoryBlogDatabase;
@@ -28,7 +28,7 @@ public class ArticleServiceDatabaseTest {
             seedThreePublishedArticles(database);
             database.insertComment(1, 2, "first comment");
 
-            ArticleDetailDTO detail = new ArticleService().detail("hello-world", request("/blog"));
+            ArticleDetailDTO detail = new ArticleService(database.cacheService()).detail("hello-world", request("/blog"));
 
             assertNotNull(detail);
             assertEquals(Long.valueOf(2), detail.getId());
@@ -54,6 +54,34 @@ public class ArticleServiceDatabaseTest {
     }
 
     @Test
+    public void shouldFollowSiteHostStaticModeAndCommentSwitchWithoutGlobalConfig() throws Exception {
+        try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
+            seedThreePublishedArticles(database);
+            database.insertComment(1, 2, "first comment");
+            ArticleService service = new ArticleService(database.cacheService());
+            var site = database.cacheService().getPublicWebSiteInfo();
+            com.zrlog.common.Constants.zrLogConfig = null;
+            site.setHost("configured.example");
+            site.setGenerator_html_status(true);
+            site.setDisable_comment_status(true);
+            ArticleDetailDTO staticArticle = service.detail("hello-world", request("/blog"));
+            assertEquals("//configured.example/blog/hello-world.html", staticArticle.getNoSchemeUrl());
+            assertEquals("/blog/tag/java.html", staticArticle.getTags().get(0).getUrl());
+            assertEquals("/blog/previous-post.html", staticArticle.getLastLog().getUrl());
+            assertTrue(staticArticle.getComments().isEmpty());
+            assertFalse(staticArticle.getCanComment());
+            site.setGenerator_html_status(false);
+            site.setHost("renamed.example");
+            site.setDisable_comment_status(false);
+            ArticleDetailDTO dynamicArticle = service.detail("hello-world", request("/blog"));
+            assertEquals("//renamed.example/blog/hello-world", dynamicArticle.getNoSchemeUrl());
+            assertEquals("/blog/tag/java", dynamicArticle.getTags().get(0).getUrl());
+            assertEquals(1, dynamicArticle.getComments().size());
+            assertTrue(dynamicArticle.getCanComment());
+        }
+    }
+
+    @Test
     public void shouldSearchArticlesThroughRealLogDao() throws Exception {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
             database.insertArticle(1, "java-post", "Java Post", "Java content", "java,search",
@@ -63,7 +91,7 @@ public class ArticleServiceDatabaseTest {
             database.insertArticle(3, "other-post", "Other Post", "Other content", "other",
                     "2026-06-03 10:00:00", false, false);
 
-            PageData<ArticleBasicDTO> data = new ArticleService()
+            PageData<ArticleBasicDTO> data = new ArticleService(database.cacheService())
                     .pageByKeywords(new PageRequestImpl(1L, 10L), "Java", request("/blog"),
                             ArticleListOrder.STICKY_FIRST);
 
@@ -89,7 +117,7 @@ public class ArticleServiceDatabaseTest {
             database.insertArticle(3, "other-post", "Other Post", "Other content", "other",
                     "2026-06-03 10:00:00", false, false);
             database.update("update log set sticky=? where logId=?", 1, 1);
-            ArticleService service = new ArticleService();
+            ArticleService service = new ArticleService(database.cacheService());
 
             PageData<ArticleBasicDTO> home = service.pageByKeywords(
                     new PageRequestImpl(1L, 10L), "", request("/blog"), ArticleListOrder.STICKY_FIRST);

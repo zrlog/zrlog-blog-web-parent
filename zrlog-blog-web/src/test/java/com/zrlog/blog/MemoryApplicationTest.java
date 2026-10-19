@@ -2,18 +2,17 @@ package com.zrlog.blog;
 
 import com.hibegin.common.dao.InMemoryDatabase;
 import com.hibegin.http.server.util.PathUtil;
+import com.zrlog.common.CacheService;
 import com.zrlog.common.Constants;
 import com.zrlog.common.ZrLogConfig;
 import com.zrlog.install.web.InstallConstants;
 import com.zrlog.install.web.config.DefaultInstallConfig;
 import com.zrlog.install.web.config.InstallConfig;
-import org.junit.Test;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Properties;
-
+import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -102,8 +101,8 @@ public class MemoryApplicationTest {
                 assertEquals(1L, ((Number) database.scalar("select count(*) from comment")).longValue());
             }
             assertEquals(Constants.getDefaultTemplatePath(),
-                    config.getCacheService().getPublicWebSiteInfo().getTemplate());
-            assertEquals(2L, config.getCacheService().getPublicWebSiteInfo().getRows().longValue());
+                    config.getServerConfig().getBindings().build().get(CacheService.class).getPublicWebSiteInfo().getTemplate());
+            assertEquals(2L, config.getServerConfig().getBindings().build().get(CacheService.class).getPublicWebSiteInfo().getRows().longValue());
             assertFalse(Files.exists(projectRoot.resolve("conf/memory-install.generated.json")));
         } finally {
             if (config != null) {
@@ -148,7 +147,7 @@ public class MemoryApplicationTest {
                 assertEquals("hello-world", database.scalar("select alias from log where logId=1"));
             }
             assertFalse(Files.exists(runtimeRoot.resolve("static/attached/writing-cover.svg")));
-            assertEquals(10L, config.getCacheService().getPublicWebSiteInfo().getRows().longValue());
+            assertEquals(10L, config.getServerConfig().getBindings().build().get(CacheService.class).getPublicWebSiteInfo().getRows().longValue());
         } finally {
             if (config != null) {
                 config.stop();

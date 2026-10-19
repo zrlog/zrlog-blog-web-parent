@@ -1,30 +1,19 @@
 package com.zrlog.test.web.plugin;
 
-import com.hibegin.common.dao.DataSourceWrapper;
 import com.zrlog.blog.web.plugin.ArticleStatisticsPluginImpl;
 import com.zrlog.blog.web.plugin.ArticleStatisticsRunnable;
 import com.zrlog.business.plugin.RequestInfo;
-import com.zrlog.common.CacheService;
 import com.zrlog.common.Constants;
-import com.zrlog.common.TokenService;
 import com.zrlog.common.ZrLogConfig;
-import com.zrlog.common.cache.dto.TagDTO;
-import com.zrlog.common.cache.dto.TypeDTO;
-import com.zrlog.common.cache.dto.UserBasicDTO;
-import com.zrlog.common.cache.vo.BaseDataInitVO;
 import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.plugin.BaseStaticSitePlugin;
-import com.zrlog.plugin.IPlugin;
-import com.zrlog.plugin.Plugins;
 import com.zrlog.test.support.InMemoryBlogDatabase;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,10 +27,10 @@ public class ArticleStatisticsPluginImplTest {
 
     @Test
     public void shouldRecordOnlyPublicArticleRequests() throws Exception {
-        ArticleStatisticsPluginImpl plugin = new ArticleStatisticsPluginImpl();
         PublicWebSiteInfo publicWebSiteInfo = new PublicWebSiteInfo();
+        ArticleStatisticsPluginImpl plugin = new ArticleStatisticsPluginImpl(publicWebSiteInfo::getWebCm);
 
-        withConfig(publicWebSiteInfo, () -> {
+        withoutGlobalConfig(() -> {
             plugin.record(requestInfo("/admin/index", 1L));
             plugin.record(requestInfo("/api/article/detail", 2L));
             plugin.record(requestInfo("/install", 3L));
@@ -56,18 +45,18 @@ public class ArticleStatisticsPluginImplTest {
 
     @Test
     public void shouldSkipRecordsWhenStatisticsPluginIsDisabledByWebsiteConfig() throws Exception {
-        ArticleStatisticsPluginImpl plugin = new ArticleStatisticsPluginImpl();
         PublicWebSiteInfo publicWebSiteInfo = new PublicWebSiteInfo();
+        ArticleStatisticsPluginImpl plugin = new ArticleStatisticsPluginImpl(publicWebSiteInfo::getWebCm);
         publicWebSiteInfo.setWebCm("<div>no statistics plugin</div>");
 
-        withConfig(publicWebSiteInfo, () -> plugin.record(requestInfo("/hello-world", 4L)));
+        withoutGlobalConfig(() -> plugin.record(requestInfo("/hello-world", 4L)));
 
         assertTrue(queue(plugin).isEmpty());
     }
 
     @Test
     public void shouldStartAndStopStatisticsScheduler() {
-        ArticleStatisticsPluginImpl plugin = new ArticleStatisticsPluginImpl();
+        ArticleStatisticsPluginImpl plugin = new ArticleStatisticsPluginImpl(() -> "");
 
         assertFalse(plugin.isStarted());
         assertTrue(plugin.start());
@@ -80,7 +69,7 @@ public class ArticleStatisticsPluginImplTest {
 
     @Test
     public void shouldSkipStaticPluginRequestsWhenStatisticsRunnableRuns() throws Exception {
-        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable();
+        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "");
         RequestInfo staticPluginRequest = requestInfo("/hello-world", 4L);
         staticPluginRequest.setUserAgent(BaseStaticSitePlugin.STATIC_USER_AGENT);
         queue(runnable).add(staticPluginRequest);
@@ -93,7 +82,7 @@ public class ArticleStatisticsPluginImplTest {
 
     @Test
     public void shouldSkipCrawlerRequestsWhenStatisticsRunnableRuns() throws Exception {
-        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable();
+        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "");
         RequestInfo crawlerRequest = requestInfo("/hello-world", 4L);
         crawlerRequest.setUserAgent("Googlebot/2.1 (+http://www.google.com/bot.html)");
         queue(runnable).add(crawlerRequest);
@@ -109,7 +98,7 @@ public class ArticleStatisticsPluginImplTest {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
             database.insertArticle(1, "hello-world", "Hello World", "Hello content", "zrlog",
                     "2026-06-01 10:00:00", false, false);
-            ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable();
+            ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "");
             RequestInfo requestInfo = requestInfo("/hello-world", 1L);
             queue(runnable).add(requestInfo);
 
@@ -122,7 +111,7 @@ public class ArticleStatisticsPluginImplTest {
 
     @Test
     public void shouldRemoveExpiredAlreadyProcessedRequestsWhenStatisticsRunnableRuns() throws Exception {
-        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable();
+        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "");
         RequestInfo oldRequest = requestInfo("/hello-world", 4L);
         oldRequest.setDeal(true);
         oldRequest.setRequestTime(System.currentTimeMillis() - 180_000L);
@@ -133,12 +122,35 @@ public class ArticleStatisticsPluginImplTest {
         assertTrue(queue(runnable).isEmpty());
     }
 
-    private void withConfig(PublicWebSiteInfo publicWebSiteInfo, ThrowingRunnable runnable) throws Exception {
+    @Test
+    public void shouldFollowLiveStatisticsSettingWithoutGlobalConfig() throws Exception {
+        try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
+            database.insertArticle(1, "hello-world", "Hello World", "Hello content", "zrlog",
+                    "2026-06-01 10:00:00", false, false);
+            PublicWebSiteInfo site = new PublicWebSiteInfo();
+            ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(site::getWebCm);
+            withoutGlobalConfig(() -> {
+                runnable.addTask(requestInfo("/hello-world", 1L));
+                runnable.run();
+                assertEquals(11L, ((Number) database.scalar("select click from log where logId=?", 1)).longValue());
+                site.setWebCm("<div>external statistics</div>");
+                runnable.addTask(requestInfo("/hello-world", 1L));
+                runnable.run();
+                assertEquals(11L, ((Number) database.scalar("select click from log where logId=?", 1)).longValue());
+                site.setWebCm("<plugin name=statistics></plugin>");
+                runnable.addTask(requestInfo("/hello-world", 1L));
+                runnable.run();
+                assertEquals(12L, ((Number) database.scalar("select click from log where logId=?", 1)).longValue());
+            });
+        }
+    }
+
+    private void withoutGlobalConfig(ThrowingRunnable runnable) throws Exception {
         ZrLogConfig previousConfig = Constants.zrLogConfig;
         String previousRootPath = System.getProperty("sws.root.path");
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-statistics").getAbsolutePath());
-            Constants.zrLogConfig = new StatisticsZrLogConfig(publicWebSiteInfo);
+            Constants.zrLogConfig = null;
             runnable.run();
         } finally {
             Constants.zrLogConfig = previousConfig;
@@ -182,92 +194,4 @@ public class ArticleStatisticsPluginImplTest {
         void run() throws Exception;
     }
 
-    private static class StatisticsZrLogConfig extends ZrLogConfig {
-
-        private final PublicWebSiteInfo publicWebSiteInfo;
-
-        StatisticsZrLogConfig(PublicWebSiteInfo publicWebSiteInfo) {
-            super(18080, null, "");
-            this.publicWebSiteInfo = publicWebSiteInfo;
-        }
-
-        @Override
-        public boolean isInstalled() {
-            return false;
-        }
-
-        @Override
-        public DataSourceWrapper configDatabase() {
-            return null;
-        }
-
-        @Override
-        public CacheService getCacheService() {
-            return new StatisticsCacheService(publicWebSiteInfo);
-        }
-
-        @Override
-        protected TokenService initTokenService() {
-            return null;
-        }
-
-        @Override
-        public List<IPlugin> getBasePluginList() {
-            return new Plugins();
-        }
-    }
-
-    private static class StatisticsCacheService implements CacheService {
-
-        private final PublicWebSiteInfo publicWebSiteInfo;
-
-        StatisticsCacheService(PublicWebSiteInfo publicWebSiteInfo) {
-            this.publicWebSiteInfo = publicWebSiteInfo;
-        }
-
-        @Override
-        public long getCurrentSqlVersion() {
-            return 0;
-        }
-
-        @Override
-        public long getWebSiteVersion() {
-            return 0;
-        }
-
-        @Override
-        public BaseDataInitVO getInitData() {
-            return new BaseDataInitVO();
-        }
-
-        @Override
-        public BaseDataInitVO refreshInitData() {
-            return new BaseDataInitVO();
-        }
-
-        @Override
-        public PublicWebSiteInfo getPublicWebSiteInfo() {
-            return publicWebSiteInfo;
-        }
-
-        @Override
-        public List<TypeDTO> getArticleTypes() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<TagDTO> getTags() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public UserBasicDTO getUserInfoById(Long userId) {
-            return null;
-        }
-
-        @Override
-        public Map<String, Object> getTemplateConfigMapWithCache(String template) {
-            return Collections.emptyMap();
-        }
-    }
 }

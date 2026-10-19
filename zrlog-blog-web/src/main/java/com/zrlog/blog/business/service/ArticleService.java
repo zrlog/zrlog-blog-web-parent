@@ -11,6 +11,7 @@ import com.zrlog.blog.web.util.OutlineUtil;
 import com.zrlog.blog.web.util.WebTools;
 import com.zrlog.business.plugin.StaticSitePlugin;
 import com.zrlog.business.util.ArticleHelpers;
+import com.zrlog.common.CacheService;
 import com.zrlog.common.Constants;
 import com.zrlog.common.vo.Outline;
 import com.zrlog.common.vo.PublicWebSiteInfo;
@@ -31,15 +32,20 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-
 public class ArticleService {
+
+    private final CacheService cacheService;
+
+    public ArticleService(CacheService cacheService) {
+        this.cacheService = cacheService;
+    }
 
     public enum ArticleListOrder {
         STICKY_FIRST,
         NEWEST_FIRST
     }
 
-    private static List<ArticleDetailDTO.TagsDTO> getTags(ArticleBasicDTO log, HttpRequest request) {
+    private static List<ArticleDetailDTO.TagsDTO> getTags(ArticleBasicDTO log, HttpRequest request, String suffix) {
         String keywords = ObjectHelpers.requireNonNullElse(log.getKeywords(), "");
         List<ArticleDetailDTO.TagsDTO> tags = new ArrayList<>();
         for (String tag : keywords.split(",")) {
@@ -48,15 +54,15 @@ public class ArticleService {
             }
             ArticleDetailDTO.TagsDTO map = new ArticleDetailDTO.TagsDTO();
             map.setName(tag);
-            map.setUrl(WebTools.buildEncodedUrl(request, "tag/" + tag + StaticSitePlugin.getSuffix(request)));
+            map.setUrl(WebTools.buildEncodedUrl(request, "tag/" + tag + suffix));
             tags.add(map);
         }
         return tags;
     }
 
     private ArticleDetailDTO fillArticleInfo(ArticleDetailDTO log, HttpRequest request) {
-        handlerArticle(log, request);
-        String suffix = StaticSitePlugin.getSuffix(request);
+        handlerArticle(log, request, cacheService);
+        String suffix = StaticSitePlugin.getSuffix(request, Boolean.TRUE.equals(cacheService.getPublicWebSiteInfo().getGenerator_html_status()));
         log.getNextLog().setUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + log.getNextLog().getAlias() + suffix));
         log.getLastLog().setUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + log.getLastLog().getAlias() + suffix));
 
@@ -71,7 +77,7 @@ public class ArticleService {
     }
 
     public ArticleDetailDTO detail(Object idOrAlias, HttpRequest request) throws SQLException {
-        ArticleDetailDTO log = new Log().findByIdOrAlias(idOrAlias);
+        ArticleDetailDTO log = new Log().findByIdOrAlias(idOrAlias, Boolean.TRUE.equals(cacheService.getPublicWebSiteInfo().getDisable_comment_status()));
         if (Objects.isNull(log)) {
             return null;
         }
@@ -91,8 +97,8 @@ public class ArticleService {
         return fillArticleInfo(log, request);
     }
 
-    public static <T extends ArticleBasicDTO> T handlerArticle(T log, HttpRequest request) {
-        String suffix = StaticSitePlugin.getSuffix(request);
+    public static <T extends ArticleBasicDTO> T handlerArticle(T log, HttpRequest request, CacheService cacheService) {
+        String suffix = StaticSitePlugin.getSuffix(request, Boolean.TRUE.equals(cacheService.getPublicWebSiteInfo().getGenerator_html_status()));
         String originalAlias = log.getAlias();
         String aliasUrl = UrlEncodeUtils.encodeUrl(originalAlias) + suffix;
         String articleUrl = WebTools.buildEncodedUrl(request, Constants.getArticleUri() + originalAlias + suffix);
@@ -101,11 +107,11 @@ public class ArticleService {
         log.setRubbish(ResultValueConvertUtils.toBoolean(log.getRubbish()));
         log.setPrivacy(ResultValueConvertUtils.toBoolean(log.getPrivacy()));
         log.setHot(ResultValueConvertUtils.toBoolean(log.getHot()));
-        PublicWebSiteInfo publicWebSiteInfo = Constants.zrLogConfig.getCacheService().getPublicWebSiteInfo();
+        PublicWebSiteInfo publicWebSiteInfo = cacheService.getPublicWebSiteInfo();
         log.setCanComment(ResultValueConvertUtils.toBoolean(log.getCanComment()) && Objects.equals(publicWebSiteInfo.getDisable_comment_status(), false));
         log.setTypeUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + "sort/" + log.getTypeAlias() + suffix));
-        log.setNoSchemeUrl(ZrLogUtil.getHomeUrlWithHost(request) + Constants.getArticleUri() + aliasUrl);
-        log.setCommentUrl(ZrLogUtil.getHomeUrlWithHost(request) + Constants.getArticleUri() + "addComment");
+        log.setNoSchemeUrl(ZrLogUtil.getHomeUrlWithHost(request, publicWebSiteInfo.getHost()) + Constants.getArticleUri() + aliasUrl);
+        log.setCommentUrl(ZrLogUtil.getHomeUrlWithHost(request, publicWebSiteInfo.getHost()) + Constants.getArticleUri() + "addComment");
         //
         log.setRecommended(ResultValueConvertUtils.toBoolean(log.getRecommended()));
         Object lastUpdateDate = Objects.nonNull(log.getLastUpdateDate()) ? log.getLastUpdateDate()
@@ -130,7 +136,7 @@ public class ArticleService {
             log.setThumbnail(null);
             log.setThumbnailAlt(null);
         }
-        log.setTags(getTags(log, request));
+        log.setTags(getTags(log, request, suffix));
         return log;
     }
 
@@ -187,9 +193,9 @@ public class ArticleService {
                 && listOrder == ArticleListOrder.STICKY_FIRST
                 ? log.visitorFindHome(pageRequest)
                 : log.visitorFind(pageRequest, keywords);
-        ArticleHelpers.wrapperSearchKeyword(data, keywords);
+        ArticleHelpers.wrapperSearchKeyword(data, keywords, cacheService.getPublicWebSiteInfo().getArticle_auto_digest_length());
         data.setKey(keywords);
-        data.getRows().forEach(e -> handlerArticle(e, request));
+        data.getRows().forEach(e -> handlerArticle(e, request, cacheService));
         return data;
     }
 

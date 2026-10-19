@@ -7,8 +7,6 @@ import com.hibegin.common.util.LoggerUtil;
 import com.hibegin.common.util.StringUtils;
 import com.hibegin.http.HttpMethod;
 import com.hibegin.http.annotation.RequestMethod;
-import com.hibegin.http.server.api.HttpRequest;
-import com.hibegin.http.server.api.HttpResponse;
 import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.web.template.PagerUtil;
@@ -18,6 +16,7 @@ import com.zrlog.business.plugin.PluginCorePlugin;
 import com.zrlog.business.plugin.StaticSitePlugin;
 import com.zrlog.common.CacheService;
 import com.zrlog.common.Constants;
+import com.zrlog.common.TokenService;
 import com.zrlog.common.cache.dto.TypeDTO;
 import com.zrlog.common.vo.AdminTokenVO;
 import com.zrlog.data.dto.ArticleBasicDTO;
@@ -31,28 +30,30 @@ import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 public class ArticleController extends Controller {
 
     private static final Logger LOGGER = LoggerUtil.getLogger(ArticleController.class);
-    private final ArticleService articleService = new ArticleService();
+    private final ArticleService articleService;
     private final CacheService cacheService;
+    private final TokenService tokenService;
+    private final Supplier<PluginCorePlugin> pluginCore;
 
-    public ArticleController(HttpRequest request, HttpResponse response) {
-        super(request, response);
-        this.cacheService = Constants.zrLogConfig.getCacheService();
-    }
-
-    public ArticleController() {
-        this.cacheService = Constants.zrLogConfig.getCacheService();
+    public ArticleController(CacheService cacheService, ArticleService articleService, TokenService tokenService,
+                             Supplier<PluginCorePlugin> pluginCore) {
+        this.tokenService = tokenService;
+        this.pluginCore = pluginCore;
+        this.cacheService = cacheService;
+        this.articleService = articleService;
     }
 
     /**
      * add page info for template more easy
      */
     private void setPageDataInfo(String currentUri, PageData<ArticleBasicDTO> data, PageRequest pageRequest) {
-        data.getRows().forEach(e -> ArticleService.handlerArticle(e, request));
+        data.getRows().forEach(e -> ArticleService.handlerArticle(e, request, cacheService));
         getRequest().getAttr().put("yurl", Constants.getArticleUri() + currentUri);
         getRequest().getAttr().put("data", data);
         long totalPage = BigDecimal.valueOf(Math.ceil(data.getTotalElements() * 1.0 / pageRequest.getSize())).longValue();
@@ -60,7 +61,7 @@ public class ArticleController extends Controller {
             //大于1页
             if (totalPage > 1) {
                 PagerVO pager = PagerUtil.generatorPager(currentUri, pageRequest.getPage(), totalPage);
-                String suffix = StaticSitePlugin.getSuffix(request);
+                String suffix = StaticSitePlugin.getSuffix(request, Boolean.TRUE.equals(cacheService.getPublicWebSiteInfo().getGenerator_html_status()));
                 for (PagerVO.PageEntry pageMap : pager.getPageList()) {
                     pageMap.setUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + pageMap.getUrl()) + suffix);
                 }
@@ -128,8 +129,8 @@ public class ArticleController extends Controller {
 
     @RequestMethod(method = HttpMethod.POST)
     public void saveComment() throws IOException, URISyntaxException, InterruptedException {
-        PluginCorePlugin pluginCorePlugin = Constants.zrLogConfig.getPlugin(PluginCorePlugin.class);
-        AdminTokenVO adminTokenVO = Objects.nonNull(Constants.zrLogConfig.getTokenService()) ? Constants.zrLogConfig.getTokenService().getAdminTokenVO(request) : null;
+        PluginCorePlugin pluginCorePlugin = pluginCore.get();
+        AdminTokenVO adminTokenVO = tokenService == null ? null : tokenService.getAdminTokenVO(request);
         pluginCorePlugin.accessPlugin("/p/comment/addComment", request, response, adminTokenVO);
     }
 
@@ -142,7 +143,6 @@ public class ArticleController extends Controller {
         }
         return "detail";
     }
-
 
     static ArticleUriInfoVO parseUriInfo(String uri) {
         String rawUrl = uri;

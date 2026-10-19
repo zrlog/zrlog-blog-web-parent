@@ -13,13 +13,16 @@ import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
 import com.zrlog.model.Comment;
-
 import java.sql.SQLException;
 import java.util.List;
 
 public class BlogApiArticleController extends Controller {
 
-    private final ArticleService articleService = new ArticleService();
+    private final ArticleService articleService;
+
+    public BlogApiArticleController(ArticleService articleService) {
+        this.articleService = articleService;
+    }
 
     @ResponseBody
     @RequestMethod(method = HttpMethod.GET)

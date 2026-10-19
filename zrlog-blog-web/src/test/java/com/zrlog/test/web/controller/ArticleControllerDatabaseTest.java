@@ -3,7 +3,9 @@ package com.zrlog.test.web.controller;
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.http.HttpMethod;
 import com.hibegin.http.server.api.HttpRequest;
+import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.web.controller.page.ArticleController;
+import com.zrlog.common.CacheService;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.test.support.InMemoryBlogDatabase;
 import org.junit.Test;
@@ -30,9 +32,9 @@ public class ArticleControllerDatabaseTest {
             database.update("update log set sticky=? where logId=?", 1, 4);
             Map<String, Object> firstPageAttrs = new HashMap<>();
 
-            String view = new ArticleController(request("/all-1.html", HttpMethod.GET, "", firstPageAttrs), null).index();
+            String view = controller(database.cacheService(), request("/all-1.html", HttpMethod.GET, "", firstPageAttrs)).index();
             Map<String, Object> secondPageAttrs = new HashMap<>();
-            new ArticleController(request("/all-2.html", HttpMethod.GET, "", secondPageAttrs), null).index();
+            controller(database.cacheService(), request("/all-2.html", HttpMethod.GET, "", secondPageAttrs)).index();
 
             assertEquals("index", view);
             assertEquals("all-", firstPageAttrs.get("yurl"));
@@ -54,7 +56,7 @@ public class ArticleControllerDatabaseTest {
             seedArticles(database);
             Map<String, Object> attrs = new HashMap<>();
 
-            String view = new ArticleController(request("/search/Java-1.html", HttpMethod.GET, "", attrs), null)
+            String view = controller(database.cacheService(), request("/search/Java-1.html", HttpMethod.GET, "", attrs))
                     .search();
 
             assertEquals("page", view);
@@ -74,21 +76,20 @@ public class ArticleControllerDatabaseTest {
             database.update("update log set sticky=? where logId=?", 10, 1);
 
             Map<String, Object> sortAttrs = new HashMap<>();
-            assertEquals("page", new ArticleController(request("/sort/default-1.html", HttpMethod.GET, "",
-                    sortAttrs), null).sort());
+            assertEquals("page", controller(database.cacheService(), request("/sort/default-1.html", HttpMethod.GET, "",
+                    sortAttrs)).sort());
             assertEquals("Default", sortAttrs.get("tipsName"));
             assertEquals(3L, pageData(sortAttrs).getTotalElements());
             assertEquals(List.of("last-public", "java-post"), aliases(pageData(sortAttrs)));
 
             Map<String, Object> tagAttrs = new HashMap<>();
-            assertEquals("page", new ArticleController(request("/tag/java.html", HttpMethod.GET, "", tagAttrs),
-                    null).tag());
+            assertEquals("page", controller(database.cacheService(), request("/tag/java.html", HttpMethod.GET, "", tagAttrs)).tag());
             assertEquals("java", tagAttrs.get("tipsName"));
             assertEquals(1L, pageData(tagAttrs).getTotalElements());
 
             Map<String, Object> recordAttrs = new HashMap<>();
-            assertEquals("page", new ArticleController(request("/record/2026_06.html", HttpMethod.GET, "",
-                    recordAttrs), null).record());
+            assertEquals("page", controller(database.cacheService(), request("/record/2026_06.html", HttpMethod.GET, "",
+                    recordAttrs)).record());
             assertEquals("2026_06", recordAttrs.get("tipsName"));
             assertEquals(3L, pageData(recordAttrs).getTotalElements());
         }
@@ -100,14 +101,19 @@ public class ArticleControllerDatabaseTest {
             seedArticles(database);
             Map<String, Object> attrs = new HashMap<>();
 
-            assertEquals("archives", new ArticleController(request("/archives.html", HttpMethod.GET, "", attrs),
-                    null).archives());
+            assertEquals("archives", controller(database.cacheService(), request("/archives.html", HttpMethod.GET, "", attrs)).archives());
 
             assertEquals("archives", attrs.get("yurl"));
             PageData<ArticleBasicDTO> data = pageData(attrs);
             assertEquals(0L, data.getTotalElements());
             assertTrue(data.getRows().isEmpty());
         }
+    }
+
+    private static ArticleController controller(CacheService cache, HttpRequest httpRequest) {
+        return new ArticleController(cache, new ArticleService(cache), com.zrlog.common.Constants.zrLogConfig == null ? null : com.zrlog.common.Constants.zrLogConfig.getTokenService(), () -> com.zrlog.common.Constants.zrLogConfig.getPlugin(com.zrlog.business.plugin.PluginCorePlugin.class)) {{
+            this.request = httpRequest;
+        }};
     }
 
     @SuppressWarnings("unchecked")
