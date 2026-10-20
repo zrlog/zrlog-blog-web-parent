@@ -20,20 +20,17 @@ import java.util.function.Supplier;
  * 如果想了解更多关于插件的实现可以浏览这篇文章 <a href="https://blog.zrlog.com/zrlog-plugin-dev.html">插件实现</a>
  */
 public class BlogPluginInterceptor implements HandleAbleInterceptor {
-    private final Supplier<TokenService> tokenService;
-
-    private final Supplier<PluginCorePlugin> pluginCore;
-
-    public BlogPluginInterceptor(Supplier<TokenService> tokenService, Supplier<PluginCorePlugin> pluginCore) {
-        this.tokenService = Objects.requireNonNull(tokenService);
-        this.pluginCore = Objects.requireNonNull(pluginCore);
-    }
-
     private static final String userPluginUriPath = "/plugin/";
     private static final String userPluginUriPathShort = "/p/";
     private static final String userPluginUriApiPathShort = "/api/p/";
     private static final String userPluginUriApiPath = "/api/plugin/";
+    private final Supplier<TokenService> tokenService;
+    private final Supplier<PluginCorePlugin> pluginCore;
     private final List<String> pluginHandlerPaths = Arrays.asList(userPluginUriApiPathShort, userPluginUriApiPath, userPluginUriPath, userPluginUriPathShort);
+    public BlogPluginInterceptor(Supplier<TokenService> tokenService, Supplier<PluginCorePlugin> pluginCore) {
+        this.tokenService = Objects.requireNonNull(tokenService);
+        this.pluginCore = Objects.requireNonNull(pluginCore);
+    }
 
     @Override
     public boolean isHandleAble(HttpRequest request) {

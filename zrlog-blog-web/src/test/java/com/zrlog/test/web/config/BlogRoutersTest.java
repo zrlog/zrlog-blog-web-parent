@@ -15,6 +15,13 @@ import static org.junit.Assert.assertNotNull;
 
 public class BlogRoutersTest {
 
+    private static void assertRoute(Router router, String path, Class<?> controllerClass, String methodName) {
+        Method method = router.getRouterMap().get(path);
+        assertNotNull("Missing route " + path, method);
+        assertEquals(controllerClass, method.getDeclaringClass());
+        assertEquals(methodName, method.getName());
+    }
+
     @Test
     public void shouldRegisterBlogApiAndPageRoutes() {
         Router router = new Router();
@@ -26,12 +33,5 @@ public class BlogRoutersTest {
         assertRoute(router, "/api/article/comment", BlogApiArticleController.class, "comment");
         assertRoute(router, "/api/cache", BlogApiCacheController.class, "index");
         assertRoute(router, "/", ArticleController.class, "index");
-    }
-
-    private static void assertRoute(Router router, String path, Class<?> controllerClass, String methodName) {
-        Method method = router.getRouterMap().get(path);
-        assertNotNull("Missing route " + path, method);
-        assertEquals(controllerClass, method.getDeclaringClass());
-        assertEquals(methodName, method.getName());
     }
 }

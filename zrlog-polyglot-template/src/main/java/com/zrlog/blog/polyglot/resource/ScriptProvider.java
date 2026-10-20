@@ -9,11 +9,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ScriptProvider {
+    private static final ScriptProvider instance = new ScriptProvider();
     // 提前把所有脚本读入内存，拒绝文件系统
     private final Map<String, String> cache = new HashMap<>();
     private final Map<String, String> baseLibCache = new HashMap<>();
-
-    private static final ScriptProvider instance = new ScriptProvider();
 
     public static ScriptProvider getInstance() {
         return instance;

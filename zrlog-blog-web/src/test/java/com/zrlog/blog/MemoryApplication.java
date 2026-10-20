@@ -36,12 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -229,12 +224,13 @@ public class MemoryApplication {
     }
 
     private static class MemoryZrLogConfig extends DevZrLogConfig {
-        @Override
-        public boolean isTest() { return true; }
-
-
         private MemoryZrLogConfig(Integer port, Updater updater, String contextPath) {
             super(port, updater, contextPath == null ? "" : contextPath);
+        }
+
+        @Override
+        public boolean isTest() {
+            return true;
         }
 
         @Override
@@ -269,6 +265,52 @@ public class MemoryApplication {
     }
 
     private static class MemoryPluginCorePlugin implements PluginCorePlugin {
+        private static java.net.http.HttpResponse<InputStream> memoryResponse(String body) {
+            byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+            return new java.net.http.HttpResponse<>() {
+                @Override
+                public int statusCode() {
+                    return 200;
+                }
+
+                @Override
+                public java.net.http.HttpRequest request() {
+                    return java.net.http.HttpRequest.newBuilder(URI.create("http://127.0.0.1/memory-plugin")).build();
+                }
+
+                @Override
+                public Optional<java.net.http.HttpResponse<InputStream>> previousResponse() {
+                    return Optional.empty();
+                }
+
+                @Override
+                public HttpHeaders headers() {
+                    return HttpHeaders.of(Map.of("content-type", List.of("text/html;charset=utf-8")),
+                            (name, value) -> true);
+                }
+
+                @Override
+                public InputStream body() {
+                    return new ByteArrayInputStream(bytes);
+                }
+
+                @Override
+                public Optional<javax.net.ssl.SSLSession> sslSession() {
+                    return Optional.empty();
+                }
+
+                @Override
+                public URI uri() {
+                    return URI.create("http://127.0.0.1/memory-plugin");
+                }
+
+                @Override
+                public HttpClient.Version version() {
+                    return HttpClient.Version.HTTP_1_1;
+                }
+            };
+        }
+
         @Override
         public boolean refreshCache(String cacheVersion, HttpRequest request) {
             return false;
@@ -317,52 +359,6 @@ public class MemoryApplication {
         @Override
         public boolean stop() {
             return true;
-        }
-
-        private static java.net.http.HttpResponse<InputStream> memoryResponse(String body) {
-            byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-            return new java.net.http.HttpResponse<>() {
-                @Override
-                public int statusCode() {
-                    return 200;
-                }
-
-                @Override
-                public java.net.http.HttpRequest request() {
-                    return java.net.http.HttpRequest.newBuilder(URI.create("http://127.0.0.1/memory-plugin")).build();
-                }
-
-                @Override
-                public Optional<java.net.http.HttpResponse<InputStream>> previousResponse() {
-                    return Optional.empty();
-                }
-
-                @Override
-                public HttpHeaders headers() {
-                    return HttpHeaders.of(Map.of("content-type", List.of("text/html;charset=utf-8")),
-                            (name, value) -> true);
-                }
-
-                @Override
-                public InputStream body() {
-                    return new ByteArrayInputStream(bytes);
-                }
-
-                @Override
-                public Optional<javax.net.ssl.SSLSession> sslSession() {
-                    return Optional.empty();
-                }
-
-                @Override
-                public URI uri() {
-                    return URI.create("http://127.0.0.1/memory-plugin");
-                }
-
-                @Override
-                public HttpClient.Version version() {
-                    return HttpClient.Version.HTTP_1_1;
-                }
-            };
         }
     }
 

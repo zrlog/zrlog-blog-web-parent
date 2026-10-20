@@ -2,14 +2,14 @@ package com.zrlog.blog.business.rest.response;
 
 public class CreateCommentResponse {
 
+    private String alias;
+
     public CreateCommentResponse() {
     }
 
     public CreateCommentResponse(String alias) {
         this.alias = alias;
     }
-
-    private String alias;
 
     public String getAlias() {
         return alias;

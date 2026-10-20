@@ -1,26 +1,101 @@
 {
   "navigation": [
-    {"id": 1, "name": "首页", "url": "/", "sort": 1},
-    {"id": 2, "name": "七月归档", "url": "/record/2026_07", "sort": 2},
-    {"id": 3, "name": "技术", "url": "/sort/code", "sort": 3}
+    {
+      "id": 1,
+      "name": "首页",
+      "url": "/",
+      "sort": 1
+    },
+    {
+      "id": 2,
+      "name": "七月归档",
+      "url": "/record/2026_07",
+      "sort": 2
+    },
+    {
+      "id": 3,
+      "name": "技术",
+      "url": "/sort/code",
+      "sort": 3
+    }
   ],
   "types": [
-    {"id": 1, "name": "随笔", "alias": "notes", "remark": "读书、写作和日常生活的零散记录"},
-    {"id": 2, "name": "技术", "alias": "code", "remark": "Java、Web 与自托管实践"},
-    {"id": 3, "name": "行走", "alias": "journey", "remark": "旅途、城市和离开屏幕的时间"}
+    {
+      "id": 1,
+      "name": "随笔",
+      "alias": "notes",
+      "remark": "读书、写作和日常生活的零散记录"
+    },
+    {
+      "id": 2,
+      "name": "技术",
+      "alias": "code",
+      "remark": "Java、Web 与自托管实践"
+    },
+    {
+      "id": 3,
+      "name": "行走",
+      "alias": "journey",
+      "remark": "旅途、城市和离开屏幕的时间"
+    }
   ],
   "tags": [
-    {"id": 1, "text": "ZrLog", "count": 2},
-    {"id": 2, "text": "写作", "count": 2},
-    {"id": 3, "text": "自托管", "count": 2},
-    {"id": 4, "text": "Java", "count": 1},
-    {"id": 5, "text": "城市", "count": 1},
-    {"id": 6, "text": "性能", "count": 1}
+    {
+      "id": 1,
+      "text": "ZrLog",
+      "count": 2
+    },
+    {
+      "id": 2,
+      "text": "写作",
+      "count": 2
+    },
+    {
+      "id": 3,
+      "text": "自托管",
+      "count": 2
+    },
+    {
+      "id": 4,
+      "text": "Java",
+      "count": 1
+    },
+    {
+      "id": 5,
+      "text": "城市",
+      "count": 1
+    },
+    {
+      "id": 6,
+      "text": "性能",
+      "count": 1
+    }
   ],
   "links": [
-    {"id": 1, "name": "ZrLog 官网", "url": "https://www.zrlog.com", "alt": "ZrLog 开源博客系统官方站点", "icon": "/attached/link-icon.svg", "sort": 1},
-    {"id": 2, "name": "项目源码", "url": "https://github.com/94fzb/zrlog", "alt": "ZrLog 的 GitHub 源码仓库", "icon": "", "sort": 2},
-    {"id": 3, "name": "ZrLog 开发日志：关于博客与开源软件", "url": "https://blog.zrlog.com", "alt": "记录 ZrLog 版本演进和开源开发的博客", "icon": "", "sort": 3}
+    {
+      "id": 1,
+      "name": "ZrLog 官网",
+      "url": "https://www.zrlog.com",
+      "alt": "ZrLog 开源博客系统官方站点",
+      "icon": "/attached/link-icon.svg",
+      "sort": 1
+    },
+    {
+      "id": 2,
+      "name": "项目源码",
+      "url": "https://github.com/94fzb/zrlog",
+      "alt": "ZrLog 的 GitHub 源码仓库",
+      "icon": "",
+      "sort": 2
+    },
+    {
+      "id": 3,
+      "name": "ZrLog 开发日志：关于博客与开源软件",
+      "url": "https://blog.zrlog.com",
+      "alt": "记录 ZrLog 版本演进和开源开发的博客",
+      "icon": "",
+      "sort": 3
+    }
   ],
   "articles": [
     {

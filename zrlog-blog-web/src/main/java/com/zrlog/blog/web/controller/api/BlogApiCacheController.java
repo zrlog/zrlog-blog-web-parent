@@ -7,7 +7,6 @@ import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.business.rest.response.ApiStandardResponse;
 import com.zrlog.common.CacheService;
 import com.zrlog.common.cache.vo.BaseDataInitVO;
-
 import jakarta.inject.Inject;
 
 public class BlogApiCacheController extends Controller {

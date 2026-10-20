@@ -1,17 +1,13 @@
 package com.zrlog.test.web.controller.api;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-
 import com.hibegin.common.dao.DataSourceWrapper;
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.common.dao.dto.PageRequest;
 import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.business.rest.response.ApiStandardResponse;
-import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
 import com.zrlog.blog.business.service.ArticleService;
+import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
 import com.zrlog.blog.web.controller.api.BlogApiArticleController;
 import com.zrlog.blog.web.controller.api.BlogApiCacheController;
 import com.zrlog.blog.web.controller.api.BlogApiPublicController;
@@ -28,7 +24,6 @@ import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
 import com.zrlog.model.Comment;
 import com.zrlog.util.I18nUtil;
-
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
 import org.junit.Rule;
@@ -38,18 +33,113 @@ import org.junit.rules.TemporaryFolder;
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 public class BlogApiControllerContractTest {
 
-    private DataSourceWrapper queryDataSource;
-
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    private DataSourceWrapper queryDataSource;
+
+    private static void restoreProperty(String key, String value) {
+        if (value == null) {
+            System.clearProperty(key);
+        } else {
+            System.setProperty(key, value);
+        }
+    }
+
+    private static void setControllerRequest(Controller controller, HttpRequest request) throws Exception {
+        Field field = Controller.class.getDeclaredField("request");
+        field.setAccessible(true);
+        field.set(controller, request);
+    }
+
+    private static HttpRequest request(String contextPath, String host) {
+        return request(contextPath, host, Collections.emptyMap());
+    }
+
+    private static HttpRequest request(Map<String, String> params) {
+        return request("/blog", "blog.example.com", params);
+    }
+
+    private static HttpRequest request(String contextPath, String host, Map<String, String> params) {
+        Map<String, String[]> paramMap = new HashMap<>();
+        params.forEach((key, value) -> paramMap.put(key, new String[]{value}));
+        return (HttpRequest) Proxy.newProxyInstance(
+                BlogApiControllerContractTest.class.getClassLoader(),
+                new Class[]{HttpRequest.class},
+                (proxy, method, args) -> {
+                    if ("getContextPath".equals(method.getName())) {
+                        return contextPath;
+                    }
+                    if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
+                        return host;
+                    }
+                    if ("getParamMap".equals(method.getName()) || "decodeParamMap".equals(method.getName())) {
+                        return paramMap;
+                    }
+                    if ("getParaToStr".equals(method.getName())) {
+                        String value = params.get(args[0].toString());
+                        if (args.length > 1) {
+                            return value == null ? args[1].toString() : value;
+                        }
+                        return value;
+                    }
+                    if ("getParaToInt".equals(method.getName())) {
+                        String value = params.get(args[0].toString());
+                        if (value == null) {
+                            return args.length > 1 ? args[1] : null;
+                        }
+                        return Integer.parseInt(value);
+                    }
+                    if ("getParaToBool".equals(method.getName())) {
+                        String value = params.get(args[0].toString());
+                        if (value == null) {
+                            return args.length > 1 ? args[1] : false;
+                        }
+                        return Boolean.parseBoolean(value);
+                    }
+                    if ("toString".equals(method.getName())) {
+                        return "HttpRequestProxy";
+                    }
+                    return null;
+                });
+    }
+
+    private static void setArticleService(BlogApiArticleController controller, ArticleService articleService)
+            throws Exception {
+        Field field = BlogApiArticleController.class.getDeclaredField("articleService");
+        field.setAccessible(true);
+        field.set(controller, articleService);
+    }
+
+    private static DataSourceWrapper dataSource(QueryRunner queryRunner) {
+        return (DataSourceWrapper) Proxy.newProxyInstance(
+                BlogApiControllerContractTest.class.getClassLoader(),
+                new Class[]{DataSourceWrapper.class},
+                (proxy, method, args) -> {
+                    if ("getQueryRunner".equals(method.getName())) {
+                        return queryRunner;
+                    }
+                    if ("toString".equals(method.getName())) {
+                        return "DataSourceWrapperProxy";
+                    }
+                    Class<?> returnType = method.getReturnType();
+                    if (returnType == boolean.class) {
+                        return false;
+                    }
+                    if (returnType == int.class) {
+                        return 0;
+                    }
+                    if (returnType == long.class) {
+                        return 0L;
+                    }
+                    return null;
+                });
+    }
 
     @Test
     public void shouldReturnCacheInitDataFromConfiguredCacheService() throws Exception {
@@ -189,79 +279,6 @@ public class BlogApiControllerContractTest {
         }
     }
 
-    private static void restoreProperty(String key, String value) {
-        if (value == null) {
-            System.clearProperty(key);
-        } else {
-            System.setProperty(key, value);
-        }
-    }
-
-    private static void setControllerRequest(Controller controller, HttpRequest request) throws Exception {
-        Field field = Controller.class.getDeclaredField("request");
-        field.setAccessible(true);
-        field.set(controller, request);
-    }
-
-    private static HttpRequest request(String contextPath, String host) {
-        return request(contextPath, host, Collections.emptyMap());
-    }
-
-    private static HttpRequest request(Map<String, String> params) {
-        return request("/blog", "blog.example.com", params);
-    }
-
-    private static HttpRequest request(String contextPath, String host, Map<String, String> params) {
-        Map<String, String[]> paramMap = new HashMap<>();
-        params.forEach((key, value) -> paramMap.put(key, new String[]{value}));
-        return (HttpRequest) Proxy.newProxyInstance(
-                BlogApiControllerContractTest.class.getClassLoader(),
-                new Class[]{HttpRequest.class},
-                (proxy, method, args) -> {
-                    if ("getContextPath".equals(method.getName())) {
-                        return contextPath;
-                    }
-                    if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
-                        return host;
-                    }
-                    if ("getParamMap".equals(method.getName()) || "decodeParamMap".equals(method.getName())) {
-                        return paramMap;
-                    }
-                    if ("getParaToStr".equals(method.getName())) {
-                        String value = params.get(args[0].toString());
-                        if (args.length > 1) {
-                            return value == null ? args[1].toString() : value;
-                        }
-                        return value;
-                    }
-                    if ("getParaToInt".equals(method.getName())) {
-                        String value = params.get(args[0].toString());
-                        if (value == null) {
-                            return args.length > 1 ? args[1] : null;
-                        }
-                        return Integer.parseInt(value);
-                    }
-                    if ("getParaToBool".equals(method.getName())) {
-                        String value = params.get(args[0].toString());
-                        if (value == null) {
-                            return args.length > 1 ? args[1] : false;
-                        }
-                        return Boolean.parseBoolean(value);
-                    }
-                    if ("toString".equals(method.getName())) {
-                        return "HttpRequestProxy";
-                    }
-                    return null;
-                });
-    }
-
-    private static void setArticleService(BlogApiArticleController controller, ArticleService articleService)
-            throws Exception {
-        Field field = BlogApiArticleController.class.getDeclaredField("articleService");
-        field.setAccessible(true);
-        field.set(controller, articleService);
-    }
-
     private DataSourceWrapper setQueryDataSource(DataSourceWrapper dataSource) {
         DataSourceWrapper previous = queryDataSource;
         queryDataSource = dataSource;
@@ -270,31 +287,6 @@ public class BlogApiControllerContractTest {
 
     private void restoreQueryDataSource(DataSourceWrapper previousDataSource) {
         queryDataSource = previousDataSource;
-    }
-
-    private static DataSourceWrapper dataSource(QueryRunner queryRunner) {
-        return (DataSourceWrapper) Proxy.newProxyInstance(
-                BlogApiControllerContractTest.class.getClassLoader(),
-                new Class[]{DataSourceWrapper.class},
-                (proxy, method, args) -> {
-                    if ("getQueryRunner".equals(method.getName())) {
-                        return queryRunner;
-                    }
-                    if ("toString".equals(method.getName())) {
-                        return "DataSourceWrapperProxy";
-                    }
-                    Class<?> returnType = method.getReturnType();
-                    if (returnType == boolean.class) {
-                        return false;
-                    }
-                    if (returnType == int.class) {
-                        return 0;
-                    }
-                    if (returnType == long.class) {
-                        return 0L;
-                    }
-                    return null;
-                });
     }
 
     private interface ThrowingRunnable {
@@ -361,10 +353,6 @@ public class BlogApiControllerContractTest {
     }
 
     private static class FakeArticleService extends ArticleService {
-        private FakeArticleService() {
-            super(org.mockito.Mockito.mock(CacheService.class), () -> { throw new AssertionError("Unexpected article query"); });
-        }
-
         private ArticleDetailDTO detail;
         private PageData<ArticleBasicDTO> pageData = new PageData<>(0L, new ArrayList<>());
         private Object lastDetailId;
@@ -373,6 +361,11 @@ public class BlogApiControllerContractTest {
         private String lastKeywords;
         private HttpRequest lastPageRequestHttpRequest;
         private ArticleListOrder lastListOrder;
+        private FakeArticleService() {
+            super(org.mockito.Mockito.mock(CacheService.class), () -> {
+                throw new AssertionError("Unexpected article query");
+            });
+        }
 
         @Override
         public ArticleDetailDTO detail(Object idOrAlias, HttpRequest request) throws SQLException {

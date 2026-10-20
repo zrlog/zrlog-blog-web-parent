@@ -8,6 +8,12 @@ import static org.junit.Assert.assertTrue;
 
 public class CommentServiceTest {
 
+    private static ArticleBasicDTO article(Boolean canComment) {
+        ArticleBasicDTO article = new ArticleBasicDTO();
+        article.setCanComment(canComment);
+        return article;
+    }
+
     @Test
     public void shouldValidateEmailAddress() throws Exception {
         assertTrue(CommentService.isValidEmailAddress("user@example.com"));
@@ -25,12 +31,6 @@ public class CommentServiceTest {
         assertFalse(commentService.isAllowComment(article(false), false));
         assertFalse(commentService.isAllowComment(article(null), false));
         assertFalse(commentService.isAllowComment(article(true), true));
-    }
-
-    private static ArticleBasicDTO article(Boolean canComment) {
-        ArticleBasicDTO article = new ArticleBasicDTO();
-        article.setCanComment(canComment);
-        return article;
     }
 
 }

@@ -21,19 +21,13 @@ import com.zrlog.model.Log;
 import com.zrlog.util.I18nUtil;
 import com.zrlog.util.ParseUtil;
 import com.zrlog.util.ZrLogUtil;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
 
 @Singleton
 public class ArticleService {
@@ -46,11 +40,6 @@ public class ArticleService {
     public ArticleService(CacheService cacheService, jakarta.inject.Provider<Log> articles) {
         this.cacheService = cacheService;
         this.articles = articles;
-    }
-
-    public enum ArticleListOrder {
-        STICKY_FIRST,
-        NEWEST_FIRST
     }
 
     private static List<ArticleDetailDTO.TagsDTO> getTags(ArticleBasicDTO log, HttpRequest request, String suffix) {
@@ -66,50 +55,6 @@ public class ArticleService {
             tags.add(map);
         }
         return tags;
-    }
-
-    private ArticleDetailDTO fillArticleInfo(ArticleDetailDTO log, HttpRequest request) {
-        handlerArticle(log, request, cacheService);
-        String suffix = StaticSitePlugin.getSuffix(request, Boolean.TRUE.equals(cacheService.getPublicWebSiteInfo().getGenerator_html_status()));
-        log.getNextLog().setUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + log.getNextLog().getAlias() + suffix));
-        log.getLastLog().setUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + log.getLastLog().getAlias() + suffix));
-
-        if (StringUtils.isNotEmpty(log.getMarkdown())) {
-            List<Outline> outlineVO = OutlineUtil.extractOutline(log.getContent());
-            if (!outlineVO.isEmpty()) {
-                log.setTocHtml(OutlineUtil.buildTocHtml(outlineVO, ""));
-            }
-            log.setToc(outlineVO);
-        }
-        return log;
-    }
-
-    public ArticleDetailDTO detail(Object idOrAlias, HttpRequest request) throws SQLException {
-        ArticleDetailDTO log =
-                articles.get()
-                        .findByIdOrAlias(
-                                idOrAlias,
-                                Boolean.TRUE.equals(
-                                        cacheService
-                                                .getPublicWebSiteInfo()
-                                                .getDisable_comment_status()));
-        if (Objects.isNull(log)) {
-            return null;
-        }
-        if (log.getNextLog() == null) {
-            ArticleDetailDTO.NextLogDTO nextLogDTO = new ArticleDetailDTO.NextLogDTO();
-            nextLogDTO.setAlias(idOrAlias + "");
-            nextLogDTO.setTitle(I18nUtil.getBlogStringFromRes("noNextLog"));
-            log.setNextLog(nextLogDTO);
-        }
-        //
-        if (log.getLastLog() == null) {
-            ArticleDetailDTO.LastLogDTO lastLogDTO = new ArticleDetailDTO.LastLogDTO();
-            lastLogDTO.setAlias(idOrAlias + "");
-            lastLogDTO.setTitle(I18nUtil.getBlogStringFromRes("noLastLog"));
-            log.setLastLog(lastLogDTO);
-        }
-        return fillArticleInfo(log, request);
     }
 
     public static <T extends ArticleBasicDTO> T handlerArticle(T log, HttpRequest request, CacheService cacheService) {
@@ -197,12 +142,56 @@ public class ArticleService {
         return null;
     }
 
+    private ArticleDetailDTO fillArticleInfo(ArticleDetailDTO log, HttpRequest request) {
+        handlerArticle(log, request, cacheService);
+        String suffix = StaticSitePlugin.getSuffix(request, Boolean.TRUE.equals(cacheService.getPublicWebSiteInfo().getGenerator_html_status()));
+        log.getNextLog().setUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + log.getNextLog().getAlias() + suffix));
+        log.getLastLog().setUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + log.getLastLog().getAlias() + suffix));
+
+        if (StringUtils.isNotEmpty(log.getMarkdown())) {
+            List<Outline> outlineVO = OutlineUtil.extractOutline(log.getContent());
+            if (!outlineVO.isEmpty()) {
+                log.setTocHtml(OutlineUtil.buildTocHtml(outlineVO, ""));
+            }
+            log.setToc(outlineVO);
+        }
+        return log;
+    }
+
+    public ArticleDetailDTO detail(Object idOrAlias, HttpRequest request) throws SQLException {
+        ArticleDetailDTO log =
+                articles.get()
+                        .findByIdOrAlias(
+                                idOrAlias,
+                                Boolean.TRUE.equals(
+                                        cacheService
+                                                .getPublicWebSiteInfo()
+                                                .getDisable_comment_status()));
+        if (Objects.isNull(log)) {
+            return null;
+        }
+        if (log.getNextLog() == null) {
+            ArticleDetailDTO.NextLogDTO nextLogDTO = new ArticleDetailDTO.NextLogDTO();
+            nextLogDTO.setAlias(idOrAlias + "");
+            nextLogDTO.setTitle(I18nUtil.getBlogStringFromRes("noNextLog"));
+            log.setNextLog(nextLogDTO);
+        }
+        //
+        if (log.getLastLog() == null) {
+            ArticleDetailDTO.LastLogDTO lastLogDTO = new ArticleDetailDTO.LastLogDTO();
+            lastLogDTO.setAlias(idOrAlias + "");
+            lastLogDTO.setTitle(I18nUtil.getBlogStringFromRes("noLastLog"));
+            log.setLastLog(lastLogDTO);
+        }
+        return fillArticleInfo(log, request);
+    }
+
     public PageData<ArticleBasicDTO> pageByKeywords(PageRequest pageRequest, String keywords, HttpRequest request) {
         return pageByKeywords(pageRequest, keywords, request, ArticleListOrder.NEWEST_FIRST);
     }
 
     public PageData<ArticleBasicDTO> pageByKeywords(PageRequest pageRequest, String keywords, HttpRequest request,
-                                                     ArticleListOrder listOrder) {
+                                                    ArticleListOrder listOrder) {
         Log log = articles.get();
         PageData<ArticleBasicDTO> data = StringUtils.isEmpty(keywords)
                 && listOrder == ArticleListOrder.STICKY_FIRST
@@ -212,6 +201,11 @@ public class ArticleService {
         data.setKey(keywords);
         data.getRows().forEach(e -> handlerArticle(e, request, cacheService));
         return data;
+    }
+
+    public enum ArticleListOrder {
+        STICKY_FIRST,
+        NEWEST_FIRST
     }
 
 }

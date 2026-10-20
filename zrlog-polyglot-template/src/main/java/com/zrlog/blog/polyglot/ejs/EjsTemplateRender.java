@@ -11,7 +11,6 @@ import com.zrlog.blog.polyglot.util.PolyglotContextUtils;
 import com.zrlog.blog.web.template.vo.BasePageInfo;
 import com.zrlog.common.resource.ZrLogResourceLoader;
 import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Value;
 
 import java.io.IOException;

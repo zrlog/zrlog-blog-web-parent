@@ -2,7 +2,9 @@ package com.zrlog.blog.polyglot.markdown;
 
 import com.zrlog.business.service.MarkdownRenderer;
 
-/** Adapts the optional Polyglot engine to the shared Markdown capability. */
+/**
+ * Adapts the optional Polyglot engine to the shared Markdown capability.
+ */
 public final class PolyglotMarkdownRenderer implements MarkdownRenderer {
 
     @Override

@@ -28,7 +28,7 @@ tags:
 paths:
   /api/article:
     get:
-      tags: [Article]
+      tags: [ Article ]
       summary: 查询公开文章列表
       description: 返回已发布文章的分页列表。默认按置顶优先排序；`feed=true` 时按发布时间倒序。
       operationId: listPublicArticles
@@ -60,7 +60,7 @@ paths:
                 $ref: "#/components/schemas/ArticlePageResponse"
   /api/article/detail:
     get:
-      tags: [Article]
+      tags: [ Article ]
       summary: 查询公开文章详情
       operationId: getPublicArticle
       x-zrlog-controller: com.zrlog.blog.web.controller.api.BlogApiArticleController#detail
@@ -82,7 +82,7 @@ paths:
                 $ref: "#/components/schemas/ArticleDetailResponse"
   /api/article/comment:
     get:
-      tags: [Article]
+      tags: [ Article ]
       summary: 查询文章公开评论
       operationId: listPublicArticleComments
       x-zrlog-controller: com.zrlog.blog.web.controller.api.BlogApiArticleController#comment
@@ -105,7 +105,7 @@ paths:
                 $ref: "#/components/schemas/CommentListResponse"
   /api/cache:
     get:
-      tags: [Bootstrap]
+      tags: [ Bootstrap ]
       summary: 查询博客初始化缓存
       description: 返回分类、标签、导航、站点信息和统计等前台公共初始化数据。
       operationId: getBlogBootstrapData
@@ -120,7 +120,7 @@ paths:
                 $ref: "#/components/schemas/BootstrapResponse"
   /api/public/blogResource:
     get:
-      tags: [Bootstrap]
+      tags: [ Bootstrap ]
       summary: 查询博客前端资源配置
       description: 返回当前语言资源、站点标题、首页地址、主题模式和构建标识。语言字段会随站点语言包扩展。
       operationId: getBlogResource
@@ -158,7 +158,7 @@ components:
   schemas:
     StandardResponse:
       type: object
-      required: [error, message]
+      required: [ error, message ]
       properties:
         error:
           type: integer
@@ -170,7 +170,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/StandardResponse"
         - type: object
-          required: [data]
+          required: [ data ]
           properties:
             data:
               $ref: "#/components/schemas/ArticlePage"
@@ -187,7 +187,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/StandardResponse"
         - type: object
-          required: [data]
+          required: [ data ]
           properties:
             data:
               type: array
@@ -197,7 +197,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/StandardResponse"
         - type: object
-          required: [data]
+          required: [ data ]
           properties:
             data:
               $ref: "#/components/schemas/BootstrapData"
@@ -205,13 +205,13 @@ components:
       allOf:
         - $ref: "#/components/schemas/StandardResponse"
         - type: object
-          required: [data]
+          required: [ data ]
           properties:
             data:
               $ref: "#/components/schemas/BlogResourceData"
     ArticlePage:
       type: object
-      required: [page, size, totalElements, rows]
+      required: [ page, size, totalElements, rows ]
       properties:
         page:
           type: integer
@@ -264,8 +264,8 @@ components:
         url: { type: string, format: uri-reference }
         noSchemeUrl: { type: string }
         commentUrl: { type: string, format: uri-reference }
-        thumbnail: { type: [string, "null"], format: uri-reference }
-        thumbnailAlt: { type: [string, "null"] }
+        thumbnail: { type: [ string, "null" ], format: uri-reference }
+        thumbnailAlt: { type: [ string, "null" ] }
         tags:
           type: array
           items:

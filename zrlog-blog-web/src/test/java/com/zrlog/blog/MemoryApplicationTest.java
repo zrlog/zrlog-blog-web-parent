@@ -4,22 +4,42 @@ import com.hibegin.common.dao.InMemoryDatabase;
 import com.hibegin.http.server.util.PathUtil;
 import com.zrlog.common.CacheService;
 import com.zrlog.common.Constants;
+import org.junit.Test;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Properties;
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+
+import static org.junit.Assert.*;
 
 public class MemoryApplicationTest {
 
-    @org.junit.Rule public org.junit.rules.TemporaryFolder temporary = new org.junit.rules.TemporaryFolder();
+    @org.junit.Rule
+    public org.junit.rules.TemporaryFolder temporary = new org.junit.rules.TemporaryFolder();
     private String originalUserDir;
 
-    @org.junit.Before public void useIsolatedProject() throws Exception {
+    private static Properties loadDbProperties(Path runtimeRoot) throws Exception {
+        return com.zrlog.test.support.MemoryRuntime.readDatabaseProperties(runtimeRoot);
+    }
+
+    private static void deleteTree(Path rootPath) throws Exception {
+        if (!Files.exists(rootPath)) {
+            return;
+        }
+        try (var stream = Files.walk(rootPath)) {
+            stream.sorted(Comparator.reverseOrder()).forEach(path -> {
+                try {
+                    Files.deleteIfExists(path);
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+            });
+        }
+    }
+
+    @org.junit.Before
+    public void useIsolatedProject() throws Exception {
         originalUserDir = System.getProperty("user.dir");
         Path source = MemoryApplication.projectRootPath();
         Path project = temporary.newFolder("project").toPath();
@@ -45,7 +65,8 @@ public class MemoryApplicationTest {
         System.setProperty("user.dir", project.toString());
     }
 
-    @org.junit.After public void restoreUserDir() {
+    @org.junit.After
+    public void restoreUserDir() {
         System.setProperty("user.dir", originalUserDir);
     }
 
@@ -143,25 +164,6 @@ public class MemoryApplicationTest {
             }
             deleteTree(runtimeRoot);
             PathUtil.setRootPath(previousRootPath);
-        }
-    }
-
-    private static Properties loadDbProperties(Path runtimeRoot) throws Exception {
-        return com.zrlog.test.support.MemoryRuntime.readDatabaseProperties(runtimeRoot);
-    }
-
-    private static void deleteTree(Path rootPath) throws Exception {
-        if (!Files.exists(rootPath)) {
-            return;
-        }
-        try (var stream = Files.walk(rootPath)) {
-            stream.sorted(Comparator.reverseOrder()).forEach(path -> {
-                try {
-                    Files.deleteIfExists(path);
-                } catch (Exception e) {
-                    throw new IllegalStateException(e);
-                }
-            });
         }
     }
 }

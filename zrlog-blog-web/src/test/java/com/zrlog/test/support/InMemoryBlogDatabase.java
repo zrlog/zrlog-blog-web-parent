@@ -16,14 +16,15 @@ import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSetupContext;
 import com.zrlog.web.WebSetupLoader;
 import com.zrlog.web.WebSiteInfoProvider;
+import org.apache.commons.dbutils.handlers.MapHandler;
+import org.apache.commons.dbutils.handlers.MapListHandler;
+import org.apache.commons.dbutils.handlers.ScalarHandler;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.dbutils.handlers.MapHandler;
-import org.apache.commons.dbutils.handlers.MapListHandler;
-import org.apache.commons.dbutils.handlers.ScalarHandler;
 
 public class InMemoryBlogDatabase implements AutoCloseable {
 
@@ -58,7 +59,9 @@ public class InMemoryBlogDatabase implements AutoCloseable {
         return config.getServerConfig().getBindings().build().get(type);
     }
 
-    public DataSourceWrapper dataSource() { return database.dataSource(); }
+    public DataSourceWrapper dataSource() {
+        return database.dataSource();
+    }
 
     public ZrLogConfig config() {
         return config;

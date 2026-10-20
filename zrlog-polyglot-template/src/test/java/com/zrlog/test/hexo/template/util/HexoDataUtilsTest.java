@@ -11,14 +11,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class HexoDataUtilsTest {
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> cast(Object value) {
+        assertNotNull(value);
+        return (Map<String, Object>) value;
+    }
+
+    private static int filteredSize(Map<String, Object> wrapper, Value predicate) {
+        Map<String, Object> filtered = cast(((ProxyExecutable) wrapper.get("filter")).execute(predicate));
+        return ((List<?>) filtered.get("data")).size();
+    }
 
     @Test
     public void shouldWrapListAndExposeHelperFunctions() {
@@ -161,16 +167,5 @@ public class HexoDataUtilsTest {
             Value criteria = context.eval("js", "({ id: 1 })");
             assertThrows(NotImplementException.class, () -> ((ProxyExecutable) wrapper.get("filter")).execute(criteria));
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> cast(Object value) {
-        assertNotNull(value);
-        return (Map<String, Object>) value;
-    }
-
-    private static int filteredSize(Map<String, Object> wrapper, Value predicate) {
-        Map<String, Object> filtered = cast(((ProxyExecutable) wrapper.get("filter")).execute(predicate));
-        return ((List<?>) filtered.get("data")).size();
     }
 }

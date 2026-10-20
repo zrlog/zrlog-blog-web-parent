@@ -1,7 +1,7 @@
 package com.zrlog.blog.polyglot.njk;
 
-import com.zrlog.common.resource.ZrLogResourceLoader;
 import com.hibegin.common.util.LoggerUtil;
+import com.zrlog.common.resource.ZrLogResourceLoader;
 import org.graalvm.polyglot.HostAccess;
 
 import java.nio.file.Path;
@@ -13,12 +13,10 @@ import java.util.logging.Logger;
 
 public class NativeJavaLoader {
     private static final Logger LOGGER = LoggerUtil.getLogger(NativeJavaLoader.class);
-
-    private final String baseDir;
-
     // 暴露给 JS 的属性，告诉 Nunjucks 这是同步加载器
     @HostAccess.Export
     public final boolean async = false;
+    private final String baseDir;
 
     public NativeJavaLoader(String baseDir) {
         this.baseDir = baseDir;

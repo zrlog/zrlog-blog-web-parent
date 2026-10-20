@@ -24,7 +24,6 @@ import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.model.Log;
 import com.zrlog.util.I18nUtil;
 import com.zrlog.util.ParseUtil;
-
 import jakarta.inject.Inject;
 
 import java.io.IOException;
@@ -57,6 +56,30 @@ public class ArticleController extends Controller {
         this.pluginCore = pluginCore;
         this.cacheService = cacheService;
         this.articleService = articleService;
+    }
+
+    static ArticleUriInfoVO parseUriInfo(String uri) {
+        String rawUrl = uri;
+        if (rawUrl.endsWith(".html")) {
+            rawUrl = rawUrl.substring(0, rawUrl.length() - ".html".length());
+        }
+        String rawArgs = rawUrl.substring(rawUrl.lastIndexOf("/") + 1);
+        List<String> list = Arrays.asList(rawArgs.split("-"));
+        boolean numeric = ParseUtil.isNumeric(list.get(list.size() - 1));
+        StringJoiner sj = new StringJoiner("-");
+        int page = 1;
+        if (numeric) {
+            page = ParseUtil.strToInt(list.get(list.size() - 1), 1);
+            for (int i = 0; i < list.size() - 1; i++) {
+                sj.add(list.get(i));
+            }
+        } else {
+            for (String arg : list) {
+                sj.add(arg);
+            }
+        }
+        String key = sj.toString();
+        return new ArticleUriInfoVO(key, page);
     }
 
     /**
@@ -156,30 +179,6 @@ public class ArticleController extends Controller {
             request.getAttr().put("log", detail);
         }
         return "detail";
-    }
-
-    static ArticleUriInfoVO parseUriInfo(String uri) {
-        String rawUrl = uri;
-        if (rawUrl.endsWith(".html")) {
-            rawUrl = rawUrl.substring(0, rawUrl.length() - ".html".length());
-        }
-        String rawArgs = rawUrl.substring(rawUrl.lastIndexOf("/") + 1);
-        List<String> list = Arrays.asList(rawArgs.split("-"));
-        boolean numeric = ParseUtil.isNumeric(list.get(list.size() - 1));
-        StringJoiner sj = new StringJoiner("-");
-        int page = 1;
-        if (numeric) {
-            page = ParseUtil.strToInt(list.get(list.size() - 1), 1);
-            for (int i = 0; i < list.size() - 1; i++) {
-                sj.add(list.get(i));
-            }
-        } else {
-            for (String arg : list) {
-                sj.add(arg);
-            }
-        }
-        String key = sj.toString();
-        return new ArticleUriInfoVO(key, page);
     }
 
     @RequestMethod

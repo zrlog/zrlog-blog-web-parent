@@ -13,6 +13,16 @@ import static org.junit.Assert.assertTrue;
 
 public class HexoPaginatorTest {
 
+    private static PagerVO.PageEntry entry(String url, String desc, boolean current, boolean prev, boolean next) {
+        PagerVO.PageEntry entry = new PagerVO.PageEntry();
+        entry.setUrl(url);
+        entry.setDesc(desc);
+        entry.setCurrent(current);
+        entry.setPrev(prev);
+        entry.setNext(next);
+        return entry;
+    }
+
     @Test
     public void shouldReturnEmptyHtmlWhenSinglePage() {
         PagerVO pagerVO = new PagerVO();
@@ -32,15 +42,5 @@ public class HexoPaginatorTest {
         assertTrue(html.contains("current\">1</span>"));
         assertTrue(html.contains("href=\"/2#anchor\">2</a>"));
         assertTrue(html.contains("href=\"/3#anchor\">Next</a>"));
-    }
-
-    private static PagerVO.PageEntry entry(String url, String desc, boolean current, boolean prev, boolean next) {
-        PagerVO.PageEntry entry = new PagerVO.PageEntry();
-        entry.setUrl(url);
-        entry.setDesc(desc);
-        entry.setCurrent(current);
-        entry.setPrev(prev);
-        entry.setNext(next);
-        return entry;
     }
 }

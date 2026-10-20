@@ -21,7 +21,7 @@ renderer.define('hexo-config', function (pathNode) {
         var expr = new nodes.Expression();
         if (raw && raw.length > 0) {
             // 如果真的有值，把值塞进去（这里简化处理）
-            raw.forEach(function(item) {
+            raw.forEach(function (item) {
                 expr.push(new nodes.String(item));
             });
         }

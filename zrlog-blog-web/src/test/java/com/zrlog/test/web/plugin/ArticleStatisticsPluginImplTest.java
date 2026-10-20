@@ -1,10 +1,5 @@
 package com.zrlog.test.web.plugin;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-
 import com.hibegin.common.dao.DAO;
 import com.zrlog.blog.web.plugin.ArticleStatisticsPluginImpl;
 import com.zrlog.blog.web.plugin.ArticleStatisticsRunnable;
@@ -12,7 +7,6 @@ import com.zrlog.business.plugin.RequestInfo;
 import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.plugin.BaseStaticSitePlugin;
 import com.zrlog.test.support.InMemoryBlogDatabase;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -20,10 +14,44 @@ import org.junit.rules.TemporaryFolder;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import static org.junit.Assert.*;
+
 public class ArticleStatisticsPluginImplTest {
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    private static RequestInfo requestInfo(String uri, Long articleId) {
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setRequestUri(uri);
+        requestInfo.setArticleId(articleId);
+        requestInfo.setUserAgent("Mozilla/5.0");
+        requestInfo.setRequestTime(System.currentTimeMillis());
+        return requestInfo;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<RequestInfo> queue(ArticleStatisticsPluginImpl plugin) throws Exception {
+        Field runnableField = ArticleStatisticsPluginImpl.class.getDeclaredField("runnable");
+        runnableField.setAccessible(true);
+        ArticleStatisticsRunnable runnable = (ArticleStatisticsRunnable) runnableField.get(plugin);
+        return queue(runnable);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<RequestInfo> queue(ArticleStatisticsRunnable runnable) throws Exception {
+        Field requestInfoListField = ArticleStatisticsRunnable.class.getDeclaredField("requestInfoList");
+        requestInfoListField.setAccessible(true);
+        return (List<RequestInfo>) requestInfoListField.get(runnable);
+    }
+
+    private static void restoreProperty(String key, String value) {
+        if (value == null) {
+            System.clearProperty(key);
+        } else {
+            System.setProperty(key, value);
+        }
+    }
 
     @Test
     public void shouldRecordOnlyPublicArticleRequests() throws Exception {
@@ -158,38 +186,6 @@ public class ArticleStatisticsPluginImplTest {
             runnable.run();
         } finally {
             restoreProperty("sws.root.path", previousRootPath);
-        }
-    }
-
-    private static RequestInfo requestInfo(String uri, Long articleId) {
-        RequestInfo requestInfo = new RequestInfo();
-        requestInfo.setRequestUri(uri);
-        requestInfo.setArticleId(articleId);
-        requestInfo.setUserAgent("Mozilla/5.0");
-        requestInfo.setRequestTime(System.currentTimeMillis());
-        return requestInfo;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<RequestInfo> queue(ArticleStatisticsPluginImpl plugin) throws Exception {
-        Field runnableField = ArticleStatisticsPluginImpl.class.getDeclaredField("runnable");
-        runnableField.setAccessible(true);
-        ArticleStatisticsRunnable runnable = (ArticleStatisticsRunnable) runnableField.get(plugin);
-        return queue(runnable);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<RequestInfo> queue(ArticleStatisticsRunnable runnable) throws Exception {
-        Field requestInfoListField = ArticleStatisticsRunnable.class.getDeclaredField("requestInfoList");
-        requestInfoListField.setAccessible(true);
-        return (List<RequestInfo>) requestInfoListField.get(runnable);
-    }
-
-    private static void restoreProperty(String key, String value) {
-        if (value == null) {
-            System.clearProperty(key);
-        } else {
-            System.setProperty(key, value);
         }
     }
 

@@ -5,9 +5,9 @@ import java.nio.file.Paths;
 import java.util.Stack;
 
 public class TemplateResolver {
+    private static final String CLASSPATH_PREFIX = "classpath:";
     private final Stack<String> directoryStack = new Stack<>();
     private final String baseDir;
-    private static final String CLASSPATH_PREFIX = "classpath:";
 
     public TemplateResolver(String baseDir) {
         // 确保 baseDir 以协议开头或为绝对路径

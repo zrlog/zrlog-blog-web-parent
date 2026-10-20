@@ -1,7 +1,5 @@
 package com.zrlog.blog;
 
-import static com.zrlog.common.Constants.getZrLogHome;
-
 import com.hibegin.http.server.WebServerBuilder;
 import com.hibegin.http.server.util.PathUtil;
 import com.zrlog.blog.web.BlogWebSetup;
@@ -19,6 +17,8 @@ import com.zrlog.web.inteceptor.DefaultInterceptor;
 
 import java.util.List;
 import java.util.Objects;
+
+import static com.zrlog.common.Constants.getZrLogHome;
 
 public class Application {
 

@@ -1,22 +1,16 @@
 package com.zrlog.test.business.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.common.dao.dto.PageRequestImpl;
 import com.hibegin.http.server.api.HttpRequest;
-import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
 import com.zrlog.blog.business.service.ArticleService;
+import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
 import com.zrlog.blog.web.di.BlogComponent;
 import com.zrlog.common.CacheService;
 import com.zrlog.data.di.DataComponent;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.test.support.InMemoryBlogDatabase;
-
 import org.junit.Test;
 
 import java.lang.reflect.Proxy;
@@ -24,7 +18,43 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.*;
+
 public class ArticleServiceDatabaseTest {
+
+    private static void seedThreePublishedArticles(InMemoryBlogDatabase database) throws Exception {
+        database.insertArticle(1, "previous-post", "Previous Post", "Previous content", "history",
+                "2026-06-01 10:00:00", false, false);
+        database.insertArticle(2, "hello-world", "Hello World", "Hello world body", "java,zrlog",
+                "2026-06-02 10:00:00", false, false);
+        database.insertArticle(3, "next-post", "Next Post", "Next content", "future",
+                "2026-06-03 10:00:00", false, false);
+    }
+
+    private static HttpRequest request(String contextPath) {
+        Map<String, Object> attrs = new HashMap<>();
+        return (HttpRequest) Proxy.newProxyInstance(
+                ArticleServiceDatabaseTest.class.getClassLoader(),
+                new Class[]{HttpRequest.class},
+                (proxy, method, args) -> {
+                    if ("getContextPath".equals(method.getName())) {
+                        return contextPath;
+                    }
+                    if ("getAttr".equals(method.getName())) {
+                        return attrs;
+                    }
+                    if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
+                        return "request.example.com";
+                    }
+                    if ("getHeaderMap".equals(method.getName())) {
+                        return Collections.singletonMap("Host", "request.example.com");
+                    }
+                    if ("toString".equals(method.getName())) {
+                        return "HttpRequestProxy";
+                    }
+                    return null;
+                });
+    }
 
     @Test
     public void shouldLoadArticleDetailFromInMemoryDatabase() throws Exception {
@@ -90,7 +120,7 @@ public class ArticleServiceDatabaseTest {
     @Test
     public void productionGraphsKeepDatabaseAndRefreshedSettingsOwnedByEachApplication() throws Exception {
         try (InMemoryBlogDatabase first = InMemoryBlogDatabase.open();
-                InMemoryBlogDatabase second = InMemoryBlogDatabase.open()) {
+             InMemoryBlogDatabase second = InMemoryBlogDatabase.open()) {
             first.insertArticle(1, "shared", "First application", "First", "", "2026-06-01 10:00:00", false, false);
             second.insertArticle(1, "shared", "Second application", "Second", "", "2026-06-01 10:00:00", false, false);
             var firstGraph = first.component(BlogComponent.class);
@@ -170,39 +200,5 @@ public class ArticleServiceDatabaseTest {
             assertEquals("Java", search.getKey());
             assertEquals("java-new", search.getRows().get(0).getAlias());
         }
-    }
-
-    private static void seedThreePublishedArticles(InMemoryBlogDatabase database) throws Exception {
-        database.insertArticle(1, "previous-post", "Previous Post", "Previous content", "history",
-                "2026-06-01 10:00:00", false, false);
-        database.insertArticle(2, "hello-world", "Hello World", "Hello world body", "java,zrlog",
-                "2026-06-02 10:00:00", false, false);
-        database.insertArticle(3, "next-post", "Next Post", "Next content", "future",
-                "2026-06-03 10:00:00", false, false);
-    }
-
-    private static HttpRequest request(String contextPath) {
-        Map<String, Object> attrs = new HashMap<>();
-        return (HttpRequest) Proxy.newProxyInstance(
-                ArticleServiceDatabaseTest.class.getClassLoader(),
-                new Class[]{HttpRequest.class},
-                (proxy, method, args) -> {
-                    if ("getContextPath".equals(method.getName())) {
-                        return contextPath;
-                    }
-                    if ("getAttr".equals(method.getName())) {
-                        return attrs;
-                    }
-                    if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
-                        return "request.example.com";
-                    }
-                    if ("getHeaderMap".equals(method.getName())) {
-                        return Collections.singletonMap("Host", "request.example.com");
-                    }
-                    if ("toString".equals(method.getName())) {
-                        return "HttpRequestProxy";
-                    }
-                    return null;
-                });
     }
 }

@@ -12,8 +12,8 @@ import java.util.logging.Logger;
 public class HexoDateObjUtils {
 
     private static final HexoDateObjUtils instance = new HexoDateObjUtils();
-    private final Map<String, Locale> locales = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     private static final Logger LOGGER = LoggerUtil.getLogger(HexoDateObjUtils.class);
+    private final Map<String, Locale> locales = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     public HexoDateObjUtils() {
         locales.put("zh", Locale.CHINA);

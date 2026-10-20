@@ -15,11 +15,6 @@ import java.util.Objects;
  * 静态化文章页，加快文章页的响应，压缩 html 文本，提供自定义插件标签的解析
  */
 public class BlogPageInterceptor implements HandleAbleInterceptor {
-    @FunctionalInterface
-    public interface RenderFactory {
-        ZrLogTemplateRender create(HttpRequest request) throws Exception;
-    }
-
     private final RenderFactory renderFactory;
 
     public BlogPageInterceptor(RenderFactory renderFactory) {
@@ -77,5 +72,10 @@ public class BlogPageInterceptor implements HandleAbleInterceptor {
         }
         //如果静态文件不为 .html，就扔出 404
         return target.endsWith(".html");
+    }
+
+    @FunctionalInterface
+    public interface RenderFactory {
+        ZrLogTemplateRender create(HttpRequest request) throws Exception;
     }
 }

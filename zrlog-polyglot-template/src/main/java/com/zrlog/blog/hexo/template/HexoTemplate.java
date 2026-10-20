@@ -1,7 +1,5 @@
 package com.zrlog.blog.hexo.template;
 
-import com.zrlog.theme.spi.BundledThemes;
-
 import com.zrlog.blog.hexo.template.support.butterfly.ButterflyHexoObjectBox;
 import com.zrlog.blog.hexo.template.support.fluid.FluidHexoObjectBox;
 import com.zrlog.blog.hexo.template.support.next.NextHexoObjectBox;
@@ -12,27 +10,24 @@ import com.zrlog.blog.polyglot.pug.PugTemplateRender;
 import com.zrlog.blog.polyglot.util.YamlLoader;
 import com.zrlog.blog.web.template.ZrLogTemplate;
 import com.zrlog.blog.web.template.vo.BasePageInfo;
-import com.zrlog.business.type.TemplateType;
-import com.zrlog.common.Constants;
 import com.zrlog.common.exception.NotImplementException;
-import com.zrlog.common.resource.ZrLogResourceLoader;
 import com.zrlog.common.vo.TemplateVO;
+import com.zrlog.theme.spi.BundledThemes;
 
 import java.io.File;
 import java.util.Map;
-import java.util.Objects;
 
 public class HexoTemplate implements ZrLogTemplate {
+    private final TemplateVO templateVO;
     private String template;
     private String rootPath;
-    private final TemplateVO templateVO;
-
-    public String getTemplate() {
-        return template;
-    }
 
     public HexoTemplate(TemplateVO templateVO) {
         this.templateVO = templateVO;
+    }
+
+    public String getTemplate() {
+        return template;
     }
 
     @Override

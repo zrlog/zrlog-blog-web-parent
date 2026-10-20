@@ -1,9 +1,5 @@
 package com.zrlog.test.web.controller;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.http.HttpMethod;
 import com.hibegin.http.server.api.HttpRequest;
@@ -14,7 +10,6 @@ import com.zrlog.blog.web.di.BlogComponent;
 import com.zrlog.common.ZrLogConfig;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.test.support.InMemoryBlogDatabase;
-
 import org.junit.Test;
 
 import java.lang.reflect.Proxy;
@@ -24,9 +19,75 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.*;
+
 public class ArticleControllerDatabaseTest {
 
     private ZrLogConfig applicationConfig;
+
+    @SuppressWarnings("unchecked")
+    private static PageData<ArticleBasicDTO> pageData(Map<String, Object> attrs) {
+        return (PageData<ArticleBasicDTO>) attrs.get("data");
+    }
+
+    private static List<String> aliases(PageData<ArticleBasicDTO> data) {
+        return data.getRows().stream().map(ArticleBasicDTO::getAlias).collect(Collectors.toList());
+    }
+
+    private static List<Long> logIds(PageData<ArticleBasicDTO> data) {
+        return data.getRows().stream().map(ArticleBasicDTO::getLogId).collect(Collectors.toList());
+    }
+
+    private static void seedArticles(InMemoryBlogDatabase database) throws Exception {
+        database.insertArticle(1, "hello-world", "Hello World", "Hello content", "zrlog",
+                "2026-06-01 10:00:00", false, false);
+        database.insertArticle(2, "draft-post", "Draft Post", "Draft content", "draft",
+                "2026-06-02 10:00:00", true, false);
+        database.insertArticle(3, "private-post", "Private Post", "Private content", "private",
+                "2026-06-03 10:00:00", false, true);
+        database.insertArticle(4, "java-post", "Java Post", "Java content", "java",
+                "2026-06-04 10:00:00", false, false);
+        database.insertArticle(5, "last-public", "Last Public", "Last content", "misc",
+                "2026-06-05 10:00:00", false, false);
+    }
+
+    private static HttpRequest request(String uri, HttpMethod method, String key, Map<String, Object> attrs) {
+        Map<String, String> params = new HashMap<>();
+        if (key != null && !key.isEmpty()) {
+            params.put("key", key);
+        }
+        return (HttpRequest) Proxy.newProxyInstance(
+                ArticleControllerDatabaseTest.class.getClassLoader(),
+                new Class[]{HttpRequest.class},
+                (proxy, reflectedMethod, args) -> {
+                    if ("getUri".equals(reflectedMethod.getName())) {
+                        return uri;
+                    }
+                    if ("getMethod".equals(reflectedMethod.getName())) {
+                        return method;
+                    }
+                    if ("getAttr".equals(reflectedMethod.getName())) {
+                        return attrs;
+                    }
+                    if ("getContextPath".equals(reflectedMethod.getName())) {
+                        return "/blog";
+                    }
+                    if ("getHeader".equals(reflectedMethod.getName()) && "Host".equals(args[0])) {
+                        return "request.example.com";
+                    }
+                    if ("getHeaderMap".equals(reflectedMethod.getName())) {
+                        return Collections.singletonMap("Host", "request.example.com");
+                    }
+                    if ("getParaToStr".equals(reflectedMethod.getName())) {
+                        String value = params.get(args[0].toString());
+                        return value == null ? args[1].toString() : value;
+                    }
+                    if ("toString".equals(reflectedMethod.getName())) {
+                        return "HttpRequestProxy";
+                    }
+                    return null;
+                });
+    }
 
     @Test
     public void shouldRenderIndexPageFromInMemoryDatabase() throws Exception {
@@ -131,69 +192,5 @@ public class ArticleControllerDatabaseTest {
                 });
         return (ArticleController) Controller.buildController(
                 ArticleController.class.getMethod(action), configured, null);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static PageData<ArticleBasicDTO> pageData(Map<String, Object> attrs) {
-        return (PageData<ArticleBasicDTO>) attrs.get("data");
-    }
-
-    private static List<String> aliases(PageData<ArticleBasicDTO> data) {
-        return data.getRows().stream().map(ArticleBasicDTO::getAlias).collect(Collectors.toList());
-    }
-
-    private static List<Long> logIds(PageData<ArticleBasicDTO> data) {
-        return data.getRows().stream().map(ArticleBasicDTO::getLogId).collect(Collectors.toList());
-    }
-
-    private static void seedArticles(InMemoryBlogDatabase database) throws Exception {
-        database.insertArticle(1, "hello-world", "Hello World", "Hello content", "zrlog",
-                "2026-06-01 10:00:00", false, false);
-        database.insertArticle(2, "draft-post", "Draft Post", "Draft content", "draft",
-                "2026-06-02 10:00:00", true, false);
-        database.insertArticle(3, "private-post", "Private Post", "Private content", "private",
-                "2026-06-03 10:00:00", false, true);
-        database.insertArticle(4, "java-post", "Java Post", "Java content", "java",
-                "2026-06-04 10:00:00", false, false);
-        database.insertArticle(5, "last-public", "Last Public", "Last content", "misc",
-                "2026-06-05 10:00:00", false, false);
-    }
-
-    private static HttpRequest request(String uri, HttpMethod method, String key, Map<String, Object> attrs) {
-        Map<String, String> params = new HashMap<>();
-        if (key != null && !key.isEmpty()) {
-            params.put("key", key);
-        }
-        return (HttpRequest) Proxy.newProxyInstance(
-                ArticleControllerDatabaseTest.class.getClassLoader(),
-                new Class[]{HttpRequest.class},
-                (proxy, reflectedMethod, args) -> {
-                    if ("getUri".equals(reflectedMethod.getName())) {
-                        return uri;
-                    }
-                    if ("getMethod".equals(reflectedMethod.getName())) {
-                        return method;
-                    }
-                    if ("getAttr".equals(reflectedMethod.getName())) {
-                        return attrs;
-                    }
-                    if ("getContextPath".equals(reflectedMethod.getName())) {
-                        return "/blog";
-                    }
-                    if ("getHeader".equals(reflectedMethod.getName()) && "Host".equals(args[0])) {
-                        return "request.example.com";
-                    }
-                    if ("getHeaderMap".equals(reflectedMethod.getName())) {
-                        return Collections.singletonMap("Host", "request.example.com");
-                    }
-                    if ("getParaToStr".equals(reflectedMethod.getName())) {
-                        String value = params.get(args[0].toString());
-                        return value == null ? args[1].toString() : value;
-                    }
-                    if ("toString".equals(reflectedMethod.getName())) {
-                        return "HttpRequestProxy";
-                    }
-                    return null;
-                });
     }
 }

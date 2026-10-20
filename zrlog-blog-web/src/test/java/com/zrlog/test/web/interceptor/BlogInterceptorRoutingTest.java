@@ -39,20 +39,97 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class BlogInterceptorRoutingTest {
 
-    private com.zrlog.common.ZrLogConfig applicationConfig;
-
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    private com.zrlog.common.ZrLogConfig applicationConfig;
+
+    private static HttpRequest request(String uri) {
+        return request(uri, null);
+    }
+
+    private static HttpRequest request(String uri, String userAgent) {
+        return request(uri, userAgent, null);
+    }
+
+    private static HttpRequest request(String uri, String userAgent, ServerConfig serverConfig) {
+        return request(uri, userAgent, serverConfig, null, HttpMethod.GET);
+    }
+
+    private static HttpRequest request(String uri, String userAgent, ServerConfig serverConfig,
+                                       RequestConfig requestConfig, HttpMethod httpMethod) {
+        return (HttpRequest) Proxy.newProxyInstance(
+                BlogInterceptorRoutingTest.class.getClassLoader(),
+                new Class[]{HttpRequest.class},
+                (proxy, method, args) -> {
+                    if ("getUri".equals(method.getName())) {
+                        return uri;
+                    }
+                    if ("getHeader".equals(method.getName()) && "User-Agent".equals(args[0])) {
+                        return userAgent;
+                    }
+                    if ("getContextPath".equals(method.getName())) {
+                        return "";
+                    }
+                    if ("getRequestConfig".equals(method.getName())) {
+                        return requestConfig;
+                    }
+                    if ("getMethod".equals(method.getName())) {
+                        return httpMethod;
+                    }
+                    if ("getServerConfig".equals(method.getName())) {
+                        return serverConfig;
+                    }
+                    if ("toString".equals(method.getName())) {
+                        return "HttpRequestProxy";
+                    }
+                    return null;
+                });
+    }
+
+    private static ServerConfig pageServerConfig() throws Exception {
+        ServerConfig serverConfig = new ServerConfig();
+        putRoute(serverConfig, "/article", "article");
+        putRoute(serverConfig, "/index", "index");
+        putRoute(serverConfig, "/sort", "sort");
+        putRoute(serverConfig, "/search", "search");
+        putRoute(serverConfig, "/tag", "tag");
+        putRoute(serverConfig, "/record", "record");
+        putRoute(serverConfig, "/detail", "detail");
+        return serverConfig;
+    }
+
+    private static void putRoute(ServerConfig serverConfig, String path, String methodName) throws Exception {
+        Method method = TestPageController.class.getDeclaredMethod(methodName);
+        serverConfig.getRouter().getRouterMap().put(path, method);
+    }
+
+    private static void assertBlogPageRoute(ServerConfig serverConfig, String uri, String expectedMethod)
+            throws Exception {
+        TestPageController.lastMethod = null;
+
+        boolean continueChain = new BlogPageInterceptor(renderRequest -> {
+            throw new AssertionError("No template should be rendered for this route");
+        })
+                .doInterceptor(request(uri, null, serverConfig), new CapturedResponse().response());
+
+        assertFalse(continueChain);
+        assertEquals(expectedMethod, TestPageController.lastMethod);
+    }
+
+    private static void restoreProperty(String key, String value) {
+        if (value == null) {
+            System.clearProperty(key);
+        } else {
+            System.setProperty(key, value);
+        }
+    }
 
     @Test
     public void shouldMatchBlogApiRequests() {
@@ -76,7 +153,9 @@ public class BlogInterceptorRoutingTest {
 
     @Test
     public void shouldMatchBlogPageRequests() {
-        BlogPageInterceptor interceptor = new BlogPageInterceptor(renderRequest -> { throw new AssertionError("No template should be rendered for this route"); });
+        BlogPageInterceptor interceptor = new BlogPageInterceptor(renderRequest -> {
+            throw new AssertionError("No template should be rendered for this route");
+        });
 
         assertTrue(interceptor.isHandleAble(request("/")));
         assertTrue(interceptor.isHandleAble(request("/article.html")));
@@ -198,7 +277,9 @@ public class BlogInterceptorRoutingTest {
         ServerConfig serverConfig = new ServerConfig();
         CapturedResponse capturedResponse = new CapturedResponse();
 
-        boolean continueChain = new BlogPageInterceptor(renderRequest -> { throw new AssertionError("No template should be rendered for this route"); })
+        boolean continueChain = new BlogPageInterceptor(renderRequest -> {
+            throw new AssertionError("No template should be rendered for this route");
+        })
                 .doInterceptor(request("/missing", null, serverConfig), capturedResponse.response());
 
         assertFalse(continueChain);
@@ -247,85 +328,6 @@ public class BlogInterceptorRoutingTest {
             assertFalse(continueChain);
             assertTrue(TestApiController.handled);
         });
-    }
-
-    private static HttpRequest request(String uri) {
-        return request(uri, null);
-    }
-
-    private static HttpRequest request(String uri, String userAgent) {
-        return request(uri, userAgent, null);
-    }
-
-    private static HttpRequest request(String uri, String userAgent, ServerConfig serverConfig) {
-        return request(uri, userAgent, serverConfig, null, HttpMethod.GET);
-    }
-
-    private static HttpRequest request(String uri, String userAgent, ServerConfig serverConfig,
-                                       RequestConfig requestConfig, HttpMethod httpMethod) {
-        return (HttpRequest) Proxy.newProxyInstance(
-                BlogInterceptorRoutingTest.class.getClassLoader(),
-                new Class[]{HttpRequest.class},
-                (proxy, method, args) -> {
-                    if ("getUri".equals(method.getName())) {
-                        return uri;
-                    }
-                    if ("getHeader".equals(method.getName()) && "User-Agent".equals(args[0])) {
-                        return userAgent;
-                    }
-                    if ("getContextPath".equals(method.getName())) {
-                        return "";
-                    }
-                    if ("getRequestConfig".equals(method.getName())) {
-                        return requestConfig;
-                    }
-                    if ("getMethod".equals(method.getName())) {
-                        return httpMethod;
-                    }
-                    if ("getServerConfig".equals(method.getName())) {
-                        return serverConfig;
-                    }
-                    if ("toString".equals(method.getName())) {
-                        return "HttpRequestProxy";
-                    }
-                    return null;
-                });
-    }
-
-    private static ServerConfig pageServerConfig() throws Exception {
-        ServerConfig serverConfig = new ServerConfig();
-        putRoute(serverConfig, "/article", "article");
-        putRoute(serverConfig, "/index", "index");
-        putRoute(serverConfig, "/sort", "sort");
-        putRoute(serverConfig, "/search", "search");
-        putRoute(serverConfig, "/tag", "tag");
-        putRoute(serverConfig, "/record", "record");
-        putRoute(serverConfig, "/detail", "detail");
-        return serverConfig;
-    }
-
-    private static void putRoute(ServerConfig serverConfig, String path, String methodName) throws Exception {
-        Method method = TestPageController.class.getDeclaredMethod(methodName);
-        serverConfig.getRouter().getRouterMap().put(path, method);
-    }
-
-    private static void assertBlogPageRoute(ServerConfig serverConfig, String uri, String expectedMethod)
-            throws Exception {
-        TestPageController.lastMethod = null;
-
-        boolean continueChain = new BlogPageInterceptor(renderRequest -> { throw new AssertionError("No template should be rendered for this route"); })
-                .doInterceptor(request(uri, null, serverConfig), new CapturedResponse().response());
-
-        assertFalse(continueChain);
-        assertEquals(expectedMethod, TestPageController.lastMethod);
-    }
-
-    private static void restoreProperty(String key, String value) {
-        if (value == null) {
-            System.clearProperty(key);
-        } else {
-            System.setProperty(key, value);
-        }
     }
 
     private void withPluginConfig(FakePluginCorePlugin plugin, ThrowingRunnable runnable) throws Exception {

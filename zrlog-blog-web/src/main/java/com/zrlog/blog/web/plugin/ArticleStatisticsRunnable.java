@@ -9,9 +9,7 @@ import com.zrlog.business.plugin.RequestInfo;
 import com.zrlog.model.Log;
 import com.zrlog.plugin.BaseStaticSitePlugin;
 import com.zrlog.util.UserAgentUtils;
-
 import jakarta.inject.Inject;
-
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 
@@ -25,24 +23,20 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ArticleStatisticsRunnable extends BaseLockObject implements Runnable {
+    private static final Logger LOGGER = LoggerUtil.getLogger(ArticleStatisticsRunnable.class);
+    /**
+     * 保留2分钟的，2分钟内不重复记数量
+     */
+    private static final long REMOVE_TIME = 2 * 1000 * 60L;
     private final Supplier<String> webCm;
-
     private final jakarta.inject.Provider<DAO> statements;
-
+    private final List<RequestInfo> requestInfoList = Collections.synchronizedList(new ArrayList<>());
     @Inject
     public ArticleStatisticsRunnable(
             Supplier<String> webCm, jakarta.inject.Provider<DAO> statements) {
         this.statements = statements;
         this.webCm = Objects.requireNonNull(webCm);
     }
-
-    private static final Logger LOGGER = LoggerUtil.getLogger(ArticleStatisticsRunnable.class);
-
-    /**
-     * 保留2分钟的，2分钟内不重复记数量
-     */
-    private static final long REMOVE_TIME = 2 * 1000 * 60L;
-    private final List<RequestInfo> requestInfoList = Collections.synchronizedList(new ArrayList<>());
 
     /**
      *

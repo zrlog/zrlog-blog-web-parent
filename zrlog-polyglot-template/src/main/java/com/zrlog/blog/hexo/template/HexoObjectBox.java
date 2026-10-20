@@ -34,15 +34,10 @@ public class HexoObjectBox {
     protected final Map<String, Object> root;
     protected final BasePageInfo basePageInfo;
     protected final String rootPath;
-    private boolean stylusInit = false;
     protected final TemplateVO templateVO;
     protected final Map<String, Value> helperMap = new LinkedHashMap<>();
     protected final InjectionStorage injectionStorage;
-
-
-    public Map<String, Value> getHelperMap() {
-        return helperMap;
-    }
+    private boolean stylusInit = false;
 
 
     public HexoObjectBox(Map<String, Object> root, String rootPath, BasePageInfo basePageInfo, TemplateVO templateVO, String templateDir) {
@@ -52,6 +47,10 @@ public class HexoObjectBox {
         this.rootPath = rootPath;
         this.injectionStorage = new InjectionStorage(new ConcurrentHashMap<>(), templateDir);
         this.fillConfig();
+    }
+
+    public Map<String, Value> getHelperMap() {
+        return helperMap;
     }
 
     protected boolean filterRegister(Context context, String name, Value[] values) {

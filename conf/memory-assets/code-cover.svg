@@ -1,12 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
-  <title id="title">终端与运行日志</title>
-  <desc id="desc">深色终端窗口与运行命令组成的技术文章封面</desc>
-  <rect width="1200" height="720" rx="42" fill="#111827"/>
-  <rect x="72" y="76" width="1056" height="568" rx="28" fill="#0b1220" stroke="#334155" stroke-width="4"/>
-  <circle cx="124" cy="128" r="13" fill="#fb7185"/>
-  <circle cx="168" cy="128" r="13" fill="#fbbf24"/>
-  <circle cx="212" cy="128" r="13" fill="#4ade80"/>
-  <text x="116" y="294" fill="#93c5fd" font-family="ui-monospace,monospace" font-size="58">$ java -jar zrlog</text>
-  <text x="116" y="390" fill="#f8fafc" font-family="system-ui,sans-serif" font-size="68" font-weight="700">Build · Run · Observe</text>
-  <text x="116" y="475" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="30">notes from a small home server</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img"
+     aria-labelledby="title desc">
+    <title id="title">终端与运行日志</title>
+    <desc id="desc">深色终端窗口与运行命令组成的技术文章封面</desc>
+    <rect width="1200" height="720" rx="42" fill="#111827"/>
+    <rect x="72" y="76" width="1056" height="568" rx="28" fill="#0b1220" stroke="#334155" stroke-width="4"/>
+    <circle cx="124" cy="128" r="13" fill="#fb7185"/>
+    <circle cx="168" cy="128" r="13" fill="#fbbf24"/>
+    <circle cx="212" cy="128" r="13" fill="#4ade80"/>
+    <text x="116" y="294" fill="#93c5fd" font-family="ui-monospace,monospace" font-size="58">$ java -jar zrlog</text>
+    <text x="116" y="390" fill="#f8fafc" font-family="system-ui,sans-serif" font-size="68" font-weight="700">Build · Run
+        · Observe
+    </text>
+    <text x="116" y="475" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="30">notes from a small home
+        server
+    </text>
 </svg>

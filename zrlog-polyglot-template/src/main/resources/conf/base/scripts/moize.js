@@ -2,7 +2,7 @@
 'use strict';
 
 const moize = {
-    shallow: function(...args) {
+    shallow: function (...args) {
         return args.filter(Boolean).join('/').replace(/\/+/g, '/');
     },
 };

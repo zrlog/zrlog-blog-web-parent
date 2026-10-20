@@ -4,7 +4,6 @@ import com.hibegin.common.util.EnvKit;
 import com.zrlog.business.plugin.ArticleStatisticsPlugin;
 import com.zrlog.business.plugin.RequestInfo;
 import com.zrlog.util.ThreadUtils;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -16,8 +15,8 @@ import java.util.concurrent.TimeUnit;
 @Singleton
 public class ArticleStatisticsPluginImpl implements ArticleStatisticsPlugin {
 
-    private ScheduledExecutorService clickSchedule;
     private final ArticleStatisticsRunnable runnable;
+    private ScheduledExecutorService clickSchedule;
 
     @Inject
     public ArticleStatisticsPluginImpl(ArticleStatisticsRunnable runnable) {

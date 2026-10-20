@@ -83,6 +83,20 @@ public class ZrLogTemplateRender implements TemplateRender {
         }
     }
 
+    /**
+     * 处理静态化文件
+     */
+    static boolean catGeneratorHtml(HttpRequest request, boolean staticHtml) {
+        if (BaseStaticSitePlugin.isStaticPluginRequest(request)) {
+            return false;
+        }
+        String targetUri = request.getUri();
+        if (!staticHtml) {
+            return false;
+        }
+        return targetUri.endsWith(".html");
+    }
+
     private ZrLogTemplate setupTemplate() throws Exception {
 
         TemplateVO templateVO = TemplateInfoHelper.loadTemplateVO(pageInfo.getTemplate());
@@ -130,20 +144,6 @@ public class ZrLogTemplateRender implements TemplateRender {
     @Override
     public String render(String s) {
         throw new NotImplementException();
-    }
-
-    /**
-     * 处理静态化文件
-     */
-    static boolean catGeneratorHtml(HttpRequest request, boolean staticHtml) {
-        if (BaseStaticSitePlugin.isStaticPluginRequest(request)) {
-            return false;
-        }
-        String targetUri = request.getUri();
-        if (!staticHtml) {
-            return false;
-        }
-        return targetUri.endsWith(".html");
     }
 
     @Override

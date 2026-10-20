@@ -12,6 +12,7 @@ import com.zrlog.web.inteceptor.DefaultInterceptor;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -19,6 +20,14 @@ public class DevZrLogConfigTest {
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    private static void restoreProperty(String key, String value) {
+        if (value == null) {
+            System.clearProperty(key);
+        } else {
+            System.setProperty(key, value);
+        }
+    }
 
     @Test
     public void shouldConfigureBlogDevRuntimeWithoutInstalledDatabase() throws Exception {
@@ -57,14 +66,6 @@ public class DevZrLogConfigTest {
             assertTrue(plugins.stream().anyMatch(UpdateVersionInfoPlugin.class::isInstance));
         } finally {
             restoreProperty("sws.root.path", previousRootPath);
-        }
-    }
-
-    private static void restoreProperty(String key, String value) {
-        if (value == null) {
-            System.clearProperty(key);
-        } else {
-            System.setProperty(key, value);
         }
     }
 }

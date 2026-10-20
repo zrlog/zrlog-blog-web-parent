@@ -2,10 +2,10 @@
 'use strict';
 
 const path = {
-    join: function(...args) {
+    join: function (...args) {
         return args.filter(Boolean).join('/').replace(/\/+/g, '/');
     },
-    extname: function(p) {
+    extname: function (p) {
         const idx = p.lastIndexOf('.');
         return idx < 0 ? '' : p.substring(idx);
     },

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title">
-  <title id="title">ZrLog</title>
-  <rect width="48" height="48" rx="12" fill="#2563eb"/>
-  <path d="M14 15h20v5L21 33h13v5H14v-5l13-13H14z" fill="#fff"/>
+    <title id="title">ZrLog</title>
+    <rect width="48" height="48" rx="12" fill="#2563eb"/>
+    <path d="M14 15h20v5L21 33h13v5H14v-5l13-13H14z" fill="#fff"/>
 </svg>

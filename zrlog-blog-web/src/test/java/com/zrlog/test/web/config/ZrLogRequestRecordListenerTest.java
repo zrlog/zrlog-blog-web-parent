@@ -12,12 +12,46 @@ import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ZrLogRequestRecordListenerTest {
+
+    private static HttpRequest request(HttpMethod method, String uri, Map<String, Object> attrs,
+                                       Map<String, String> headers, long createTime) {
+        return (HttpRequest) Proxy.newProxyInstance(
+                ZrLogRequestRecordListenerTest.class.getClassLoader(),
+                new Class[]{HttpRequest.class},
+                (proxy, invokedMethod, args) -> {
+                    if ("getMethod".equals(invokedMethod.getName())) {
+                        return method;
+                    }
+                    if ("getUri".equals(invokedMethod.getName())) {
+                        return uri;
+                    }
+                    if ("getAttr".equals(invokedMethod.getName())) {
+                        return attrs;
+                    }
+                    if ("getCreateTime".equals(invokedMethod.getName())) {
+                        return createTime;
+                    }
+                    if ("getContextPath".equals(invokedMethod.getName())) {
+                        return "/blog";
+                    }
+                    if ("getHeader".equals(invokedMethod.getName())) {
+                        return headers.get(args[0].toString());
+                    }
+                    if ("getHeaderMap".equals(invokedMethod.getName())) {
+                        return headers;
+                    }
+                    if ("getRemoteHost".equals(invokedMethod.getName())) {
+                        return "127.0.0.1";
+                    }
+                    if ("toString".equals(invokedMethod.getName())) {
+                        return "HttpRequestProxy";
+                    }
+                    return null;
+                });
+    }
 
     @Test
     public void shouldRecordHandledArticlePage() throws Exception {
@@ -89,43 +123,6 @@ public class ZrLogRequestRecordListenerTest {
     private void withConfig(boolean installed, FakeArticleStatisticsPlugin plugin,
                             java.util.function.Consumer<ZrLogRequestRecordListener> action) {
         action.accept(new ZrLogRequestRecordListener(() -> installed, () -> plugin));
-    }
-
-    private static HttpRequest request(HttpMethod method, String uri, Map<String, Object> attrs,
-                                       Map<String, String> headers, long createTime) {
-        return (HttpRequest) Proxy.newProxyInstance(
-                ZrLogRequestRecordListenerTest.class.getClassLoader(),
-                new Class[]{HttpRequest.class},
-                (proxy, invokedMethod, args) -> {
-                    if ("getMethod".equals(invokedMethod.getName())) {
-                        return method;
-                    }
-                    if ("getUri".equals(invokedMethod.getName())) {
-                        return uri;
-                    }
-                    if ("getAttr".equals(invokedMethod.getName())) {
-                        return attrs;
-                    }
-                    if ("getCreateTime".equals(invokedMethod.getName())) {
-                        return createTime;
-                    }
-                    if ("getContextPath".equals(invokedMethod.getName())) {
-                        return "/blog";
-                    }
-                    if ("getHeader".equals(invokedMethod.getName())) {
-                        return headers.get(args[0].toString());
-                    }
-                    if ("getHeaderMap".equals(invokedMethod.getName())) {
-                        return headers;
-                    }
-                    if ("getRemoteHost".equals(invokedMethod.getName())) {
-                        return "127.0.0.1";
-                    }
-                    if ("toString".equals(invokedMethod.getName())) {
-                        return "HttpRequestProxy";
-                    }
-                    return null;
-                });
     }
 
     private static class FakeArticleStatisticsPlugin implements ArticleStatisticsPlugin {

@@ -11,15 +11,15 @@ import java.util.HashMap;
 
 public class TestUpgrade extends TestApplication {
 
+    public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
+        TestUpgrade testUpgrade = new TestUpgrade();
+        testUpgrade.upgrade();
+    }
+
     //@Test
     public void upgrade() throws IOException, URISyntaxException, InterruptedException {
         File warFile = HttpUtil.getInstance().sendGetRequest("https://dl.zrlog.com/release/zrlog.war", new HashMap<>(), new HttpFileHandle(System.getProperty("java.io.tmpdir")), new HashMap<>()).getT();
         System.out.println("warFile = " + warFile);
         //new WarUpdateVersionThread(warFile).run();
-    }
-
-    public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
-        TestUpgrade testUpgrade = new TestUpgrade();
-        testUpgrade.upgrade();
     }
 }

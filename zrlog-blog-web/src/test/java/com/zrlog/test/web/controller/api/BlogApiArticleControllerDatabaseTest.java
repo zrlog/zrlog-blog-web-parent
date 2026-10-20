@@ -1,8 +1,5 @@
 package com.zrlog.test.web.controller.api;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.web.Controller;
@@ -13,7 +10,6 @@ import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
 import com.zrlog.test.support.InMemoryBlogDatabase;
-
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -23,48 +19,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
 public class BlogApiArticleControllerDatabaseTest {
-
-    @Test
-    public void shouldServeArticleApisThroughRealDatabase() throws Exception {
-        try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
-            seedArticles(database);
-            database.insertComment(1, 2, "api comment");
-            BlogApiArticleController controller =
-                    database.component(BlogComponent.class).articleApi();
-
-            setControllerRequest(controller, request(Map.of("id", "hello-world")));
-            ApiStandardResponse<ArticleDetailDTO> detail = controller.detail();
-
-            assertEquals(Long.valueOf(2), detail.getData().getId());
-            assertEquals("hello-world", detail.getData().getAlias());
-            assertEquals("api comment", detail.getData().getComments().get(0).getUserComment());
-
-            setControllerRequest(controller, request(Map.of("key", "Java", "page", "1", "size", "10")));
-            ApiStandardResponse<PageData<ArticleBasicDTO>> page = controller.index();
-
-            assertEquals(1L, page.getData().getTotalElements());
-            assertEquals("java-post", page.getData().getRows().get(0).getAlias());
-            assertFalse(page.getData().getRows().get(0).getTags().isEmpty());
-
-            database.update("update log set sticky=? where logId=?", 1, 1);
-            setControllerRequest(controller, request(Map.of("page", "1", "size", "10")));
-            ApiStandardResponse<PageData<ArticleBasicDTO>> homePage = controller.index();
-            setControllerRequest(controller, request(Map.of("feed", "true", "page", "1", "size", "10")));
-            ApiStandardResponse<PageData<ArticleBasicDTO>> feedPage = controller.index();
-
-            assertEquals("previous-post", homePage.getData().getRows().get(0).getAlias());
-            assertEquals("java-post", feedPage.getData().getRows().get(0).getAlias());
-
-            setControllerRequest(controller, request(Map.of("id", "2")));
-            ApiStandardResponse<List<VisitorCommentDTO>> comments = controller.comment();
-
-            assertEquals(1, comments.getData().size());
-            assertEquals("api comment", comments.getData().get(0).getUserComment());
-            assertEquals("reader", comments.getData().get(0).getUserName());
-            assertFalse(comments.getData().get(0).getGravatarId().isEmpty());
-        }
-    }
 
     private static void seedArticles(InMemoryBlogDatabase database) throws Exception {
         database.insertArticle(1, "previous-post", "Previous Post", "Previous content", "history",
@@ -126,5 +84,46 @@ public class BlogApiArticleControllerDatabaseTest {
                     }
                     return null;
                 });
+    }
+
+    @Test
+    public void shouldServeArticleApisThroughRealDatabase() throws Exception {
+        try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
+            seedArticles(database);
+            database.insertComment(1, 2, "api comment");
+            BlogApiArticleController controller =
+                    database.component(BlogComponent.class).articleApi();
+
+            setControllerRequest(controller, request(Map.of("id", "hello-world")));
+            ApiStandardResponse<ArticleDetailDTO> detail = controller.detail();
+
+            assertEquals(Long.valueOf(2), detail.getData().getId());
+            assertEquals("hello-world", detail.getData().getAlias());
+            assertEquals("api comment", detail.getData().getComments().get(0).getUserComment());
+
+            setControllerRequest(controller, request(Map.of("key", "Java", "page", "1", "size", "10")));
+            ApiStandardResponse<PageData<ArticleBasicDTO>> page = controller.index();
+
+            assertEquals(1L, page.getData().getTotalElements());
+            assertEquals("java-post", page.getData().getRows().get(0).getAlias());
+            assertFalse(page.getData().getRows().get(0).getTags().isEmpty());
+
+            database.update("update log set sticky=? where logId=?", 1, 1);
+            setControllerRequest(controller, request(Map.of("page", "1", "size", "10")));
+            ApiStandardResponse<PageData<ArticleBasicDTO>> homePage = controller.index();
+            setControllerRequest(controller, request(Map.of("feed", "true", "page", "1", "size", "10")));
+            ApiStandardResponse<PageData<ArticleBasicDTO>> feedPage = controller.index();
+
+            assertEquals("previous-post", homePage.getData().getRows().get(0).getAlias());
+            assertEquals("java-post", feedPage.getData().getRows().get(0).getAlias());
+
+            setControllerRequest(controller, request(Map.of("id", "2")));
+            ApiStandardResponse<List<VisitorCommentDTO>> comments = controller.comment();
+
+            assertEquals(1, comments.getData().size());
+            assertEquals("api comment", comments.getData().get(0).getUserComment());
+            assertEquals("reader", comments.getData().get(0).getUserName());
+            assertFalse(comments.getData().get(0).getGravatarId().isEmpty());
+        }
     }
 }

@@ -15,23 +15,72 @@ import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSiteInfoProvider;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+
+import static org.junit.Assert.*;
 
 public class ArticleServiceTest {
 
-    private com.zrlog.common.ZrLogConfig applicationConfig;
-
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    private com.zrlog.common.ZrLogConfig applicationConfig;
+
+    private static ArticleBasicDTO article() {
+        ArticleBasicDTO article = new ArticleBasicDTO();
+        article.setLogId(10L);
+        article.setAlias("hello-world");
+        article.setTypeAlias("default");
+        article.setTitle("<b>Hello</b>");
+        article.setCanComment(true);
+        article.setRubbish(true);
+        article.setPrivacy(false);
+        article.setHot(true);
+        article.setRecommended(false);
+        article.setReleaseTime("2026-06-29 12:13:14");
+        article.setLastUpdateDate("2026-06-29 13:14:15");
+        article.setLast_update_date("2026-06-29 13:14:15");
+        article.setDigest(null);
+        article.setContent(null);
+        article.setThumbnail("/attached/cover.png");
+        article.setKeywords("java,zrlog,,");
+        return article;
+    }
+
+    private static HttpRequest request(String contextPath, String host) {
+        return (HttpRequest) Proxy.newProxyInstance(
+                ArticleServiceTest.class.getClassLoader(),
+                new Class[]{HttpRequest.class},
+                (proxy, method, args) -> {
+                    if ("getContextPath".equals(method.getName())) {
+                        return contextPath;
+                    }
+                    if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
+                        return host;
+                    }
+                    if ("getHeaderMap".equals(method.getName())) {
+                        return Collections.singletonMap("Host", host);
+                    }
+                    if ("toString".equals(method.getName())) {
+                        return "HttpRequestProxy";
+                    }
+                    return null;
+                });
+    }
+
+    private static void restoreProperty(String key, String value) {
+        if (value == null) {
+            System.clearProperty(key);
+        } else {
+            System.setProperty(key, value);
+        }
+    }
 
     @Test
     public void shouldNormalizeArticleForBlogRendering() throws Exception {
@@ -87,27 +136,6 @@ public class ArticleServiceTest {
         });
     }
 
-    private static ArticleBasicDTO article() {
-        ArticleBasicDTO article = new ArticleBasicDTO();
-        article.setLogId(10L);
-        article.setAlias("hello-world");
-        article.setTypeAlias("default");
-        article.setTitle("<b>Hello</b>");
-        article.setCanComment(true);
-        article.setRubbish(true);
-        article.setPrivacy(false);
-        article.setHot(true);
-        article.setRecommended(false);
-        article.setReleaseTime("2026-06-29 12:13:14");
-        article.setLastUpdateDate("2026-06-29 13:14:15");
-        article.setLast_update_date("2026-06-29 13:14:15");
-        article.setDigest(null);
-        article.setContent(null);
-        article.setThumbnail("/attached/cover.png");
-        article.setKeywords("java,zrlog,,");
-        return article;
-    }
-
     private void withConfig(PublicWebSiteInfo publicWebSiteInfo, ThrowingRunnable runnable) throws Exception {
         String previousRootPath = System.getProperty("sws.root.path");
         try {
@@ -116,35 +144,6 @@ public class ArticleServiceTest {
             runnable.run(((ArticleZrLogConfig) applicationConfig).cacheForTest());
         } finally {
             restoreProperty("sws.root.path", previousRootPath);
-        }
-    }
-
-    private static HttpRequest request(String contextPath, String host) {
-        return (HttpRequest) Proxy.newProxyInstance(
-                ArticleServiceTest.class.getClassLoader(),
-                new Class[]{HttpRequest.class},
-                (proxy, method, args) -> {
-                    if ("getContextPath".equals(method.getName())) {
-                        return contextPath;
-                    }
-                    if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
-                        return host;
-                    }
-                    if ("getHeaderMap".equals(method.getName())) {
-                        return Collections.singletonMap("Host", host);
-                    }
-                    if ("toString".equals(method.getName())) {
-                        return "HttpRequestProxy";
-                    }
-                    return null;
-                });
-    }
-
-    private static void restoreProperty(String key, String value) {
-        if (value == null) {
-            System.clearProperty(key);
-        } else {
-            System.setProperty(key, value);
         }
     }
 

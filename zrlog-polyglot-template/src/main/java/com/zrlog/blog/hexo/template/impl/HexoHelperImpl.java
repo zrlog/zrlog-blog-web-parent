@@ -14,6 +14,23 @@ public class HexoHelperImpl {
         this.basePageInfo = basePageInfo;
     }
 
+    public static ProxyExecutable getUrlJoinProvider() {
+        return args -> {
+            if (args.length == 0) return "";
+
+            String joined = Arrays.stream(args)
+                    .map(v -> v.isNull() ? "" : v.asString())
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.joining("/"));
+
+            // 正则处理：
+            // 1. 将三个及以上连续斜杠转为单斜杠 (/// -> /)
+            // 2. 将非协议头位置的双斜杠转为单斜杠 (a//b -> a/b)
+            // 3. 保护协议头 (http:// 保持不变)
+            return joined.replaceAll("(?<!:)/{2,}", "/");
+        };
+    }
+
     // 对应 url_for(path)
     public String url_for(String path) {
         String root = basePageInfo.getBaseUrl();
@@ -39,22 +56,5 @@ public class HexoHelperImpl {
             return root + path.substring(basePageInfo.getContextPath().length() + 1);
         }
         return root + path;
-    }
-
-    public static ProxyExecutable getUrlJoinProvider() {
-        return args -> {
-            if (args.length == 0) return "";
-
-            String joined = Arrays.stream(args)
-                    .map(v -> v.isNull() ? "" : v.asString())
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.joining("/"));
-
-            // 正则处理：
-            // 1. 将三个及以上连续斜杠转为单斜杠 (/// -> /)
-            // 2. 将非协议头位置的双斜杠转为单斜杠 (a//b -> a/b)
-            // 3. 保护协议头 (http:// 保持不变)
-            return joined.replaceAll("(?<!:)/{2,}", "/");
-        };
     }
 }

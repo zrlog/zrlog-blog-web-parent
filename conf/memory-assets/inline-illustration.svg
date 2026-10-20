@@ -1,15 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420" role="img" aria-labelledby="title desc">
-  <title id="title">书桌旁的电脑与笔记本</title>
-  <desc id="desc">一张放着电脑、笔记本和咖啡杯的简洁书桌插图</desc>
-  <rect width="960" height="420" rx="32" fill="#eef4ff"/>
-  <circle cx="790" cy="84" r="38" fill="#fbbf24" opacity=".85"/>
-  <path d="M0 318h960v102H0z" fill="#c7a47a"/>
-  <rect x="120" y="70" width="470" height="260" rx="20" fill="#1e293b"/>
-  <rect x="142" y="92" width="426" height="216" rx="10" fill="#dbeafe"/>
-  <path d="M190 144h214M190 184h300M190 224h250" stroke="#5b7dbd" stroke-width="14" stroke-linecap="round" opacity=".72"/>
-  <path d="M305 330h100l18 42H287z" fill="#475569"/>
-  <rect x="642" y="188" width="188" height="142" rx="12" fill="#fffdf7" stroke="#94a3b8" stroke-width="4"/>
-  <path d="M670 226h126M670 260h112M670 294h94" stroke="#94a3b8" stroke-width="7" stroke-linecap="round"/>
-  <path d="M842 242h42a34 34 0 0 1 0 68h-42" fill="none" stroke="#3158a5" stroke-width="10"/>
-  <rect x="814" y="222" width="52" height="108" rx="12" fill="#3158a5"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420" role="img"
+     aria-labelledby="title desc">
+    <title id="title">书桌旁的电脑与笔记本</title>
+    <desc id="desc">一张放着电脑、笔记本和咖啡杯的简洁书桌插图</desc>
+    <rect width="960" height="420" rx="32" fill="#eef4ff"/>
+    <circle cx="790" cy="84" r="38" fill="#fbbf24" opacity=".85"/>
+    <path d="M0 318h960v102H0z" fill="#c7a47a"/>
+    <rect x="120" y="70" width="470" height="260" rx="20" fill="#1e293b"/>
+    <rect x="142" y="92" width="426" height="216" rx="10" fill="#dbeafe"/>
+    <path d="M190 144h214M190 184h300M190 224h250" stroke="#5b7dbd" stroke-width="14" stroke-linecap="round"
+          opacity=".72"/>
+    <path d="M305 330h100l18 42H287z" fill="#475569"/>
+    <rect x="642" y="188" width="188" height="142" rx="12" fill="#fffdf7" stroke="#94a3b8" stroke-width="4"/>
+    <path d="M670 226h126M670 260h112M670 294h94" stroke="#94a3b8" stroke-width="7" stroke-linecap="round"/>
+    <path d="M842 242h42a34 34 0 0 1 0 68h-42" fill="none" stroke="#3158a5" stroke-width="10"/>
+    <rect x="814" y="222" width="52" height="108" rx="12" fill="#3158a5"/>
 </svg>

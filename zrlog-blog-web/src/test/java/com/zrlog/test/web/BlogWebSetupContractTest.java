@@ -1,9 +1,5 @@
 package com.zrlog.test.web;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import com.hibegin.common.dao.DataSourceWrapper;
 import com.zrlog.blog.web.BlogWebSetup;
 import com.zrlog.blog.web.BlogWebSetupProvider;
@@ -23,7 +19,6 @@ import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSetup;
 import com.zrlog.web.WebSetupContext;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -31,10 +26,24 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.util.List;
 
+import static org.junit.Assert.*;
+
 public class BlogWebSetupContractTest {
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    private static boolean hasPlugin(Plugins plugins, Class<?> pluginClass) {
+        return plugins.stream().anyMatch(pluginClass::isInstance);
+    }
+
+    private static void restoreProperty(String key, String value) {
+        if (value == null) {
+            System.clearProperty(key);
+        } else {
+            System.setProperty(key, value);
+        }
+    }
 
     @Test
     public void shouldExposeProviderMetadataAndCreateSetup() throws Exception {
@@ -75,12 +84,12 @@ public class BlogWebSetupContractTest {
 
         new DataWebSetup(config).setup();
         new ServiceWebSetup(
-                        new WebSetupContext(
-                                config,
-                                new File("db.properties"),
-                                new File("install.lock"),
-                                "/blog",
-                                null))
+                new WebSetupContext(
+                        config,
+                        new File("db.properties"),
+                        new File("install.lock"),
+                        "/blog",
+                        null))
                 .setup();
         BlogWebSetup setup = new BlogWebSetup(config, "/blog", true);
         setup.setup();
@@ -102,18 +111,6 @@ public class BlogWebSetupContractTest {
             return new TestZrLogConfig();
         } finally {
             restoreProperty("sws.root.path", previousRootPath);
-        }
-    }
-
-    private static boolean hasPlugin(Plugins plugins, Class<?> pluginClass) {
-        return plugins.stream().anyMatch(pluginClass::isInstance);
-    }
-
-    private static void restoreProperty(String key, String value) {
-        if (value == null) {
-            System.clearProperty(key);
-        } else {
-            System.setProperty(key, value);
         }
     }
 

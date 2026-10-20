@@ -3,7 +3,6 @@ package com.zrlog.blog.polyglot;
 import com.zrlog.blog.polyglot.resource.ScriptProvider;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
-import org.graalvm.polyglot.proxy.ProxyExecutable;
 
 import java.util.Map;
 
