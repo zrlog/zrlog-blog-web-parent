@@ -4,15 +4,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-import com.hibegin.common.dao.DAO;
 import com.hibegin.common.dao.DataSourceWrapper;
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.common.dao.dto.PageRequest;
 import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.business.rest.response.ApiStandardResponse;
-import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
+import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.web.controller.api.BlogApiArticleController;
 import com.zrlog.blog.web.controller.api.BlogApiCacheController;
 import com.zrlog.blog.web.controller.api.BlogApiPublicController;
@@ -28,7 +27,6 @@ import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
 import com.zrlog.model.Comment;
-import com.zrlog.model.Log;
 import com.zrlog.util.I18nUtil;
 
 import org.apache.commons.dbutils.QueryRunner;
@@ -47,6 +45,8 @@ import java.util.List;
 import java.util.Map;
 
 public class BlogApiControllerContractTest {
+
+    private DataSourceWrapper queryDataSource;
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -110,7 +110,7 @@ public class BlogApiControllerContractTest {
     public void shouldReturnArticleDetailFromArticleService() throws Exception {
         FakeArticleService articleService = new FakeArticleService();
         BlogApiArticleController controller =
-                new BlogApiArticleController(articleService, Comment::new);
+                new BlogApiArticleController(articleService, () -> new Comment(queryDataSource));
         ArticleDetailDTO detail = new ArticleDetailDTO();
         detail.setLogId(7L);
         articleService.detail = detail;
@@ -128,7 +128,7 @@ public class BlogApiControllerContractTest {
     public void shouldReturnArticlePageDataFromArticleService() throws Exception {
         FakeArticleService articleService = new FakeArticleService();
         BlogApiArticleController controller =
-                new BlogApiArticleController(articleService, Comment::new);
+                new BlogApiArticleController(articleService, () -> new Comment(queryDataSource));
         ArticleBasicDTO row = new ArticleBasicDTO();
         row.setLogId(8L);
         articleService.pageData = new PageData<>(1L, List.of(row), 2L, 5L);
@@ -149,7 +149,7 @@ public class BlogApiControllerContractTest {
     public void shouldRequestNewestFirstArticlePageForFeed() throws Exception {
         FakeArticleService articleService = new FakeArticleService();
         BlogApiArticleController controller =
-                new BlogApiArticleController(articleService, Comment::new);
+                new BlogApiArticleController(articleService, () -> new Comment(queryDataSource));
         setControllerRequest(controller, request(Map.of("feed", "true")));
 
         controller.index();
@@ -160,9 +160,9 @@ public class BlogApiControllerContractTest {
     @Test
     public void shouldReturnVisitorCommentsFromDao() throws Exception {
         BlogApiArticleController controller =
-                new BlogApiArticleController(new FakeArticleService(), Comment::new);
+                new BlogApiArticleController(new FakeArticleService(), () -> new Comment(queryDataSource));
         FakeCommentQueryRunner queryRunner = new FakeCommentQueryRunner();
-        DataSourceWrapper previousDataSource = setDefaultDataSource(dataSource(queryRunner));
+        DataSourceWrapper previousDataSource = setQueryDataSource(dataSource(queryRunner));
         try {
             setControllerRequest(controller, request(Map.of("id", "7")));
 
@@ -175,7 +175,7 @@ public class BlogApiControllerContractTest {
             assertEquals("select * from comment where logId=?", queryRunner.sql);
             assertEquals(7, queryRunner.params[0]);
         } finally {
-            restoreDefaultDataSource(previousDataSource);
+            restoreQueryDataSource(previousDataSource);
         }
     }
 
@@ -262,14 +262,14 @@ public class BlogApiControllerContractTest {
         field.set(controller, articleService);
     }
 
-    private static DataSourceWrapper setDefaultDataSource(DataSourceWrapper dataSource) {
-        DataSourceWrapper previous = DAO.getDefaultDataSource();
-        DAO.setDs(dataSource);
+    private DataSourceWrapper setQueryDataSource(DataSourceWrapper dataSource) {
+        DataSourceWrapper previous = queryDataSource;
+        queryDataSource = dataSource;
         return previous;
     }
 
-    private static void restoreDefaultDataSource(DataSourceWrapper previousDataSource) {
-        DAO.setDs(previousDataSource);
+    private void restoreQueryDataSource(DataSourceWrapper previousDataSource) {
+        queryDataSource = previousDataSource;
     }
 
     private static DataSourceWrapper dataSource(QueryRunner queryRunner) {
@@ -362,7 +362,7 @@ public class BlogApiControllerContractTest {
 
     private static class FakeArticleService extends ArticleService {
         private FakeArticleService() {
-            super(org.mockito.Mockito.mock(CacheService.class), Log::new);
+            super(org.mockito.Mockito.mock(CacheService.class), () -> { throw new AssertionError("Unexpected article query"); });
         }
 
         private ArticleDetailDTO detail;

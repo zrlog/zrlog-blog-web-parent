@@ -45,6 +45,8 @@ public class InMemoryBlogDatabase implements AutoCloseable {
         return cacheService;
     }
 
+    public DataSourceWrapper dataSource() { return database.dataSource(); }
+
     public ZrLogConfig config() {
         return config;
     }

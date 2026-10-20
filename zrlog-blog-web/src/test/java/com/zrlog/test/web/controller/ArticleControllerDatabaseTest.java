@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.hibegin.common.dao.DataSourceWrapper;
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.http.HttpMethod;
 import com.hibegin.http.server.api.HttpRequest;
@@ -38,9 +39,9 @@ public class ArticleControllerDatabaseTest {
             database.update("update log set sticky=? where logId=?", 1, 4);
             Map<String, Object> firstPageAttrs = new HashMap<>();
 
-            String view = controller(database.cacheService(), request("/all-1.html", HttpMethod.GET, "", firstPageAttrs)).index();
+            String view = controller(database.cacheService(), request("/all-1.html", HttpMethod.GET, "", firstPageAttrs), database.dataSource()).index();
             Map<String, Object> secondPageAttrs = new HashMap<>();
-            controller(database.cacheService(), request("/all-2.html", HttpMethod.GET, "", secondPageAttrs)).index();
+            controller(database.cacheService(), request("/all-2.html", HttpMethod.GET, "", secondPageAttrs), database.dataSource()).index();
 
             assertEquals("index", view);
             assertEquals("all-", firstPageAttrs.get("yurl"));
@@ -63,7 +64,7 @@ public class ArticleControllerDatabaseTest {
             seedArticles(database);
             Map<String, Object> attrs = new HashMap<>();
 
-            String view = controller(database.cacheService(), request("/search/Java-1.html", HttpMethod.GET, "", attrs))
+            String view = controller(database.cacheService(), request("/search/Java-1.html", HttpMethod.GET, "", attrs), database.dataSource())
                     .search();
 
             assertEquals("page", view);
@@ -85,19 +86,19 @@ public class ArticleControllerDatabaseTest {
 
             Map<String, Object> sortAttrs = new HashMap<>();
             assertEquals("page", controller(database.cacheService(), request("/sort/default-1.html", HttpMethod.GET, "",
-                    sortAttrs)).sort());
+                    sortAttrs), database.dataSource()).sort());
             assertEquals("Default", sortAttrs.get("tipsName"));
             assertEquals(3L, pageData(sortAttrs).getTotalElements());
             assertEquals(List.of("last-public", "java-post"), aliases(pageData(sortAttrs)));
 
             Map<String, Object> tagAttrs = new HashMap<>();
-            assertEquals("page", controller(database.cacheService(), request("/tag/java.html", HttpMethod.GET, "", tagAttrs)).tag());
+            assertEquals("page", controller(database.cacheService(), request("/tag/java.html", HttpMethod.GET, "", tagAttrs), database.dataSource()).tag());
             assertEquals("java", tagAttrs.get("tipsName"));
             assertEquals(1L, pageData(tagAttrs).getTotalElements());
 
             Map<String, Object> recordAttrs = new HashMap<>();
             assertEquals("page", controller(database.cacheService(), request("/record/2026_06.html", HttpMethod.GET, "",
-                    recordAttrs)).record());
+                    recordAttrs), database.dataSource()).record());
             assertEquals("2026_06", recordAttrs.get("tipsName"));
             assertEquals(3L, pageData(recordAttrs).getTotalElements());
         }
@@ -110,7 +111,7 @@ public class ArticleControllerDatabaseTest {
             seedArticles(database);
             Map<String, Object> attrs = new HashMap<>();
 
-            assertEquals("archives", controller(database.cacheService(), request("/archives.html", HttpMethod.GET, "", attrs)).archives());
+            assertEquals("archives", controller(database.cacheService(), request("/archives.html", HttpMethod.GET, "", attrs), database.dataSource()).archives());
 
             assertEquals("archives", attrs.get("yurl"));
             PageData<ArticleBasicDTO> data = pageData(attrs);
@@ -119,13 +120,13 @@ public class ArticleControllerDatabaseTest {
         }
     }
 
-    private ArticleController controller(CacheService cache, HttpRequest httpRequest) {
+    private ArticleController controller(CacheService cache, HttpRequest httpRequest, DataSourceWrapper testDataSource) {
         return new ArticleController(
                 cache,
-                new ArticleService(cache, Log::new),
+                new ArticleService(cache, () -> new Log(testDataSource)),
                 () -> applicationConfig == null ? null : applicationConfig.getTokenService(),
                 () -> applicationConfig.getPlugin(PluginCorePlugin.class),
-                Log::new) {
+                () -> new Log(testDataSource)) {
             {
                 this.request = httpRequest;
             }

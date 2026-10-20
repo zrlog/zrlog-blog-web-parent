@@ -34,7 +34,7 @@ public class BlogApiArticleControllerDatabaseTest {
             database.insertComment(1, 2, "api comment");
             BlogApiArticleController controller =
                     new BlogApiArticleController(
-                            new ArticleService(database.cacheService(), Log::new), Comment::new);
+                            new ArticleService(database.cacheService(), () -> new Log(database.dataSource())), () -> new Comment(database.dataSource()));
 
             setControllerRequest(controller, request(Map.of("id", "hello-world")));
             ApiStandardResponse<ArticleDetailDTO> detail = controller.detail();

@@ -7,6 +7,5 @@ public class TestTag extends TestApplication {
 
     @Test
     public void testUpdate() {
-        //new Tag().update("java,java ", "C#,C# ");
     }
 }

@@ -8,8 +8,8 @@ import static org.junit.Assert.assertTrue;
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.common.dao.dto.PageRequestImpl;
 import com.hibegin.http.server.api.HttpRequest;
-import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
+import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.model.Log;
@@ -31,7 +31,7 @@ public class ArticleServiceDatabaseTest {
             database.insertComment(1, 2, "first comment");
 
             ArticleDetailDTO detail =
-                    new ArticleService(database.cacheService(), Log::new)
+                    new ArticleService(database.cacheService(), () -> new Log(database.dataSource()))
                             .detail("hello-world", request("/blog"));
 
             assertNotNull(detail);
@@ -62,7 +62,7 @@ public class ArticleServiceDatabaseTest {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
             seedThreePublishedArticles(database);
             database.insertComment(1, 2, "first comment");
-            ArticleService service = new ArticleService(database.cacheService(), Log::new);
+            ArticleService service = new ArticleService(database.cacheService(), () -> new Log(database.dataSource()));
             var site = database.cacheService().getPublicWebSiteInfo();
             site.setHost("configured.example");
             site.setGenerator_html_status(true);
@@ -95,7 +95,7 @@ public class ArticleServiceDatabaseTest {
                     "2026-06-03 10:00:00", false, false);
 
             PageData<ArticleBasicDTO> data =
-                    new ArticleService(database.cacheService(), Log::new)
+                    new ArticleService(database.cacheService(), () -> new Log(database.dataSource()))
                             .pageByKeywords(
                                     new PageRequestImpl(1L, 10L),
                                     "Java",
@@ -124,7 +124,7 @@ public class ArticleServiceDatabaseTest {
             database.insertArticle(3, "other-post", "Other Post", "Other content", "other",
                     "2026-06-03 10:00:00", false, false);
             database.update("update log set sticky=? where logId=?", 1, 1);
-            ArticleService service = new ArticleService(database.cacheService(), Log::new);
+            ArticleService service = new ArticleService(database.cacheService(), () -> new Log(database.dataSource()));
 
             PageData<ArticleBasicDTO> home = service.pageByKeywords(
                     new PageRequestImpl(1L, 10L), "", request("/blog"), ArticleListOrder.STICKY_FIRST);

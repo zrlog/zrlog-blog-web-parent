@@ -87,13 +87,13 @@ public class ArticleControllerTest {
                     ArticleController controller =
                             new ArticleController(
                                     cache,
-                                    new ArticleService(cache, Log::new),
+                                    new ArticleService(cache, () -> { throw new IllegalStateException("Database is unavailable in this test"); }),
                                     () ->
                                             applicationConfig == null
                                                     ? null
                                                     : applicationConfig.getTokenService(),
                                     () -> applicationConfig.getPlugin(PluginCorePlugin.class),
-                                    Log::new);
+                                    () -> { throw new IllegalStateException("Database is unavailable in this test"); });
                     setControllerRequest(controller, request("/link", attrs));
 
                     assertEquals("links", controller.link());
@@ -113,13 +113,13 @@ public class ArticleControllerTest {
                     ArticleController controller =
                             new ArticleController(
                                     cache,
-                                    new ArticleService(cache, Log::new),
+                                    new ArticleService(cache, () -> { throw new IllegalStateException("Database is unavailable in this test"); }),
                                     () ->
                                             applicationConfig == null
                                                     ? null
                                                     : applicationConfig.getTokenService(),
                                     () -> applicationConfig.getPlugin(PluginCorePlugin.class),
-                                    Log::new);
+                                    () -> { throw new IllegalStateException("Database is unavailable in this test"); });
                     setControllerRequest(controller, request("/tags", attrs));
 
                     assertEquals("tags", controller.tags());
@@ -136,14 +136,14 @@ public class ArticleControllerTest {
                     ArticleController controller =
                             new ArticleController(
                                     cache,
-                                    new ArticleService(cache, Log::new),
+                                    new ArticleService(cache, () -> { throw new IllegalStateException("Database is unavailable in this test"); }),
                                     () ->
                                             applicationConfig == null
                                                     ? null
                                                     : applicationConfig.getTokenService(),
                                     () -> applicationConfig.getPlugin(PluginCorePlugin.class),
-                                    Log::new);
-                    FakeArticleService articleService = new FakeArticleService();
+                                    () -> { throw new IllegalStateException("Database is unavailable in this test"); });
+                    FakeArticleService articleService = new FakeArticleService(null);
                     ArticleDetailDTO detail = new ArticleDetailDTO();
                     detail.setLogId(99L);
                     articleService.detail = detail;
@@ -166,14 +166,14 @@ public class ArticleControllerTest {
                     ArticleController controller =
                             new ArticleController(
                                     cache,
-                                    new ArticleService(cache, Log::new),
+                                    new ArticleService(cache, () -> { throw new IllegalStateException("Database is unavailable in this test"); }),
                                     () ->
                                             applicationConfig == null
                                                     ? null
                                                     : applicationConfig.getTokenService(),
                                     () -> applicationConfig.getPlugin(PluginCorePlugin.class),
-                                    Log::new);
-                    setArticleService(controller, new FakeArticleService());
+                                    () -> { throw new IllegalStateException("Database is unavailable in this test"); });
+                    setArticleService(controller, new FakeArticleService(null));
                     setControllerRequest(controller, request("/missing.html", attrs));
 
                     assertEquals("detail", controller.detail());
@@ -331,8 +331,8 @@ public class ArticleControllerTest {
     }
 
     private static class FakeArticleService extends ArticleService {
-        private FakeArticleService() {
-            super(new TestCacheService(), Log::new);
+        private FakeArticleService(DataSourceWrapper testDataSource) {
+            super(new TestCacheService(), () -> new Log(testDataSource));
         }
 
         private ArticleDetailDTO detail;
