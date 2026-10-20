@@ -7,13 +7,11 @@ import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.business.rest.response.ApiStandardResponse;
-import com.zrlog.blog.business.service.ArticleService;
 import com.zrlog.blog.web.controller.api.BlogApiArticleController;
+import com.zrlog.blog.web.di.BlogComponent;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
-import com.zrlog.model.Comment;
-import com.zrlog.model.Log;
 import com.zrlog.test.support.InMemoryBlogDatabase;
 
 import org.junit.Test;
@@ -33,8 +31,7 @@ public class BlogApiArticleControllerDatabaseTest {
             seedArticles(database);
             database.insertComment(1, 2, "api comment");
             BlogApiArticleController controller =
-                    new BlogApiArticleController(
-                            new ArticleService(database.cacheService(), () -> new Log(database.dataSource())), () -> new Comment(database.dataSource()));
+                    database.component(BlogComponent.class).articleApi();
 
             setControllerRequest(controller, request(Map.of("id", "hello-world")));
             ApiStandardResponse<ArticleDetailDTO> detail = controller.detail();

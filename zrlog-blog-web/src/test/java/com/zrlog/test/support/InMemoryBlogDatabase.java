@@ -10,8 +10,11 @@ import com.zrlog.common.cache.dto.TypeDTO;
 import com.zrlog.common.cache.dto.UserBasicDTO;
 import com.zrlog.common.cache.vo.BaseDataInitVO;
 import com.zrlog.common.vo.PublicWebSiteInfo;
+import com.zrlog.data.di.DataComponent;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
+import com.zrlog.web.WebSetupContext;
+import com.zrlog.web.WebSetupLoader;
 import com.zrlog.web.WebSiteInfoProvider;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -26,14 +29,14 @@ public class InMemoryBlogDatabase implements AutoCloseable {
 
     private final DataSourceWrapper dataSource;
     private final ZrLogTestDatabase database;
-    private final ZrLogConfig config;
+    private final TestZrLogConfig config;
     private final TestCacheService cacheService;
 
     private InMemoryBlogDatabase() throws Exception {
         this.cacheService = new TestCacheService();
         this.database = ZrLogTestDatabase.open();
         this.dataSource = database.dataSource();
-        this.config = new TestZrLogConfig(cacheService);
+        this.config = new TestZrLogConfig(cacheService, dataSource);
         seedBaseData();
     }
 
@@ -41,8 +44,18 @@ public class InMemoryBlogDatabase implements AutoCloseable {
         return new InMemoryBlogDatabase();
     }
 
-    public TestCacheService cacheService() {
+    public CacheService cacheService() {
+        return component(DataComponent.class).cache();
+    }
+
+    public TestCacheService unitCacheService() {
+        if (config.modulesLoaded) throw new IllegalStateException("Use the production cache after loading modules");
         return cacheService;
+    }
+
+    public <T> T component(Class<T> type) {
+        config.webModules();
+        return config.getServerConfig().getBindings().build().get(type);
     }
 
     public DataSourceWrapper dataSource() { return database.dataSource(); }
@@ -61,6 +74,10 @@ public class InMemoryBlogDatabase implements AutoCloseable {
 
     public Map<String, Object> queryOne(String sql, Object... params) throws SQLException {
         return dataSource.getQueryRunner().query(sql, new MapHandler(), params);
+    }
+
+    public void putWebsite(String name, Object value) throws SQLException {
+        database.putWebsite(name, value);
     }
 
     public List<Map<String, Object>> queryList(String sql, Object... params) throws SQLException {
@@ -93,6 +110,9 @@ public class InMemoryBlogDatabase implements AutoCloseable {
                 1, "admin@example.com", "pwd", "admin", "/attached/admin.png", "secret", false, null);
         update("insert into type (typeId, alias, remark, typeName, pid, arrange_plugin) values (?, ?, ?, ?, ?, ?)",
                 1, "default", "Default category", "Default", 0, null);
+        database.putWebsite("host", "blog.example.com");
+        database.putWebsite("rows", 2);
+        database.putWebsite("language", Constants.DEFAULT_LANGUAGE);
     }
 
     @Override
@@ -102,25 +122,38 @@ public class InMemoryBlogDatabase implements AutoCloseable {
 
     private static class TestZrLogConfig extends ZrLogConfig {
         private final TestCacheService cacheService;
+        private boolean modulesLoaded;
 
-        TestZrLogConfig(TestCacheService cacheService) {
+        TestZrLogConfig(TestCacheService cacheService, DataSourceWrapper source) {
             super(18080, null, "");
             this.cacheService = cacheService;
+            this.dataSource = source;
+            serverConfig.setContextPath("/blog");
+        }
+
+        private synchronized void webModules() {
+            if (modulesLoaded) return;
+            webSetups.clear();
+            webSetups.addAll(WebSetupLoader.load(
+                    new WebSetupContext(this, dbPropertiesFile, installLockFile, "/blog", null),
+                    provider -> java.util.Set.of("data", "services", "blog").contains(provider.name())));
+            modulesLoaded = true;
+            initializeWebSetups();
         }
 
         @Override
         public boolean isInstalled() {
-            return false;
+            return modulesLoaded;
         }
 
         @Override
-        public DataSourceWrapper configDatabase() {
-            return null;
+        public DataSourceWrapper configDatabase() throws Exception {
+            return modulesLoaded ? super.configDatabase() : null;
         }
 
         @Override
         public <T> T getWebSetup(Class<T> capability) {
-            if (capability == WebSiteInfoProvider.class) {
+            if (!modulesLoaded && capability == WebSiteInfoProvider.class) {
                 CacheService cache = cacheForTest();
                 return cache == null ? null : capability.cast(
                         (WebSiteInfoProvider) cache::getPublicWebSiteInfo);

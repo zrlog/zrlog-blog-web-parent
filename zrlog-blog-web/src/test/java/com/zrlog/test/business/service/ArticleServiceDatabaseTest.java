@@ -10,9 +10,11 @@ import com.hibegin.common.dao.dto.PageRequestImpl;
 import com.hibegin.http.server.api.HttpRequest;
 import com.zrlog.blog.business.service.ArticleService.ArticleListOrder;
 import com.zrlog.blog.business.service.ArticleService;
+import com.zrlog.blog.web.di.BlogComponent;
+import com.zrlog.common.CacheService;
+import com.zrlog.data.di.DataComponent;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
-import com.zrlog.model.Log;
 import com.zrlog.test.support.InMemoryBlogDatabase;
 
 import org.junit.Test;
@@ -31,7 +33,7 @@ public class ArticleServiceDatabaseTest {
             database.insertComment(1, 2, "first comment");
 
             ArticleDetailDTO detail =
-                    new ArticleService(database.cacheService(), () -> new Log(database.dataSource()))
+                    database.component(BlogComponent.class).articles()
                             .detail("hello-world", request("/blog"));
 
             assertNotNull(detail);
@@ -62,25 +64,48 @@ public class ArticleServiceDatabaseTest {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
             seedThreePublishedArticles(database);
             database.insertComment(1, 2, "first comment");
-            ArticleService service = new ArticleService(database.cacheService(), () -> new Log(database.dataSource()));
-            var site = database.cacheService().getPublicWebSiteInfo();
-            site.setHost("configured.example");
-            site.setGenerator_html_status(true);
-            site.setDisable_comment_status(true);
+            ArticleService service = database.component(BlogComponent.class).articles();
+            database.putWebsite("host", "configured.example");
+            database.putWebsite("generator_html_status", true);
+            database.putWebsite("disable_comment_status", true);
+            database.cacheService().refreshInitData();
             ArticleDetailDTO staticArticle = service.detail("hello-world", request("/blog"));
             assertEquals("//configured.example/blog/hello-world.html", staticArticle.getNoSchemeUrl());
             assertEquals("/blog/tag/java.html", staticArticle.getTags().get(0).getUrl());
             assertEquals("/blog/previous-post.html", staticArticle.getLastLog().getUrl());
             assertTrue(staticArticle.getComments().isEmpty());
             assertFalse(staticArticle.getCanComment());
-            site.setGenerator_html_status(false);
-            site.setHost("renamed.example");
-            site.setDisable_comment_status(false);
+            database.putWebsite("generator_html_status", false);
+            database.putWebsite("host", "renamed.example");
+            database.putWebsite("disable_comment_status", false);
+            database.cacheService().refreshInitData();
             ArticleDetailDTO dynamicArticle = service.detail("hello-world", request("/blog"));
             assertEquals("//renamed.example/blog/hello-world", dynamicArticle.getNoSchemeUrl());
             assertEquals("/blog/tag/java", dynamicArticle.getTags().get(0).getUrl());
             assertEquals(1, dynamicArticle.getComments().size());
             assertTrue(dynamicArticle.getCanComment());
+        }
+    }
+
+    @Test
+    public void productionGraphsKeepDatabaseAndRefreshedSettingsOwnedByEachApplication() throws Exception {
+        try (InMemoryBlogDatabase first = InMemoryBlogDatabase.open();
+                InMemoryBlogDatabase second = InMemoryBlogDatabase.open()) {
+            first.insertArticle(1, "shared", "First application", "First", "", "2026-06-01 10:00:00", false, false);
+            second.insertArticle(1, "shared", "Second application", "Second", "", "2026-06-01 10:00:00", false, false);
+            var firstGraph = first.component(BlogComponent.class);
+            var secondGraph = second.component(BlogComponent.class);
+            org.junit.Assert.assertSame(first.cacheService(), first.component(DataComponent.class).cache());
+            org.junit.Assert.assertSame(first.cacheService(), first.config().getServerConfig().getBindings().build()
+                    .get(CacheService.class));
+            first.putWebsite("host", "first.example");
+            first.cacheService().refreshInitData();
+            var firstArticle = firstGraph.articles().detail("shared", request("/blog"));
+            var secondArticle = secondGraph.articles().detail("shared", request("/blog"));
+            assertEquals("First application", firstArticle.getTitle());
+            assertEquals("//first.example/blog/shared", firstArticle.getNoSchemeUrl());
+            assertEquals("Second application", secondArticle.getTitle());
+            assertEquals("//blog.example.com/blog/shared", secondArticle.getNoSchemeUrl());
         }
     }
 
@@ -95,7 +120,7 @@ public class ArticleServiceDatabaseTest {
                     "2026-06-03 10:00:00", false, false);
 
             PageData<ArticleBasicDTO> data =
-                    new ArticleService(database.cacheService(), () -> new Log(database.dataSource()))
+                    database.component(BlogComponent.class).articles()
                             .pageByKeywords(
                                     new PageRequestImpl(1L, 10L),
                                     "Java",
@@ -124,7 +149,7 @@ public class ArticleServiceDatabaseTest {
             database.insertArticle(3, "other-post", "Other Post", "Other content", "other",
                     "2026-06-03 10:00:00", false, false);
             database.update("update log set sticky=? where logId=?", 1, 1);
-            ArticleService service = new ArticleService(database.cacheService(), () -> new Log(database.dataSource()));
+            ArticleService service = database.component(BlogComponent.class).articles();
 
             PageData<ArticleBasicDTO> home = service.pageByKeywords(
                     new PageRequestImpl(1L, 10L), "", request("/blog"), ArticleListOrder.STICKY_FIRST);

@@ -4,17 +4,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.hibegin.common.dao.DataSourceWrapper;
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.http.HttpMethod;
 import com.hibegin.http.server.api.HttpRequest;
-import com.zrlog.blog.business.service.ArticleService;
+import com.hibegin.http.server.config.RequestConfig;
+import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.web.controller.page.ArticleController;
-import com.zrlog.business.plugin.PluginCorePlugin;
-import com.zrlog.common.CacheService;
+import com.zrlog.blog.web.di.BlogComponent;
 import com.zrlog.common.ZrLogConfig;
 import com.zrlog.data.dto.ArticleBasicDTO;
-import com.zrlog.model.Log;
 import com.zrlog.test.support.InMemoryBlogDatabase;
 
 import org.junit.Test;
@@ -39,9 +37,9 @@ public class ArticleControllerDatabaseTest {
             database.update("update log set sticky=? where logId=?", 1, 4);
             Map<String, Object> firstPageAttrs = new HashMap<>();
 
-            String view = controller(database.cacheService(), request("/all-1.html", HttpMethod.GET, "", firstPageAttrs), database.dataSource()).index();
+            String view = controller(database, "index", request("/all-1.html", HttpMethod.GET, "", firstPageAttrs)).index();
             Map<String, Object> secondPageAttrs = new HashMap<>();
-            controller(database.cacheService(), request("/all-2.html", HttpMethod.GET, "", secondPageAttrs), database.dataSource()).index();
+            controller(database, "index", request("/all-2.html", HttpMethod.GET, "", secondPageAttrs)).index();
 
             assertEquals("index", view);
             assertEquals("all-", firstPageAttrs.get("yurl"));
@@ -64,7 +62,7 @@ public class ArticleControllerDatabaseTest {
             seedArticles(database);
             Map<String, Object> attrs = new HashMap<>();
 
-            String view = controller(database.cacheService(), request("/search/Java-1.html", HttpMethod.GET, "", attrs), database.dataSource())
+            String view = controller(database, "search", request("/search/Java-1.html", HttpMethod.GET, "", attrs))
                     .search();
 
             assertEquals("page", view);
@@ -85,20 +83,20 @@ public class ArticleControllerDatabaseTest {
             database.update("update log set sticky=? where logId=?", 10, 1);
 
             Map<String, Object> sortAttrs = new HashMap<>();
-            assertEquals("page", controller(database.cacheService(), request("/sort/default-1.html", HttpMethod.GET, "",
-                    sortAttrs), database.dataSource()).sort());
+            assertEquals("page", controller(database, "sort", request("/sort/default-1.html", HttpMethod.GET, "",
+                    sortAttrs)).sort());
             assertEquals("Default", sortAttrs.get("tipsName"));
             assertEquals(3L, pageData(sortAttrs).getTotalElements());
             assertEquals(List.of("last-public", "java-post"), aliases(pageData(sortAttrs)));
 
             Map<String, Object> tagAttrs = new HashMap<>();
-            assertEquals("page", controller(database.cacheService(), request("/tag/java.html", HttpMethod.GET, "", tagAttrs), database.dataSource()).tag());
+            assertEquals("page", controller(database, "tag", request("/tag/java.html", HttpMethod.GET, "", tagAttrs)).tag());
             assertEquals("java", tagAttrs.get("tipsName"));
             assertEquals(1L, pageData(tagAttrs).getTotalElements());
 
             Map<String, Object> recordAttrs = new HashMap<>();
-            assertEquals("page", controller(database.cacheService(), request("/record/2026_06.html", HttpMethod.GET, "",
-                    recordAttrs), database.dataSource()).record());
+            assertEquals("page", controller(database, "record", request("/record/2026_06.html", HttpMethod.GET, "",
+                    recordAttrs)).record());
             assertEquals("2026_06", recordAttrs.get("tipsName"));
             assertEquals(3L, pageData(recordAttrs).getTotalElements());
         }
@@ -111,7 +109,7 @@ public class ArticleControllerDatabaseTest {
             seedArticles(database);
             Map<String, Object> attrs = new HashMap<>();
 
-            assertEquals("archives", controller(database.cacheService(), request("/archives.html", HttpMethod.GET, "", attrs), database.dataSource()).archives());
+            assertEquals("archives", controller(database, "archives", request("/archives.html", HttpMethod.GET, "", attrs)).archives());
 
             assertEquals("archives", attrs.get("yurl"));
             PageData<ArticleBasicDTO> data = pageData(attrs);
@@ -120,17 +118,19 @@ public class ArticleControllerDatabaseTest {
         }
     }
 
-    private ArticleController controller(CacheService cache, HttpRequest httpRequest, DataSourceWrapper testDataSource) {
-        return new ArticleController(
-                cache,
-                new ArticleService(cache, () -> new Log(testDataSource)),
-                () -> applicationConfig == null ? null : applicationConfig.getTokenService(),
-                () -> applicationConfig.getPlugin(PluginCorePlugin.class),
-                () -> new Log(testDataSource)) {
-            {
-                this.request = httpRequest;
-            }
-        };
+    private ArticleController controller(InMemoryBlogDatabase database, String action, HttpRequest httpRequest) throws Exception {
+        database.component(BlogComponent.class);
+        var server = database.config().getServerConfig();
+        var requestConfig = new RequestConfig();
+        requestConfig.setRouter(server.getRouter());
+        HttpRequest configured = (HttpRequest) Proxy.newProxyInstance(getClass().getClassLoader(),
+                new Class<?>[]{HttpRequest.class}, (proxy, method, args) -> {
+                    if (method.getName().equals("getServerConfig")) return server;
+                    if (method.getName().equals("getRequestConfig")) return requestConfig;
+                    return method.invoke(httpRequest, args);
+                });
+        return (ArticleController) Controller.buildController(
+                ArticleController.class.getMethod(action), configured, null);
     }
 
     @SuppressWarnings("unchecked")
