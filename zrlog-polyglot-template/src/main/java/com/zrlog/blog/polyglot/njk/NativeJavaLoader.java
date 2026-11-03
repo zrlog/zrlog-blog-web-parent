@@ -2,20 +2,18 @@ package com.zrlog.blog.polyglot.njk;
 
 import com.hibegin.common.util.LoggerUtil;
 import com.zrlog.common.resource.ZrLogResourceLoader;
-import org.graalvm.polyglot.HostAccess;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.graalvm.polyglot.HostAccess;
 
 public class NativeJavaLoader {
     private static final Logger LOGGER = LoggerUtil.getLogger(NativeJavaLoader.class);
     // 暴露给 JS 的属性，告诉 Nunjucks 这是同步加载器
-    @HostAccess.Export
-    public final boolean async = false;
+    @HostAccess.Export public final boolean async = false;
     private final String baseDir;
 
     public NativeJavaLoader(String baseDir) {

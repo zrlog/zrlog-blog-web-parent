@@ -1,12 +1,9 @@
 package com.zrlog.test.web;
 
+import static org.junit.Assert.*;
+
 import com.hibegin.http.HttpMethod;
 import com.hibegin.http.annotation.RequestMethod;
-import org.junit.Test;
-import org.yaml.snakeyaml.LoaderOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.SafeConstructor;
-
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
@@ -15,12 +12,15 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
+import org.yaml.snakeyaml.LoaderOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 public class BlogApiDocumentationContractTest {
 
-    private static void assertControllerMethod(Map<String, Object> operation, HttpMethod httpMethod) throws Exception {
+    private static void assertControllerMethod(Map<String, Object> operation, HttpMethod httpMethod)
+            throws Exception {
         String controllerRef = String.valueOf(operation.get("x-zrlog-controller"));
         String[] parts = controllerRef.split("#", 2);
         assertEquals("Invalid controller reference " + controllerRef, 2, parts.length);
@@ -54,9 +54,18 @@ public class BlogApiDocumentationContractTest {
     @SuppressWarnings("unchecked")
     public void shouldKeepOpenApiOperationsBoundToExplicitControllerMethods() throws Exception {
         Path openApiPath = findOpenApiPath();
-        Path canonical = openApiPath.getParent().getParent().getParent().getParent().resolve("zrlog-api/blog-web.yaml");
+        Path canonical =
+                openApiPath
+                        .getParent()
+                        .getParent()
+                        .getParent()
+                        .getParent()
+                        .resolve("zrlog-api/blog-web.yaml");
         if (Files.isRegularFile(canonical)) {
-            assertEquals("Stale OpenAPI snapshot; synchronize from zrlog-api", Files.readString(canonical), Files.readString(openApiPath));
+            assertEquals(
+                    "Stale OpenAPI snapshot; synchronize from zrlog-api",
+                    Files.readString(canonical),
+                    Files.readString(openApiPath));
         }
         Map<String, Object> spec;
         try (Reader reader = Files.newBufferedReader(openApiPath)) {

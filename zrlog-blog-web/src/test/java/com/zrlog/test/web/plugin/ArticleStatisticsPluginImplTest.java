@@ -1,26 +1,24 @@
 package com.zrlog.test.web.plugin;
 
-import com.zrlog.data.repository.LogRepository;
-import com.zrlog.model.Log;
+import static org.junit.Assert.*;
+
 import com.zrlog.blog.web.plugin.ArticleStatisticsPluginImpl;
 import com.zrlog.blog.web.plugin.ArticleStatisticsRunnable;
 import com.zrlog.business.plugin.RequestInfo;
 import com.zrlog.common.vo.PublicWebSiteInfo;
+import com.zrlog.data.repository.LogRepository;
+import com.zrlog.model.Log;
 import com.zrlog.plugin.BaseStaticSitePlugin;
 import com.zrlog.test.support.InMemoryBlogDatabase;
+import java.lang.reflect.Field;
+import java.util.List;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.lang.reflect.Field;
-import java.util.List;
-
-import static org.junit.Assert.*;
-
 public class ArticleStatisticsPluginImplTest {
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     private static RequestInfo requestInfo(String uri, Long articleId) {
         RequestInfo requestInfo = new RequestInfo();
@@ -41,7 +39,8 @@ public class ArticleStatisticsPluginImplTest {
 
     @SuppressWarnings("unchecked")
     private static List<RequestInfo> queue(ArticleStatisticsRunnable runnable) throws Exception {
-        Field requestInfoListField = ArticleStatisticsRunnable.class.getDeclaredField("requestInfoList");
+        Field requestInfoListField =
+                ArticleStatisticsRunnable.class.getDeclaredField("requestInfoList");
         requestInfoListField.setAccessible(true);
         return (List<RequestInfo>) requestInfoListField.get(runnable);
     }
@@ -59,19 +58,21 @@ public class ArticleStatisticsPluginImplTest {
         PublicWebSiteInfo publicWebSiteInfo = new PublicWebSiteInfo();
         ArticleStatisticsPluginImpl plugin =
                 new ArticleStatisticsPluginImpl(
-                        new ArticleStatisticsRunnable(publicWebSiteInfo::getWebCm, () -> new LogRepository(null)));
+                        new ArticleStatisticsRunnable(
+                                publicWebSiteInfo::getWebCm, () -> new LogRepository(null)));
 
-        withoutGlobalConfig(() -> {
-            plugin.record(requestInfo("/admin/index", 1L));
-            plugin.record(requestInfo("/api/article/detail", 2L));
-            plugin.record(requestInfo("/install", 3L));
-            RequestInfo article = requestInfo("/hello-world", 4L);
-            plugin.record(article);
+        withoutGlobalConfig(
+                () -> {
+                    plugin.record(requestInfo("/admin/index", 1L));
+                    plugin.record(requestInfo("/api/article/detail", 2L));
+                    plugin.record(requestInfo("/install", 3L));
+                    RequestInfo article = requestInfo("/hello-world", 4L);
+                    plugin.record(article);
 
-            List<RequestInfo> queue = queue(plugin);
-            assertEquals(1, queue.size());
-            assertSame(article, queue.get(0));
-        });
+                    List<RequestInfo> queue = queue(plugin);
+                    assertEquals(1, queue.size());
+                    assertSame(article, queue.get(0));
+                });
     }
 
     @Test
@@ -79,7 +80,8 @@ public class ArticleStatisticsPluginImplTest {
         PublicWebSiteInfo publicWebSiteInfo = new PublicWebSiteInfo();
         ArticleStatisticsPluginImpl plugin =
                 new ArticleStatisticsPluginImpl(
-                        new ArticleStatisticsRunnable(publicWebSiteInfo::getWebCm, () -> new LogRepository(null)));
+                        new ArticleStatisticsRunnable(
+                                publicWebSiteInfo::getWebCm, () -> new LogRepository(null)));
         publicWebSiteInfo.setWebCm("<div>no statistics plugin</div>");
 
         withoutGlobalConfig(() -> plugin.record(requestInfo("/hello-world", 4L)));
@@ -90,7 +92,8 @@ public class ArticleStatisticsPluginImplTest {
     @Test
     public void shouldStartAndStopStatisticsScheduler() {
         ArticleStatisticsPluginImpl plugin =
-                new ArticleStatisticsPluginImpl(new ArticleStatisticsRunnable(() -> "", () -> new LogRepository(null)));
+                new ArticleStatisticsPluginImpl(
+                        new ArticleStatisticsRunnable(() -> "", () -> new LogRepository(null)));
 
         assertFalse(plugin.isStarted());
         assertTrue(plugin.start());
@@ -103,7 +106,8 @@ public class ArticleStatisticsPluginImplTest {
 
     @Test
     public void shouldSkipStaticPluginRequestsWhenStatisticsRunnableRuns() throws Exception {
-        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "", () -> new LogRepository(null));
+        ArticleStatisticsRunnable runnable =
+                new ArticleStatisticsRunnable(() -> "", () -> new LogRepository(null));
         RequestInfo staticPluginRequest = requestInfo("/hello-world", 4L);
         staticPluginRequest.setUserAgent(BaseStaticSitePlugin.STATIC_USER_AGENT);
         queue(runnable).add(staticPluginRequest);
@@ -116,7 +120,8 @@ public class ArticleStatisticsPluginImplTest {
 
     @Test
     public void shouldSkipCrawlerRequestsWhenStatisticsRunnableRuns() throws Exception {
-        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "", () -> new LogRepository(null));
+        ArticleStatisticsRunnable runnable =
+                new ArticleStatisticsRunnable(() -> "", () -> new LogRepository(null));
         RequestInfo crawlerRequest = requestInfo("/hello-world", 4L);
         crawlerRequest.setUserAgent("Googlebot/2.1 (+http://www.google.com/bot.html)");
         queue(runnable).add(crawlerRequest);
@@ -128,19 +133,30 @@ public class ArticleStatisticsPluginImplTest {
     }
 
     @Test
-    public void shouldIncrementArticleClickWithInMemoryDatabaseWhenStatisticsRunnableRuns() throws Exception {
+    public void shouldIncrementArticleClickWithInMemoryDatabaseWhenStatisticsRunnableRuns()
+            throws Exception {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
-            database.insertArticle(1, "hello-world", "Hello World", "Hello content", "zrlog",
-                    "2026-06-01 10:00:00", false, false);
-            ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "", () -> new LogRepository(database.dataSource()));
+            database.insertArticle(
+                    1,
+                    "hello-world",
+                    "Hello World",
+                    "Hello content",
+                    "zrlog",
+                    "2026-06-01 10:00:00",
+                    false,
+                    false);
+            ArticleStatisticsRunnable runnable =
+                    new ArticleStatisticsRunnable(
+                            () -> "", () -> new LogRepository(database.dataSource()));
             LogRepository articles = new LogRepository(database.dataSource());
             Log before = articles.loadById(1L);
             RequestInfo requestInfo = requestInfo("/hello-world", 1L);
-            withoutGlobalConfig(() -> {
-                runnable.addTask(requestInfo);
-                runnable.run();
-                runnable.run();
-            });
+            withoutGlobalConfig(
+                    () -> {
+                        runnable.addTask(requestInfo);
+                        runnable.run();
+                        runnable.run();
+                    });
 
             assertTrue(requestInfo.isDeal());
             Log after = articles.loadById(1L);
@@ -151,8 +167,10 @@ public class ArticleStatisticsPluginImplTest {
     }
 
     @Test
-    public void shouldRemoveExpiredAlreadyProcessedRequestsWhenStatisticsRunnableRuns() throws Exception {
-        ArticleStatisticsRunnable runnable = new ArticleStatisticsRunnable(() -> "", () -> new LogRepository(null));
+    public void shouldRemoveExpiredAlreadyProcessedRequestsWhenStatisticsRunnableRuns()
+            throws Exception {
+        ArticleStatisticsRunnable runnable =
+                new ArticleStatisticsRunnable(() -> "", () -> new LogRepository(null));
         RequestInfo oldRequest = requestInfo("/hello-world", 4L);
         oldRequest.setDeal(true);
         oldRequest.setRequestTime(System.currentTimeMillis() - 180_000L);
@@ -166,31 +184,51 @@ public class ArticleStatisticsPluginImplTest {
     @Test
     public void shouldFollowLiveStatisticsSettingWithoutGlobalConfig() throws Exception {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
-            database.insertArticle(1, "hello-world", "Hello World", "Hello content", "zrlog",
-                    "2026-06-01 10:00:00", false, false);
+            database.insertArticle(
+                    1,
+                    "hello-world",
+                    "Hello World",
+                    "Hello content",
+                    "zrlog",
+                    "2026-06-01 10:00:00",
+                    false,
+                    false);
             PublicWebSiteInfo site = new PublicWebSiteInfo();
             ArticleStatisticsRunnable runnable =
-                    new ArticleStatisticsRunnable(site::getWebCm, () -> new LogRepository(database.dataSource()));
-            withoutGlobalConfig(() -> {
-                runnable.addTask(requestInfo("/hello-world", 1L));
-                runnable.run();
-                assertEquals(11L, ((Number) database.scalar("select click from log where logId=?", 1)).longValue());
-                site.setWebCm("<div>external statistics</div>");
-                runnable.addTask(requestInfo("/hello-world", 1L));
-                runnable.run();
-                assertEquals(11L, ((Number) database.scalar("select click from log where logId=?", 1)).longValue());
-                site.setWebCm("<plugin name=statistics></plugin>");
-                runnable.addTask(requestInfo("/hello-world", 1L));
-                runnable.run();
-                assertEquals(12L, ((Number) database.scalar("select click from log where logId=?", 1)).longValue());
-            });
+                    new ArticleStatisticsRunnable(
+                            site::getWebCm, () -> new LogRepository(database.dataSource()));
+            withoutGlobalConfig(
+                    () -> {
+                        runnable.addTask(requestInfo("/hello-world", 1L));
+                        runnable.run();
+                        assertEquals(
+                                11L,
+                                ((Number) database.scalar("select click from log where logId=?", 1))
+                                        .longValue());
+                        site.setWebCm("<div>external statistics</div>");
+                        runnable.addTask(requestInfo("/hello-world", 1L));
+                        runnable.run();
+                        assertEquals(
+                                11L,
+                                ((Number) database.scalar("select click from log where logId=?", 1))
+                                        .longValue());
+                        site.setWebCm("<plugin name=statistics></plugin>");
+                        runnable.addTask(requestInfo("/hello-world", 1L));
+                        runnable.run();
+                        assertEquals(
+                                12L,
+                                ((Number) database.scalar("select click from log where logId=?", 1))
+                                        .longValue());
+                    });
         }
     }
 
     private void withoutGlobalConfig(ThrowingRunnable runnable) throws Exception {
         String previousRootPath = System.getProperty("sws.root.path");
         try {
-            System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-statistics").getAbsolutePath());
+            System.setProperty(
+                    "sws.root.path",
+                    temporaryFolder.newFolder("zrlog-statistics").getAbsolutePath());
             runnable.run();
         } finally {
             restoreProperty("sws.root.path", previousRootPath);
@@ -200,5 +238,4 @@ public class ArticleStatisticsPluginImplTest {
     private interface ThrowingRunnable {
         void run() throws Exception;
     }
-
 }

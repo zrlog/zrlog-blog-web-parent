@@ -29,7 +29,6 @@ import com.zrlog.data.di.DataComponent;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSetup;
 import com.zrlog.web.WebSiteInfoProvider;
-
 import java.util.List;
 
 public class BlogWebSetup implements WebSetup {
@@ -45,13 +44,20 @@ public class BlogWebSetup implements WebSetup {
         if (zrLogConfig.getServerConfig().isNativeImageAgent()) {
             // Template sampling initializes a request context and freezes SWS bindings.
             // Run it after every module has registered its components.
-            zrLogConfig.getServerConfig().addCreateSuccessHandle(() -> {
-                BlogNativeImageUtils.reg(zrLogConfig);
-                return null;
-            });
+            zrLogConfig
+                    .getServerConfig()
+                    .addCreateSuccessHandle(
+                            () -> {
+                                BlogNativeImageUtils.reg(zrLogConfig);
+                                return null;
+                            });
         }
-        zrLogConfig.getServerConfig().addFirstRequestListener(new ZrLogRequestRecordListener(
-                zrLogConfig::isInstalled, () -> zrLogConfig.getPlugin(ArticleStatisticsPlugin.class)));
+        zrLogConfig
+                .getServerConfig()
+                .addFirstRequestListener(
+                        new ZrLogRequestRecordListener(
+                                zrLogConfig::isInstalled,
+                                () -> zrLogConfig.getPlugin(ArticleStatisticsPlugin.class)));
     }
 
     @Override
@@ -115,22 +121,37 @@ public class BlogWebSetup implements WebSetup {
                 .controller(
                         BlogApiArticleController.class,
                         (r, request, response) -> r.get(BlogComponent.class).articleApi());
-        List<Class<? extends Interceptor>> interceptors = zrLogConfig.getServerConfig().getInterceptors();
+        List<Class<? extends Interceptor>> interceptors =
+                zrLogConfig.getServerConfig().getInterceptors();
         interceptors.add(BlogPluginInterceptor.class);
         interceptors.add(BlogStaticResourceInterceptor.class);
         interceptors.add(BlogApiInterceptor.class);
         interceptors.add(BlogPageInterceptor.class);
         //
         BlogRouters.configBlogRouter(zrLogConfig.getServerConfig().getRouter());
-        zrLogConfig.getServerConfig().addStaticResourceMapper("/assets/css", "/assets/css", BlogWebSetup.class::getResourceAsStream);
-        zrLogConfig.getServerConfig().addStaticResourceMapper("/assets/js", "/assets/js", BlogWebSetup.class::getResourceAsStream);
+        zrLogConfig
+                .getServerConfig()
+                .addStaticResourceMapper(
+                        "/assets/css", "/assets/css", BlogWebSetup.class::getResourceAsStream);
+        zrLogConfig
+                .getServerConfig()
+                .addStaticResourceMapper(
+                        "/assets/js", "/assets/js", BlogWebSetup.class::getResourceAsStream);
     }
 
     @Override
     public Plugins getPlugins() {
         Plugins plugins = new Plugins();
-        plugins.add(new TemplateDownloadPlugin(() -> zrLogConfig.getServerConfig().getBindings().build()
-                .get(CacheService.class).getPublicWebSiteInfo().getTemplate()));
+        plugins.add(
+                new TemplateDownloadPlugin(
+                        () ->
+                                zrLogConfig
+                                        .getServerConfig()
+                                        .getBindings()
+                                        .build()
+                                        .get(CacheService.class)
+                                        .getPublicWebSiteInfo()
+                                        .getTemplate()));
         if (enablePageStatic) {
             ApplicationContext context = new ApplicationContext(zrLogConfig.getServerConfig());
             context.init();

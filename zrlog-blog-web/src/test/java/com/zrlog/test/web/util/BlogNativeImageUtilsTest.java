@@ -1,5 +1,7 @@
 package com.zrlog.test.web.util;
 
+import static org.junit.Assert.assertEquals;
+
 import com.hibegin.common.dao.DataSourceWrapper;
 import com.zrlog.blog.web.BlogWebSetup;
 import com.zrlog.blog.web.util.BlogNativeImageUtils;
@@ -7,21 +9,17 @@ import com.zrlog.common.TokenService;
 import com.zrlog.common.ZrLogConfig;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.util.List;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class BlogNativeImageUtilsTest {
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
     public void shouldRegisterBlogJsonTypes() {
@@ -29,7 +27,8 @@ public class BlogNativeImageUtilsTest {
     }
 
     @Test
-    public void shouldSampleNativeTemplatesAfterModulesHaveRegisteredTheirBindings() throws Exception {
+    public void shouldSampleNativeTemplatesAfterModulesHaveRegisteredTheirBindings()
+            throws Exception {
         String previousRootPath = System.getProperty("sws.root.path");
         String previousPolyglotWarning = System.getProperty("polyglot.engine.WarnInterpreterOnly");
         Logger rootLogger = Logger.getLogger("");
@@ -37,7 +36,9 @@ public class BlogNativeImageUtilsTest {
         Handler[] handlers = rootLogger.getHandlers();
         Level[] previousHandlerLevels = new Level[handlers.length];
         try {
-            System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-blog-native").getAbsolutePath());
+            System.setProperty(
+                    "sws.root.path",
+                    temporaryFolder.newFolder("zrlog-blog-native").getAbsolutePath());
             System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
             rootLogger.setLevel(Level.OFF);
             for (int i = 0; i < handlers.length; i++) {
@@ -51,7 +52,9 @@ public class BlogNativeImageUtilsTest {
             blog.setup();
             var startupCallbacks = config.getServerConfig().getOnCreateSuccessHandles();
             startupCallbacks.get(startupCallbacks.size() - 1).call();
-            assertEquals("later module", config.getServerConfig().getBindings().build().get(String.class));
+            assertEquals(
+                    "later module",
+                    config.getServerConfig().getBindings().build().get(String.class));
         } finally {
             rootLogger.setLevel(previousRootLevel);
             for (int i = 0; i < handlers.length; i++) {

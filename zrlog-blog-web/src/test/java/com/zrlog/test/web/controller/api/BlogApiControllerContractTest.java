@@ -1,5 +1,7 @@
 package com.zrlog.test.web.controller.api;
 
+import static org.junit.Assert.*;
+
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.common.dao.dto.PageRequest;
 import com.hibegin.http.server.api.HttpRequest;
@@ -22,23 +24,19 @@ import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
 import com.zrlog.data.repository.CommentRepository;
-import com.zrlog.util.I18nUtil;
 import com.zrlog.test.support.InMemoryBlogDatabase;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
+import com.zrlog.util.I18nUtil;
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
 import java.util.*;
-
-import static org.junit.Assert.*;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class BlogApiControllerContractTest {
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
     private final CommentRepository comments = org.mockito.Mockito.mock(CommentRepository.class);
 
     private static void restoreProperty(String key, String value) {
@@ -49,7 +47,8 @@ public class BlogApiControllerContractTest {
         }
     }
 
-    private static void setControllerRequest(Controller controller, HttpRequest request) throws Exception {
+    private static void setControllerRequest(Controller controller, HttpRequest request)
+            throws Exception {
         Field field = Controller.class.getDeclaredField("request");
         field.setAccessible(true);
         field.set(controller, request);
@@ -63,52 +62,55 @@ public class BlogApiControllerContractTest {
         return request("/blog", "blog.example.com", params);
     }
 
-    private static HttpRequest request(String contextPath, String host, Map<String, String> params) {
+    private static HttpRequest request(
+            String contextPath, String host, Map<String, String> params) {
         Map<String, String[]> paramMap = new HashMap<>();
-        params.forEach((key, value) -> paramMap.put(key, new String[]{value}));
-        return (HttpRequest) Proxy.newProxyInstance(
-                BlogApiControllerContractTest.class.getClassLoader(),
-                new Class[]{HttpRequest.class},
-                (proxy, method, args) -> {
-                    if ("getContextPath".equals(method.getName())) {
-                        return contextPath;
-                    }
-                    if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
-                        return host;
-                    }
-                    if ("getParamMap".equals(method.getName()) || "decodeParamMap".equals(method.getName())) {
-                        return paramMap;
-                    }
-                    if ("getParaToStr".equals(method.getName())) {
-                        String value = params.get(args[0].toString());
-                        if (args.length > 1) {
-                            return value == null ? args[1].toString() : value;
-                        }
-                        return value;
-                    }
-                    if ("getParaToInt".equals(method.getName())) {
-                        String value = params.get(args[0].toString());
-                        if (value == null) {
-                            return args.length > 1 ? args[1] : null;
-                        }
-                        return Integer.parseInt(value);
-                    }
-                    if ("getParaToBool".equals(method.getName())) {
-                        String value = params.get(args[0].toString());
-                        if (value == null) {
-                            return args.length > 1 ? args[1] : false;
-                        }
-                        return Boolean.parseBoolean(value);
-                    }
-                    if ("toString".equals(method.getName())) {
-                        return "HttpRequestProxy";
-                    }
-                    return null;
-                });
+        params.forEach((key, value) -> paramMap.put(key, new String[] {value}));
+        return (HttpRequest)
+                Proxy.newProxyInstance(
+                        BlogApiControllerContractTest.class.getClassLoader(),
+                        new Class[] {HttpRequest.class},
+                        (proxy, method, args) -> {
+                            if ("getContextPath".equals(method.getName())) {
+                                return contextPath;
+                            }
+                            if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
+                                return host;
+                            }
+                            if ("getParamMap".equals(method.getName())
+                                    || "decodeParamMap".equals(method.getName())) {
+                                return paramMap;
+                            }
+                            if ("getParaToStr".equals(method.getName())) {
+                                String value = params.get(args[0].toString());
+                                if (args.length > 1) {
+                                    return value == null ? args[1].toString() : value;
+                                }
+                                return value;
+                            }
+                            if ("getParaToInt".equals(method.getName())) {
+                                String value = params.get(args[0].toString());
+                                if (value == null) {
+                                    return args.length > 1 ? args[1] : null;
+                                }
+                                return Integer.parseInt(value);
+                            }
+                            if ("getParaToBool".equals(method.getName())) {
+                                String value = params.get(args[0].toString());
+                                if (value == null) {
+                                    return args.length > 1 ? args[1] : false;
+                                }
+                                return Boolean.parseBoolean(value);
+                            }
+                            if ("toString".equals(method.getName())) {
+                                return "HttpRequestProxy";
+                            }
+                            return null;
+                        });
     }
 
-    private static void setArticleService(BlogApiArticleController controller, ArticleService articleService)
-            throws Exception {
+    private static void setArticleService(
+            BlogApiArticleController controller, ArticleService articleService) throws Exception {
         Field field = BlogApiArticleController.class.getDeclaredField("articleService");
         field.setAccessible(true);
         field.set(controller, articleService);
@@ -119,18 +121,23 @@ public class BlogApiControllerContractTest {
         BaseDataInitVO initData = new BaseDataInitVO();
         initData.setVersion(99L);
         FakeCacheService cacheService = new FakeCacheService(initData);
-        withConfig(cacheService, () -> {
-            ApiStandardResponse<BaseDataInitVO> response = new BlogApiCacheController(cacheService).index();
+        withConfig(
+                cacheService,
+                () -> {
+                    ApiStandardResponse<BaseDataInitVO> response =
+                            new BlogApiCacheController(cacheService).index();
 
-            assertSame(initData, response.getData());
-        });
+                    assertSame(initData, response.getData());
+                });
     }
 
     @Test
     public void shouldReturnEmptyBlogResourceWhenI18nContextIsMissing() {
         I18nUtil.threadLocal.remove();
 
-        ApiStandardResponse<Map<String, Object>> response = new BlogApiPublicController(new CommonService(() -> new PublicWebSiteInfo())).blogResource();
+        ApiStandardResponse<Map<String, Object>> response =
+                new BlogApiPublicController(new CommonService(() -> new PublicWebSiteInfo()))
+                        .blogResource();
 
         assertTrue(response.getData().isEmpty());
     }
@@ -150,20 +157,25 @@ public class BlogApiControllerContractTest {
         i18nVO.getBlog().put("zh_CN", blog);
         I18nUtil.threadLocal.set(i18nVO);
         try {
-            withConfig(new FakeCacheService(initData, publicWebSiteInfo), () -> {
-                BlogApiPublicController controller = new BlogApiPublicController(new CommonService(() -> publicWebSiteInfo));
-                setControllerRequest(controller, request("/blog", "blog.example.com"));
+            withConfig(
+                    new FakeCacheService(initData, publicWebSiteInfo),
+                    () -> {
+                        BlogApiPublicController controller =
+                                new BlogApiPublicController(
+                                        new CommonService(() -> publicWebSiteInfo));
+                        setControllerRequest(controller, request("/blog", "blog.example.com"));
 
-                ApiStandardResponse<Map<String, Object>> response = controller.blogResource();
+                        ApiStandardResponse<Map<String, Object>> response =
+                                controller.blogResource();
 
-                assertEquals(Map.of("comment", "Comment"), blog);
-                assertEquals("Comment", response.getData().get("comment"));
-                assertEquals("ZrLog", response.getData().get("websiteTitle"));
-                assertEquals("//blog.example.com/blog/", response.getData().get("homeUrl"));
-                assertEquals("", response.getData().get("articleRoute"));
-                assertEquals(true, response.getData().get("admin_darkMode"));
-                assertTrue(response.getData().containsKey("buildId"));
-            });
+                        assertEquals(Map.of("comment", "Comment"), blog);
+                        assertEquals("Comment", response.getData().get("comment"));
+                        assertEquals("ZrLog", response.getData().get("websiteTitle"));
+                        assertEquals("//blog.example.com/blog/", response.getData().get("homeUrl"));
+                        assertEquals("", response.getData().get("articleRoute"));
+                        assertEquals(true, response.getData().get("admin_darkMode"));
+                        assertTrue(response.getData().containsKey("buildId"));
+                    });
         } finally {
             I18nUtil.threadLocal.remove();
         }
@@ -195,7 +207,8 @@ public class BlogApiControllerContractTest {
         ArticleBasicDTO row = new ArticleBasicDTO();
         row.setLogId(8L);
         articleService.pageData = new PageData<>(1L, List.of(row), 2L, 5L);
-        HttpRequest request = request(Map.of("key", "zrlog", "page", "2", "size", "5", "sort", "logId,asc"));
+        HttpRequest request =
+                request(Map.of("key", "zrlog", "page", "2", "size", "5", "sort", "logId,asc"));
         setControllerRequest(controller, request);
 
         ApiStandardResponse<PageData<ArticleBasicDTO>> response = controller.index();
@@ -226,8 +239,9 @@ public class BlogApiControllerContractTest {
             db.insertComment(5, 7, "hello");
             db.update("UPDATE comment SET userMail=NULL WHERE commentId=5");
             db.insertComment(6, 8, "another article");
-            BlogApiArticleController controller = new BlogApiArticleController(
-                    new FakeArticleService(), () -> new CommentRepository(db.dataSource()));
+            BlogApiArticleController controller =
+                    new BlogApiArticleController(
+                            new FakeArticleService(), () -> new CommentRepository(db.dataSource()));
             setControllerRequest(controller, request(Map.of("id", "7")));
 
             ApiStandardResponse<List<VisitorCommentDTO>> response = controller.comment();
@@ -243,7 +257,8 @@ public class BlogApiControllerContractTest {
     private void withConfig(CacheService cacheService, ThrowingRunnable runnable) throws Exception {
         String previousRootPath = System.getProperty("sws.root.path");
         try {
-            System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-blog-api").getAbsolutePath());
+            System.setProperty(
+                    "sws.root.path", temporaryFolder.newFolder("zrlog-blog-api").getAbsolutePath());
             runnable.run();
         } finally {
             restoreProperty("sws.root.path", previousRootPath);
@@ -322,10 +337,13 @@ public class BlogApiControllerContractTest {
         private String lastKeywords;
         private HttpRequest lastPageRequestHttpRequest;
         private ArticleListOrder lastListOrder;
+
         private FakeArticleService() {
-            super(org.mockito.Mockito.mock(CacheService.class), () -> {
-                throw new AssertionError("Unexpected article query");
-            });
+            super(
+                    org.mockito.Mockito.mock(CacheService.class),
+                    () -> {
+                        throw new AssertionError("Unexpected article query");
+                    });
         }
 
         @Override
@@ -336,8 +354,11 @@ public class BlogApiControllerContractTest {
         }
 
         @Override
-        public PageData<ArticleBasicDTO> pageByKeywords(PageRequest pageRequest, String keywords,
-                                                        HttpRequest request, ArticleListOrder listOrder) {
+        public PageData<ArticleBasicDTO> pageByKeywords(
+                PageRequest pageRequest,
+                String keywords,
+                HttpRequest request,
+                ArticleListOrder listOrder) {
             lastPageRequest = pageRequest;
             lastKeywords = keywords;
             lastPageRequestHttpRequest = request;
@@ -345,5 +366,4 @@ public class BlogApiControllerContractTest {
             return pageData;
         }
     }
-
 }

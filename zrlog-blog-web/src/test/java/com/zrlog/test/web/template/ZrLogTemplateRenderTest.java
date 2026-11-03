@@ -1,5 +1,9 @@
 package com.zrlog.blog.web.template;
 
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import com.hibegin.common.dao.DataSourceWrapper;
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.http.HttpMethod;
@@ -28,10 +32,6 @@ import com.zrlog.plugin.BaseStaticSitePlugin;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSiteInfoProvider;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -43,37 +43,38 @@ import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class ZrLogTemplateRenderTest {
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
     private com.zrlog.common.ZrLogConfig applicationConfig;
 
-    private static boolean canGeneratorHtml(HttpRequest request, boolean staticHtml) throws Exception {
+    private static boolean canGeneratorHtml(HttpRequest request, boolean staticHtml)
+            throws Exception {
         return ZrLogTemplateRender.catGeneratorHtml(request, staticHtml);
     }
 
     private static HttpRequest request(String uri, String userAgent) {
-        return (HttpRequest) Proxy.newProxyInstance(
-                ZrLogTemplateRenderTest.class.getClassLoader(),
-                new Class[]{HttpRequest.class},
-                (proxy, method, args) -> {
-                    if ("getUri".equals(method.getName())) {
-                        return uri;
-                    }
-                    if ("getHeader".equals(method.getName()) && "User-Agent".equals(args[0])) {
-                        return userAgent;
-                    }
-                    if ("toString".equals(method.getName())) {
-                        return "HttpRequestProxy";
-                    }
-                    return null;
-                });
+        return (HttpRequest)
+                Proxy.newProxyInstance(
+                        ZrLogTemplateRenderTest.class.getClassLoader(),
+                        new Class[] {HttpRequest.class},
+                        (proxy, method, args) -> {
+                            if ("getUri".equals(method.getName())) {
+                                return uri;
+                            }
+                            if ("getHeader".equals(method.getName())
+                                    && "User-Agent".equals(args[0])) {
+                                return userAgent;
+                            }
+                            if ("toString".equals(method.getName())) {
+                                return "HttpRequestProxy";
+                            }
+                            return null;
+                        });
     }
 
     private static HttpRequest templateRequest(String uri) {
@@ -84,86 +85,93 @@ public class ZrLogTemplateRenderTest {
         return templateRequest(uri, cookies, new HashMap<>());
     }
 
-    private static HttpRequest templateRequest(String uri, Cookie[] cookies, Map<String, Object> attrs) {
+    private static HttpRequest templateRequest(
+            String uri, Cookie[] cookies, Map<String, Object> attrs) {
         return templateRequest(uri, cookies, attrs, null);
     }
 
-    private static HttpRequest templateRequest(String uri, Cookie[] cookies, Map<String, Object> attrs,
-                                               String acceptLanguage) {
+    private static HttpRequest templateRequest(
+            String uri, Cookie[] cookies, Map<String, Object> attrs, String acceptLanguage) {
         RequestConfig requestConfig = new RequestConfig();
         ServerConfig serverConfig = new ServerConfig();
-        return (HttpRequest) Proxy.newProxyInstance(
-                ZrLogTemplateRenderTest.class.getClassLoader(),
-                new Class[]{HttpRequest.class},
-                (proxy, method, args) -> {
-                    if ("getUri".equals(method.getName())) {
-                        return uri;
-                    }
-                    if ("getUrl".equals(method.getName())) {
-                        return uri;
-                    }
-                    if ("getFullUrl".equals(method.getName())) {
-                        return "https://blog.example.com" + uri;
-                    }
-                    if ("getQueryStr".equals(method.getName())) {
-                        return "";
-                    }
-                    if ("getContextPath".equals(method.getName())) {
-                        return "";
-                    }
-                    if ("getCreateTime".equals(method.getName())) {
-                        return System.currentTimeMillis();
-                    }
-                    if ("getMethod".equals(method.getName())) {
-                        return HttpMethod.GET;
-                    }
-                    if ("getCookies".equals(method.getName())) {
-                        return cookies;
-                    }
-                    if ("getAttr".equals(method.getName())) {
-                        return attrs;
-                    }
-                    if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
-                        return "blog.example.com";
-                    }
-                    if ("getHeader".equals(method.getName()) && "Accept-Language".equals(args[0])) {
-                        return acceptLanguage;
-                    }
-                    if ("getHeaderMap".equals(method.getName())) {
-                        return Collections.singletonMap("Host", "blog.example.com");
-                    }
-                    if ("getScheme".equals(method.getName())) {
-                        return "https";
-                    }
-                    if ("getRequestConfig".equals(method.getName())) {
-                        return requestConfig;
-                    }
-                    if ("getServerConfig".equals(method.getName())) {
-                        return serverConfig;
-                    }
-                    if ("getHttpVersion".equals(method.getName())) {
-                        return HttpVersion.HTTP_1_1;
-                    }
-                    if ("toString".equals(method.getName())) {
-                        return "HttpRequestProxy";
-                    }
-                    return null;
-                });
+        return (HttpRequest)
+                Proxy.newProxyInstance(
+                        ZrLogTemplateRenderTest.class.getClassLoader(),
+                        new Class[] {HttpRequest.class},
+                        (proxy, method, args) -> {
+                            if ("getUri".equals(method.getName())) {
+                                return uri;
+                            }
+                            if ("getUrl".equals(method.getName())) {
+                                return uri;
+                            }
+                            if ("getFullUrl".equals(method.getName())) {
+                                return "https://blog.example.com" + uri;
+                            }
+                            if ("getQueryStr".equals(method.getName())) {
+                                return "";
+                            }
+                            if ("getContextPath".equals(method.getName())) {
+                                return "";
+                            }
+                            if ("getCreateTime".equals(method.getName())) {
+                                return System.currentTimeMillis();
+                            }
+                            if ("getMethod".equals(method.getName())) {
+                                return HttpMethod.GET;
+                            }
+                            if ("getCookies".equals(method.getName())) {
+                                return cookies;
+                            }
+                            if ("getAttr".equals(method.getName())) {
+                                return attrs;
+                            }
+                            if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
+                                return "blog.example.com";
+                            }
+                            if ("getHeader".equals(method.getName())
+                                    && "Accept-Language".equals(args[0])) {
+                                return acceptLanguage;
+                            }
+                            if ("getHeaderMap".equals(method.getName())) {
+                                return Collections.singletonMap("Host", "blog.example.com");
+                            }
+                            if ("getScheme".equals(method.getName())) {
+                                return "https";
+                            }
+                            if ("getRequestConfig".equals(method.getName())) {
+                                return requestConfig;
+                            }
+                            if ("getServerConfig".equals(method.getName())) {
+                                return serverConfig;
+                            }
+                            if ("getHttpVersion".equals(method.getName())) {
+                                return HttpVersion.HTTP_1_1;
+                            }
+                            if ("toString".equals(method.getName())) {
+                                return "HttpRequestProxy";
+                            }
+                            return null;
+                        });
     }
 
     private static Path staticPreviewRoot() throws Exception {
         Path cwd = Path.of(System.getProperty("user.dir")).toAbsolutePath();
-        Path root = Files.isDirectory(cwd.resolve("zrlog-freemarker-template")) ? cwd : cwd.getParent();
+        Path root =
+                Files.isDirectory(cwd.resolve("zrlog-freemarker-template")) ? cwd : cwd.getParent();
         Path staticPath = root.resolve("static");
         Files.createDirectories(staticPath);
         return staticPath;
     }
 
     private static PageData<ArticleBasicDTO> previewPageData() {
-        return new PageData<>(2L, Arrays.asList(
-                previewArticle(1L, "hello-world", "Hello World"),
-                previewArticle(2L, "template-preview", "Template Preview")
-        ), 1L, 10L);
+        return new PageData<>(
+                2L,
+                Arrays.asList(
+                        previewArticle(1L, "hello-world", "Hello World"),
+                        previewArticle(2L, "template-preview", "Template Preview")),
+                1L,
+                10L);
     }
 
     private static ArticleBasicDTO previewArticle(Long id, String alias, String title) {
@@ -219,176 +227,334 @@ public class ZrLogTemplateRenderTest {
 
     @Test
     public void shouldNotCacheStaticPluginRequestsAsGeneratedHtml() throws Exception {
-        withConfig(true, cache -> assertFalse(canGeneratorHtml(
-                request("/article.html", BaseStaticSitePlugin.STATIC_USER_AGENT), true)));
+        withConfig(
+                true,
+                cache ->
+                        assertFalse(
+                                canGeneratorHtml(
+                                        request(
+                                                "/article.html",
+                                                BaseStaticSitePlugin.STATIC_USER_AGENT),
+                                        true)));
     }
 
     @Test
     public void shouldNotCacheHtmlWhenStaticGenerationIsDisabled() throws Exception {
-        withConfig(false, cache -> assertFalse(canGeneratorHtml(request("/article.html", null), false)));
+        withConfig(
+                false,
+                cache -> assertFalse(canGeneratorHtml(request("/article.html", null), false)));
     }
 
     @Test
     public void shouldOnlyCacheHtmlRequestsWhenStaticGenerationIsEnabled() throws Exception {
-        withConfig(true, cache -> {
-            assertTrue(canGeneratorHtml(request("/article.html", null), true));
-            assertFalse(canGeneratorHtml(request("/assets/app.css", null), true));
-        });
+        withConfig(
+                true,
+                cache -> {
+                    assertTrue(canGeneratorHtml(request("/article.html", null), true));
+                    assertFalse(canGeneratorHtml(request("/assets/app.css", null), true));
+                });
     }
 
     @Test
     public void shouldInitializeDefaultTemplateAndCheckTemplateFileExistence() throws Exception {
-        withConfig(false, cache -> {
-            ZrLogTemplateRender render = new ZrLogTemplateRender(templateRequest("/missing.html"), cache, applicationConfig == null ? null : applicationConfig.getTokenService(), null, null, applicationConfig.getPlugin(StaticSitePlugin.class), applicationConfig.getResponseConfig());
+        withConfig(
+                false,
+                cache -> {
+                    ZrLogTemplateRender render =
+                            new ZrLogTemplateRender(
+                                    templateRequest("/missing.html"),
+                                    cache,
+                                    applicationConfig == null
+                                            ? null
+                                            : applicationConfig.getTokenService(),
+                                    null,
+                                    null,
+                                    applicationConfig.getPlugin(StaticSitePlugin.class),
+                                    applicationConfig.getResponseConfig());
 
-            assertTrue(render.existsByTemplateName("index"));
-            assertFalse(render.existsByTemplateName("missing-template-file"));
-        });
+                    assertTrue(render.existsByTemplateName("index"));
+                    assertFalse(render.existsByTemplateName("missing-template-file"));
+                });
     }
 
     @Test
     public void shouldRejectDirectRenderMethods() throws Exception {
-        withConfig(false, cache -> {
-            ZrLogTemplateRender render = new ZrLogTemplateRender(templateRequest("/missing.html"), cache, applicationConfig == null ? null : applicationConfig.getTokenService(), null, null, applicationConfig.getPlugin(StaticSitePlugin.class), applicationConfig.getResponseConfig());
+        withConfig(
+                false,
+                cache -> {
+                    ZrLogTemplateRender render =
+                            new ZrLogTemplateRender(
+                                    templateRequest("/missing.html"),
+                                    cache,
+                                    applicationConfig == null
+                                            ? null
+                                            : applicationConfig.getTokenService(),
+                                    null,
+                                    null,
+                                    applicationConfig.getPlugin(StaticSitePlugin.class),
+                                    applicationConfig.getResponseConfig());
 
-            assertThrows(RuntimeException.class, () -> render.render("index"));
-            assertThrows(RuntimeException.class, () -> render.render(new ByteArrayInputStream(
-                    "index".getBytes(StandardCharsets.UTF_8))));
-        });
+                    assertThrows(RuntimeException.class, () -> render.render("index"));
+                    assertThrows(
+                            RuntimeException.class,
+                            () ->
+                                    render.render(
+                                            new ByteArrayInputStream(
+                                                    "index".getBytes(StandardCharsets.UTF_8))));
+                });
     }
 
     @Test
     public void shouldRenderDefaultTemplateAndTransformHtml() throws Exception {
-        withConfig(false, cache -> {
-            ZrLogTemplateRender render = new ZrLogTemplateRender(templateRequest("/empty.html"), cache, applicationConfig == null ? null : applicationConfig.getTokenService(), null, null, applicationConfig.getPlugin(StaticSitePlugin.class), applicationConfig.getResponseConfig());
+        withConfig(
+                false,
+                cache -> {
+                    ZrLogTemplateRender render =
+                            new ZrLogTemplateRender(
+                                    templateRequest("/empty.html"),
+                                    cache,
+                                    applicationConfig == null
+                                            ? null
+                                            : applicationConfig.getTokenService(),
+                                    null,
+                                    null,
+                                    applicationConfig.getPlugin(StaticSitePlugin.class),
+                                    applicationConfig.getResponseConfig());
 
-            String html = render.renderByTemplateName("empty");
+                    String html = render.renderByTemplateName("empty");
 
-            assertNotNull(html);
-            assertTrue(html.contains("graalvm native image build"));
-            assertTrue(html.contains("<!--"));
-        });
+                    assertNotNull(html);
+                    assertTrue(html.contains("graalvm native image build"));
+                    assertTrue(html.contains("<!--"));
+                });
     }
 
     @Test
     public void shouldGenerateTemplateWwwIndexPreviewHtml() throws Exception {
         TestStaticSitePlugin staticSitePlugin = new TestStaticSitePlugin("/generated/template-www");
-        withConfig(true, staticSitePlugin, cache -> {
-            Map<String, Object> attrs = new HashMap<>();
-            attrs.put("data", previewPageData());
-            HttpRequest request = templateRequest("/index.html",
-                    Cookie.saxToCookie("template=" + Constants.TEMPLATE_BASE_PATH + "template-www"), attrs);
-            ZrLogTemplateRender render = new ZrLogTemplateRender(request, cache, applicationConfig == null ? null : applicationConfig.getTokenService(), null, null, applicationConfig.getPlugin(StaticSitePlugin.class), applicationConfig.getResponseConfig());
+        withConfig(
+                true,
+                staticSitePlugin,
+                cache -> {
+                    Map<String, Object> attrs = new HashMap<>();
+                    attrs.put("data", previewPageData());
+                    HttpRequest request =
+                            templateRequest(
+                                    "/index.html",
+                                    Cookie.saxToCookie(
+                                            "template="
+                                                    + Constants.TEMPLATE_BASE_PATH
+                                                    + "template-www"),
+                                    attrs);
+                    ZrLogTemplateRender render =
+                            new ZrLogTemplateRender(
+                                    request,
+                                    cache,
+                                    applicationConfig == null
+                                            ? null
+                                            : applicationConfig.getTokenService(),
+                                    null,
+                                    null,
+                                    applicationConfig.getPlugin(StaticSitePlugin.class),
+                                    applicationConfig.getResponseConfig());
 
-            String html = render.renderByTemplateName("index");
-            Path output = staticSitePlugin.loadCacheFile(request).toPath();
-            String staticHtml = Files.readString(output, StandardCharsets.UTF_8);
+                    String html = render.renderByTemplateName("index");
+                    Path output = staticSitePlugin.loadCacheFile(request).toPath();
+                    String staticHtml = Files.readString(output, StandardCharsets.UTF_8);
 
-            assertTrue(Files.exists(output));
-            assertTrue(html.contains("action=\"/search\""));
-            assertTrue(staticHtml.contains("Template Preview"));
-            assertTrue(html.contains("<nav"));
-            assertTrue(html.contains("Template Preview"));
-            assertTrue(html.contains("Default"));
-            assertTrue(html.contains("12 阅读"));
-            assertTrue(html.contains("阅读全文"));
-            assertTrue(html.contains("flex items-stretch gap-2"));
-            assertTrue(html.contains("min-w-0 h-11 flex-1"));
-            assertTrue(html.contains("h-11 shrink-0 inline-flex"));
+                    assertTrue(Files.exists(output));
+                    assertTrue(html.contains("action=\"/search\""));
+                    assertTrue(staticHtml.contains("Template Preview"));
+                    assertTrue(html.contains("<nav"));
+                    assertTrue(html.contains("Template Preview"));
+                    assertTrue(html.contains("Default"));
+                    assertTrue(html.contains("12 阅读"));
+                    assertTrue(html.contains("阅读全文"));
+                    assertTrue(html.contains("flex items-stretch gap-2"));
+                    assertTrue(html.contains("min-w-0 h-11 flex-1"));
+                    assertTrue(html.contains("h-11 shrink-0 inline-flex"));
 
-            HttpRequest englishRequest = templateRequest("/index-en",
-                    Cookie.saxToCookie("template=" + Constants.TEMPLATE_BASE_PATH + "template-www"), attrs, "en-US");
-            String englishHtml = new ZrLogTemplateRender(englishRequest, cache, applicationConfig == null ? null : applicationConfig.getTokenService(), null, null, applicationConfig.getPlugin(StaticSitePlugin.class), applicationConfig.getResponseConfig()).renderByTemplateName("index");
-            assertTrue(englishHtml.contains("12 views"));
-            assertTrue(englishHtml.contains("Read more"));
-        });
+                    HttpRequest englishRequest =
+                            templateRequest(
+                                    "/index-en",
+                                    Cookie.saxToCookie(
+                                            "template="
+                                                    + Constants.TEMPLATE_BASE_PATH
+                                                    + "template-www"),
+                                    attrs,
+                                    "en-US");
+                    String englishHtml =
+                            new ZrLogTemplateRender(
+                                            englishRequest,
+                                            cache,
+                                            applicationConfig == null
+                                                    ? null
+                                                    : applicationConfig.getTokenService(),
+                                            null,
+                                            null,
+                                            applicationConfig.getPlugin(StaticSitePlugin.class),
+                                            applicationConfig.getResponseConfig())
+                                    .renderByTemplateName("index");
+                    assertTrue(englishHtml.contains("12 views"));
+                    assertTrue(englishHtml.contains("Read more"));
+                });
     }
 
     @Test
     public void shouldRenderExactOpenGraphUrlForDefaultTemplate() throws Exception {
-        withConfig(false, cache -> {
-            Map<String, Object> attrs = new HashMap<>();
-            attrs.put("data", previewPageData());
-            HttpRequest request = templateRequest("/all-3", null, attrs);
+        withConfig(
+                false,
+                cache -> {
+                    Map<String, Object> attrs = new HashMap<>();
+                    attrs.put("data", previewPageData());
+                    HttpRequest request = templateRequest("/all-3", null, attrs);
 
-            var responseConfig = applicationConfig.getResponseConfig();
-            cache.getPublicWebSiteInfo().setHost("configured.example");
-            String html = new ZrLogTemplateRender(request, cache, null, null, null, null, responseConfig).renderByTemplateName("index");
+                    var responseConfig = applicationConfig.getResponseConfig();
+                    cache.getPublicWebSiteInfo().setHost("configured.example");
+                    String html =
+                            new ZrLogTemplateRender(
+                                            request, cache, null, null, null, null, responseConfig)
+                                    .renderByTemplateName("index");
 
-            assertTrue(html.contains("<meta property=\"og:url\" content=\"//configured.example/all-3\">"));
-        });
+                    assertTrue(
+                            html.contains(
+                                    "<meta property=\"og:url\" content=\"//configured.example/all-3\">"));
+                });
     }
 
     @Test
     public void shouldShowPinnedMarkerOnlyOnDefaultTemplateHomePage() throws Exception {
-        withConfig(false, cache -> {
-            PageData<ArticleBasicDTO> data = previewPageData();
-            data.getRows().get(0).setSticky(1);
-            Map<String, Object> homeAttrs = new HashMap<>();
-            homeAttrs.put("data", data);
-            String homeHtml = new ZrLogTemplateRender(
-                    templateRequest("/all-1", null, homeAttrs), cache, applicationConfig == null ? null : applicationConfig.getTokenService(), null, null, applicationConfig.getPlugin(StaticSitePlugin.class), applicationConfig.getResponseConfig()).renderByTemplateName("index");
-            Map<String, Object> searchAttrs = new HashMap<>();
-            searchAttrs.put("data", data);
-            searchAttrs.put("tipsType", "Search");
-            searchAttrs.put("tipsName", "Pinned");
-            String searchHtml = new ZrLogTemplateRender(
-                    templateRequest("/search/Pinned-1", null, searchAttrs), cache, applicationConfig == null ? null : applicationConfig.getTokenService(), null, null, applicationConfig.getPlugin(StaticSitePlugin.class), applicationConfig.getResponseConfig()).renderByTemplateName("page");
+        withConfig(
+                false,
+                cache -> {
+                    PageData<ArticleBasicDTO> data = previewPageData();
+                    data.getRows().get(0).setSticky(1);
+                    Map<String, Object> homeAttrs = new HashMap<>();
+                    homeAttrs.put("data", data);
+                    String homeHtml =
+                            new ZrLogTemplateRender(
+                                            templateRequest("/all-1", null, homeAttrs),
+                                            cache,
+                                            applicationConfig == null
+                                                    ? null
+                                                    : applicationConfig.getTokenService(),
+                                            null,
+                                            null,
+                                            applicationConfig.getPlugin(StaticSitePlugin.class),
+                                            applicationConfig.getResponseConfig())
+                                    .renderByTemplateName("index");
+                    Map<String, Object> searchAttrs = new HashMap<>();
+                    searchAttrs.put("data", data);
+                    searchAttrs.put("tipsType", "Search");
+                    searchAttrs.put("tipsName", "Pinned");
+                    String searchHtml =
+                            new ZrLogTemplateRender(
+                                            templateRequest("/search/Pinned-1", null, searchAttrs),
+                                            cache,
+                                            applicationConfig == null
+                                                    ? null
+                                                    : applicationConfig.getTokenService(),
+                                            null,
+                                            null,
+                                            applicationConfig.getPlugin(StaticSitePlugin.class),
+                                            applicationConfig.getResponseConfig())
+                                    .renderByTemplateName("page");
 
-            assertTrue(homeHtml.contains("class=\"post-card-pinned\""));
-            assertFalse(searchHtml.contains("class=\"post-card-pinned\""));
-        });
+                    assertTrue(homeHtml.contains("class=\"post-card-pinned\""));
+                    assertFalse(searchHtml.contains("class=\"post-card-pinned\""));
+                });
     }
 
     @Test
     public void shouldReturnNotFoundWithoutCachingMissingDetail() throws Exception {
         TestStaticSitePlugin staticPlugin = new TestStaticSitePlugin("/generated/not-found");
-        withConfig(true, staticPlugin, cache -> {
-            for (String path : new String[]{"/missing", "/missing.html", "/error/404.html"}) {
-                HttpRequest request = templateRequest(path);
-                request.getServerConfig().getRouter().addMapper("/detail", PageFixtureController.class, "detail");
-                HttpResponse response = mock(HttpResponse.class);
-                List<String> bodies = new ArrayList<>();
-                doAnswer(call -> {
-                    bodies.add(new String(((InputStream) call.getArgument(0)).readAllBytes(), StandardCharsets.UTF_8));
-                    return null;
-                }).when(response).write(any(InputStream.class), eq(404));
-                new BlogPageInterceptor(renderRequest -> new ZrLogTemplateRender(renderRequest, cache, null, null, null,
-                        staticPlugin, applicationConfig.getResponseConfig())).doInterceptor(request, response);
-                verify(response).write(any(InputStream.class), eq(404));
-                verify(response).setContentType("text/html;charset=UTF-8");
-                verify(response, never()).renderHtmlStr(anyString());
-                assertEquals(1, bodies.size());
-                assertTrue(bodies.get(0).contains("404"));
-                assertFalse(staticPlugin.loadCacheFile(request).exists());
-            }
-        });
+        withConfig(
+                true,
+                staticPlugin,
+                cache -> {
+                    for (String path :
+                            new String[] {"/missing", "/missing.html", "/error/404.html"}) {
+                        HttpRequest request = templateRequest(path);
+                        request.getServerConfig()
+                                .getRouter()
+                                .addMapper("/detail", PageFixtureController.class, "detail");
+                        HttpResponse response = mock(HttpResponse.class);
+                        List<String> bodies = new ArrayList<>();
+                        doAnswer(
+                                        call -> {
+                                            bodies.add(
+                                                    new String(
+                                                            ((InputStream) call.getArgument(0))
+                                                                    .readAllBytes(),
+                                                            StandardCharsets.UTF_8));
+                                            return null;
+                                        })
+                                .when(response)
+                                .write(any(InputStream.class), eq(404));
+                        new BlogPageInterceptor(
+                                        renderRequest ->
+                                                new ZrLogTemplateRender(
+                                                        renderRequest,
+                                                        cache,
+                                                        null,
+                                                        null,
+                                                        null,
+                                                        staticPlugin,
+                                                        applicationConfig.getResponseConfig()))
+                                .doInterceptor(request, response);
+                        verify(response).write(any(InputStream.class), eq(404));
+                        verify(response).setContentType("text/html;charset=UTF-8");
+                        verify(response, never()).renderHtmlStr(anyString());
+                        assertEquals(1, bodies.size());
+                        assertTrue(bodies.get(0).contains("404"));
+                        assertFalse(staticPlugin.loadCacheFile(request).exists());
+                    }
+                });
     }
 
     @Test
     public void shouldKeepEmptyListAndSearchSuccessful() throws Exception {
-        withConfig(false, cache -> {
-            for (String path : new String[]{"/all-1", "/sort/empty", "/search/no-results"}) {
-                Map<String, Object> attrs = new HashMap<>();
-                attrs.put("data", new PageData<ArticleBasicDTO>(0L, Collections.emptyList()));
-                HttpRequest request = templateRequest(path, null, attrs);
-                for (String route : new String[]{"/index", "/sort", "/search"}) {
-                    request.getServerConfig().getRouter().addMapper(route, PageFixtureController.class, "page");
-                }
-                HttpResponse response = mock(HttpResponse.class);
-                new BlogPageInterceptor(renderRequest -> new ZrLogTemplateRender(renderRequest, cache, null, null, null,
-                        null, applicationConfig.getResponseConfig())).doInterceptor(request, response);
-                verify(response).renderHtmlStr(anyString());
-                verify(response, never()).write(any(InputStream.class), eq(404));
-            }
-        });
+        withConfig(
+                false,
+                cache -> {
+                    for (String path :
+                            new String[] {"/all-1", "/sort/empty", "/search/no-results"}) {
+                        Map<String, Object> attrs = new HashMap<>();
+                        attrs.put(
+                                "data", new PageData<ArticleBasicDTO>(0L, Collections.emptyList()));
+                        HttpRequest request = templateRequest(path, null, attrs);
+                        for (String route : new String[] {"/index", "/sort", "/search"}) {
+                            request.getServerConfig()
+                                    .getRouter()
+                                    .addMapper(route, PageFixtureController.class, "page");
+                        }
+                        HttpResponse response = mock(HttpResponse.class);
+                        new BlogPageInterceptor(
+                                        renderRequest ->
+                                                new ZrLogTemplateRender(
+                                                        renderRequest,
+                                                        cache,
+                                                        null,
+                                                        null,
+                                                        null,
+                                                        null,
+                                                        applicationConfig.getResponseConfig()))
+                                .doInterceptor(request, response);
+                        verify(response).renderHtmlStr(anyString());
+                        verify(response, never()).write(any(InputStream.class), eq(404));
+                    }
+                });
     }
 
-    private void withConfig(boolean generatorHtmlStatus, ThrowingRunnable runnable) throws Exception {
+    private void withConfig(boolean generatorHtmlStatus, ThrowingRunnable runnable)
+            throws Exception {
         withConfig(generatorHtmlStatus, null, runnable);
     }
 
-    private void withConfig(boolean generatorHtmlStatus, StaticSitePlugin staticSitePlugin, ThrowingRunnable runnable)
+    private void withConfig(
+            boolean generatorHtmlStatus,
+            StaticSitePlugin staticSitePlugin,
+            ThrowingRunnable runnable)
             throws Exception {
         String previousRootPath = System.getProperty("sws.root.path");
         String previousStaticPath = System.getProperty("sws.static.path");
@@ -424,11 +590,13 @@ public class ZrLogTemplateRenderTest {
     }
 
     private static class TestStaticSitePlugin implements StaticSitePlugin {
-        private final com.zrlog.common.vo.PublicWebSiteInfo site = new com.zrlog.common.vo.PublicWebSiteInfo();
+        private final com.zrlog.common.vo.PublicWebSiteInfo site =
+                new com.zrlog.common.vo.PublicWebSiteInfo();
         private final String contextPath;
         private final Map<String, HandleState> handleStatusPageMap = new HashMap<>();
         private final Lock parseLock = new ReentrantLock();
         private final List<File> cacheFiles = new ArrayList<>();
+
         TestStaticSitePlugin(String contextPath) {
             this.contextPath = contextPath;
         }
@@ -527,8 +695,9 @@ public class ZrLogTemplateRenderTest {
         public <T> T getWebSetup(Class<T> capability) {
             if (capability == WebSiteInfoProvider.class) {
                 CacheService cache = cacheForTest();
-                return cache == null ? null : capability.cast(
-                        (WebSiteInfoProvider) cache::getPublicWebSiteInfo);
+                return cache == null
+                        ? null
+                        : capability.cast((WebSiteInfoProvider) cache::getPublicWebSiteInfo);
             }
             return super.getWebSetup(capability);
         }

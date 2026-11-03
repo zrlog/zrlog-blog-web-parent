@@ -1,5 +1,8 @@
 package com.zrlog.blog;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.zrlog.blog.web.interceptor.BlogApiInterceptor;
 import com.zrlog.blog.web.interceptor.BlogPageInterceptor;
 import com.zrlog.blog.web.interceptor.BlogPluginInterceptor;
@@ -13,13 +16,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 public class DevZrLogConfigTest {
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     private static void restoreProperty(String key, String value) {
         if (value == null) {
@@ -38,13 +37,24 @@ public class DevZrLogConfigTest {
             DevZrLogConfig config = new DevZrLogConfig(7080, null, "/blog");
 
             assertFalse(config.isInstalled());
-            assertTrue(config.getServerConfig().getInterceptors().contains(BlogPluginInterceptor.class));
-            assertTrue(config.getServerConfig().getInterceptors().contains(BlogStaticResourceInterceptor.class));
-            assertTrue(config.getServerConfig().getInterceptors().contains(BlogApiInterceptor.class));
-            assertTrue(config.getServerConfig().getInterceptors().contains(BlogPageInterceptor.class));
-            assertTrue(config.getServerConfig().getInterceptors().contains(DefaultInterceptor.class));
-            assertTrue(config.getServerConfig().getRouter().getRouterMap().containsKey("/api/cache"));
-            assertTrue(config.getServerConfig().getStaticResourceMapper().containsKey("/assets/css/"));
+            assertTrue(
+                    config.getServerConfig()
+                            .getInterceptors()
+                            .contains(BlogPluginInterceptor.class));
+            assertTrue(
+                    config.getServerConfig()
+                            .getInterceptors()
+                            .contains(BlogStaticResourceInterceptor.class));
+            assertTrue(
+                    config.getServerConfig().getInterceptors().contains(BlogApiInterceptor.class));
+            assertTrue(
+                    config.getServerConfig().getInterceptors().contains(BlogPageInterceptor.class));
+            assertTrue(
+                    config.getServerConfig().getInterceptors().contains(DefaultInterceptor.class));
+            assertTrue(
+                    config.getServerConfig().getRouter().getRouterMap().containsKey("/api/cache"));
+            assertTrue(
+                    config.getServerConfig().getStaticResourceMapper().containsKey("/assets/css/"));
         } finally {
             restoreProperty("sws.root.path", previousRootPath);
         }
@@ -61,7 +71,8 @@ public class DevZrLogConfigTest {
             plugins.addAll(config.getBasePluginList());
 
             assertFalse(plugins.stream().anyMatch(PluginCorePluginImpl.class::isInstance));
-            org.junit.Assert.assertNotNull(config.getWebSetup(com.zrlog.business.web.ServiceWebSetup.class));
+            org.junit.Assert.assertNotNull(
+                    config.getWebSetup(com.zrlog.business.web.ServiceWebSetup.class));
             assertFalse(plugins.stream().anyMatch(CacheManagerPlugin.class::isInstance));
             assertTrue(plugins.stream().anyMatch(UpdateVersionInfoPlugin.class::isInstance));
         } finally {

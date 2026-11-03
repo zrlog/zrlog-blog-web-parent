@@ -2,10 +2,9 @@ package com.zrlog.blog.hexo.template.impl;
 
 import com.zrlog.blog.polyglot.util.YamlLoader;
 import com.zrlog.common.resource.ZrLogResourceLoader;
+import java.util.*;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
-
-import java.util.*;
 
 public class HexoI18nHelperImpl implements ProxyExecutable {
 
@@ -34,7 +33,9 @@ public class HexoI18nHelperImpl implements ProxyExecutable {
         }
         try {
             List<Value> objects = new ArrayList<>(Arrays.asList(args).subList(1, args.length));
-            return String.format(nestedValue.toString(), objects.stream().map(e -> e.as(Object.class)).toArray());
+            return String.format(
+                    nestedValue.toString(),
+                    objects.stream().map(e -> e.as(Object.class)).toArray());
         } catch (Exception e) {
             return e.getMessage();
         }

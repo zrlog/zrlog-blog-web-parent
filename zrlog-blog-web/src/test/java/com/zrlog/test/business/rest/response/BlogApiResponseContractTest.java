@@ -1,11 +1,11 @@
 package com.zrlog.test.business.rest.response;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import com.zrlog.blog.business.rest.response.ApiStandardResponse;
 import com.zrlog.blog.business.rest.response.CreateCommentResponse;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class BlogApiResponseContractTest {
 

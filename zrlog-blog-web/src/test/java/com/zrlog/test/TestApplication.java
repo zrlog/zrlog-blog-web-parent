@@ -7,12 +7,9 @@ public class TestApplication {
 
     @Before
     public void before() {
-        //Application.main(new String[]{"--port=0"});
+        // Application.main(new String[]{"--port=0"});
     }
 
     @After
-    public void after() {
-
-    }
-
+    public void after() {}
 }

@@ -8,7 +8,6 @@ import com.zrlog.blog.web.util.WebTools;
 import com.zrlog.business.plugin.ArticleStatisticsPlugin;
 import com.zrlog.business.plugin.RequestInfo;
 import com.zrlog.data.dto.ArticleDetailDTO;
-
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -18,7 +17,8 @@ public class ZrLogRequestRecordListener implements HttpRequestListener {
     private final BooleanSupplier installed;
     private final Supplier<ArticleStatisticsPlugin> statistics;
 
-    public ZrLogRequestRecordListener(BooleanSupplier installed, Supplier<ArticleStatisticsPlugin> statistics) {
+    public ZrLogRequestRecordListener(
+            BooleanSupplier installed, Supplier<ArticleStatisticsPlugin> statistics) {
         this.installed = Objects.requireNonNull(installed);
         this.statistics = Objects.requireNonNull(statistics);
     }
@@ -37,13 +37,12 @@ public class ZrLogRequestRecordListener implements HttpRequestListener {
             return false;
         }
         String actionKey = request.getUri();
-        //仅保留非静态资源请求或者是以 .html结尾的
+        // 仅保留非静态资源请求或者是以 .html结尾的
         if (actionKey.contains(".") && !actionKey.endsWith(".html")) {
             return false;
         }
         return Objects.nonNull(request.getAttr().get("log"));
     }
-
 
     @Override
     public void onHandled(HttpRequest request, HttpResponse httpResponse) {

@@ -5,7 +5,6 @@ import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.api.HttpResponse;
 import com.hibegin.http.server.web.MethodInterceptor;
 import com.zrlog.business.exception.MissingInstallException;
-
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 

@@ -1,13 +1,11 @@
 package com.zrlog.blog.polyglot;
 
 import com.zrlog.blog.polyglot.resource.ScriptProvider;
+import java.util.Map;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 
-import java.util.Map;
-
 public interface JsTemplateRender extends AutoCloseable {
-
 
     Value getJsBindings();
 
@@ -24,6 +22,6 @@ public interface JsTemplateRender extends AutoCloseable {
     ScriptProvider getScriptProvider();
 
     default void init(Map<String, Object> root, Map<String, Value> helpers) {
-        //root.putAll(helpers);
+        // root.putAll(helpers);
     }
 }

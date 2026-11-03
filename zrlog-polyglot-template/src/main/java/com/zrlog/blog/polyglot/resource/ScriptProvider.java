@@ -2,11 +2,10 @@ package com.zrlog.blog.polyglot.resource;
 
 import com.hibegin.http.server.util.PathUtil;
 import com.zrlog.common.resource.ZrLogResourceLoader;
-import org.graalvm.polyglot.HostAccess;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import org.graalvm.polyglot.HostAccess;
 
 public class ScriptProvider {
     private static final ScriptProvider instance = new ScriptProvider();

@@ -2,10 +2,9 @@ package com.zrlog.blog.hexo.template.support;
 
 import com.zrlog.blog.hexo.template.InjectionStorage;
 import com.zrlog.blog.polyglot.JsTemplateRender;
+import java.util.List;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
-
-import java.util.List;
 
 public class InjectPoint implements ProxyExecutable {
 

@@ -1,5 +1,7 @@
 package com.zrlog.test.hexo.template;
 
+import static org.junit.Assert.assertEquals;
+
 import com.hibegin.common.dao.dto.PageData;
 import com.zrlog.blog.hexo.template.HexoPageConverter;
 import com.zrlog.blog.web.template.vo.ArticleListPageVO;
@@ -7,13 +9,10 @@ import com.zrlog.common.Constants;
 import com.zrlog.common.cache.vo.BaseDataInitVO;
 import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.data.dto.ArticleBasicDTO;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public class HexoPageConverterTest {
 
@@ -36,8 +35,8 @@ public class HexoPageConverterTest {
         website.setAuthor("admin");
         BaseDataInitVO init = new BaseDataInitVO();
         init.setWebSite(website);
-        init.getTemplateConfigCacheMap().put(
-                "test-template", Map.of(Constants.TEMPLATE_CONFIG_STR_KEY, "{}"));
+        init.getTemplateConfigCacheMap()
+                .put("test-template", Map.of(Constants.TEMPLATE_CONFIG_STR_KEY, "{}"));
         return init;
     }
 
@@ -49,15 +48,16 @@ public class HexoPageConverterTest {
         ArticleBasicDTO unpinned = article(2L, "unpinned");
         unpinned.setSticky(null);
         BaseDataInitVO init = initData();
-        ArticleListPageVO pageInfo = new ArticleListPageVO(
-                new PageData<>(2L, List.of(pinned, unpinned), 1L, 10L), init);
+        ArticleListPageVO pageInfo =
+                new ArticleListPageVO(new PageData<>(2L, List.of(pinned, unpinned), 1L, 10L), init);
         pageInfo.setTemplate("test-template");
         pageInfo.setReqUriPath("/");
         pageInfo.setBaseWithHostPath("//blog.example.com/");
         pageInfo.setBaseUrl("/");
         pageInfo.setLang("en");
 
-        Map<String, Object> root = HexoPageConverter.toRootMap(pageInfo, "index", "/missing-template");
+        Map<String, Object> root =
+                HexoPageConverter.toRootMap(pageInfo, "index", "/missing-template");
         Map<String, Object> page = (Map<String, Object>) root.get("page");
         Map<String, Object> posts = (Map<String, Object>) page.get("posts");
         List<Map<String, Object>> rows = (List<Map<String, Object>>) posts.get("data");

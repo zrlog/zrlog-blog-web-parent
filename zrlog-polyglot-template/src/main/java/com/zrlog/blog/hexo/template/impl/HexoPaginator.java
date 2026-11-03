@@ -1,11 +1,10 @@
 package com.zrlog.blog.hexo.template.impl;
 
 import com.zrlog.blog.web.template.PagerVO;
-import org.graalvm.polyglot.Value;
-import org.graalvm.polyglot.proxy.ProxyExecutable;
-
 import java.util.Map;
 import java.util.Objects;
+import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.proxy.ProxyExecutable;
 
 public class HexoPaginator implements ProxyExecutable {
 
@@ -48,9 +47,15 @@ public class HexoPaginator implements ProxyExecutable {
         StringBuilder html = new StringBuilder();
         for (PagerVO.PageEntry pager : pagerVO.getPageList()) {
             if (pager.getCurrent()) {
-                html.append(String.format("<span class=\"page-number current\">%s</span>", pager.getDesc()));
+                html.append(
+                        String.format(
+                                "<span class=\"page-number current\">%s</span>", pager.getDesc()));
             } else {
-                html.append(String.format("<a class=\"page-number\" href=\"%s\">%s</a>", appendFormat(pager.getUrl(), (String) options.get("format")), getDesc(pager, options)));
+                html.append(
+                        String.format(
+                                "<a class=\"page-number\" href=\"%s\">%s</a>",
+                                appendFormat(pager.getUrl(), (String) options.get("format")),
+                                getDesc(pager, options)));
             }
         }
         return html;

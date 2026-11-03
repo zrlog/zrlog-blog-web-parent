@@ -1,12 +1,11 @@
 package com.zrlog.test.polyglot.markdown;
 
-import com.zrlog.business.service.MarkdownRenderer;
-import org.junit.Test;
-
-import java.util.ServiceLoader;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import com.zrlog.business.service.MarkdownRenderer;
+import java.util.ServiceLoader;
+import org.junit.Test;
 
 public class MarkdownRendererProviderTest {
     @Test

@@ -1,18 +1,16 @@
 package com.zrlog.blog.web.util;
 
 import com.zrlog.common.vo.Outline;
+import java.util.ArrayList;
+import java.util.List;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class OutlineUtil {
 
-    private OutlineUtil() {
-    }
+    private OutlineUtil() {}
 
     public static List<Outline> extractOutline(String htmlStr) {
         Document document = Jsoup.parse(htmlStr);
@@ -43,7 +41,6 @@ public class OutlineUtil {
                 }
             }
             currentLevel = outline.getLevel();
-
         }
         outlines.removeAll(needRemoveOutline);
         return outlines;
@@ -53,9 +50,16 @@ public class OutlineUtil {
         StringBuilder baseStrBuilder = new StringBuilder(baseStr);
         for (Outline outline : outlines) {
             if (!outline.getChildren().isEmpty()) {
-                baseStrBuilder.append("<li>").append(buildLiLink(outline.getText())).append(buildTocHtml(outline.getChildren(), "")).append("</li>");
+                baseStrBuilder
+                        .append("<li>")
+                        .append(buildLiLink(outline.getText()))
+                        .append(buildTocHtml(outline.getChildren(), ""))
+                        .append("</li>");
             } else {
-                baseStrBuilder.append("<li>").append(buildLiLink(outline.getText())).append("</li>");
+                baseStrBuilder
+                        .append("<li>")
+                        .append(buildLiLink(outline.getText()))
+                        .append("</li>");
             }
         }
         baseStr = baseStrBuilder.toString();

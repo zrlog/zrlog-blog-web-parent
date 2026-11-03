@@ -14,8 +14,9 @@ public class MarkdownJsRenderer {
      * @return null when rendering is unavailable; callers must retain their existing content
      */
     public String render(String markdown) {
-        LOGGER.warning("Skipping server-side Markdown rendering: Java 17 or newer is required; "
-                + "provide rendered content when running on Java 11.");
+        LOGGER.warning(
+                "Skipping server-side Markdown rendering: Java 17 or newer is required; "
+                        + "provide rendered content when running on Java 11.");
         return null;
     }
 }

@@ -9,9 +9,6 @@ import com.zrlog.data.repository.LogRepository;
 import com.zrlog.plugin.BaseStaticSitePlugin;
 import com.zrlog.util.UserAgentUtils;
 import jakarta.inject.Inject;
-import org.jsoup.Jsoup;
-import org.jsoup.select.Elements;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,16 +16,20 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.select.Elements;
 
 public class ArticleStatisticsRunnable extends BaseLockObject implements Runnable {
     private static final Logger LOGGER = LoggerUtil.getLogger(ArticleStatisticsRunnable.class);
-    /**
-     * 保留2分钟的，2分钟内不重复记数量
-     */
+
+    /** 保留2分钟的，2分钟内不重复记数量 */
     private static final long REMOVE_TIME = 2 * 1000 * 60L;
+
     private final Supplier<String> webCm;
     private final jakarta.inject.Provider<LogRepository> articles;
-    private final List<RequestInfo> requestInfoList = Collections.synchronizedList(new ArrayList<>());
+    private final List<RequestInfo> requestInfoList =
+            Collections.synchronizedList(new ArrayList<>());
+
     @Inject
     public ArticleStatisticsRunnable(
             Supplier<String> webCm, jakarta.inject.Provider<LogRepository> articles) {

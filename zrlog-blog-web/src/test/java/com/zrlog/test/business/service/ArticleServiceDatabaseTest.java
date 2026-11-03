@@ -1,5 +1,7 @@
 package com.zrlog.test.business.service;
 
+import static org.junit.Assert.*;
+
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.common.dao.dto.PageRequestImpl;
 import com.hibegin.http.server.api.HttpRequest;
@@ -11,49 +13,68 @@ import com.zrlog.data.di.DataComponent;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.test.support.InMemoryBlogDatabase;
-import org.junit.Test;
-
 import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class ArticleServiceDatabaseTest {
 
     private static void seedThreePublishedArticles(InMemoryBlogDatabase database) throws Exception {
-        database.insertArticle(1, "previous-post", "Previous Post", "Previous content", "history",
-                "2026-06-01 10:00:00", false, false);
-        database.insertArticle(2, "hello-world", "Hello World", "Hello world body", "java,zrlog",
-                "2026-06-02 10:00:00", false, false);
-        database.insertArticle(3, "next-post", "Next Post", "Next content", "future",
-                "2026-06-03 10:00:00", false, false);
+        database.insertArticle(
+                1,
+                "previous-post",
+                "Previous Post",
+                "Previous content",
+                "history",
+                "2026-06-01 10:00:00",
+                false,
+                false);
+        database.insertArticle(
+                2,
+                "hello-world",
+                "Hello World",
+                "Hello world body",
+                "java,zrlog",
+                "2026-06-02 10:00:00",
+                false,
+                false);
+        database.insertArticle(
+                3,
+                "next-post",
+                "Next Post",
+                "Next content",
+                "future",
+                "2026-06-03 10:00:00",
+                false,
+                false);
     }
 
     private static HttpRequest request(String contextPath) {
         Map<String, Object> attrs = new HashMap<>();
-        return (HttpRequest) Proxy.newProxyInstance(
-                ArticleServiceDatabaseTest.class.getClassLoader(),
-                new Class[]{HttpRequest.class},
-                (proxy, method, args) -> {
-                    if ("getContextPath".equals(method.getName())) {
-                        return contextPath;
-                    }
-                    if ("getAttr".equals(method.getName())) {
-                        return attrs;
-                    }
-                    if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
-                        return "request.example.com";
-                    }
-                    if ("getHeaderMap".equals(method.getName())) {
-                        return Collections.singletonMap("Host", "request.example.com");
-                    }
-                    if ("toString".equals(method.getName())) {
-                        return "HttpRequestProxy";
-                    }
-                    return null;
-                });
+        return (HttpRequest)
+                Proxy.newProxyInstance(
+                        ArticleServiceDatabaseTest.class.getClassLoader(),
+                        new Class[] {HttpRequest.class},
+                        (proxy, method, args) -> {
+                            if ("getContextPath".equals(method.getName())) {
+                                return contextPath;
+                            }
+                            if ("getAttr".equals(method.getName())) {
+                                return attrs;
+                            }
+                            if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
+                                return "request.example.com";
+                            }
+                            if ("getHeaderMap".equals(method.getName())) {
+                                return Collections.singletonMap("Host", "request.example.com");
+                            }
+                            if ("toString".equals(method.getName())) {
+                                return "HttpRequestProxy";
+                            }
+                            return null;
+                        });
     }
 
     @Test
@@ -63,7 +84,8 @@ public class ArticleServiceDatabaseTest {
             database.insertComment(1, 2, "first comment");
 
             ArticleDetailDTO detail =
-                    database.component(BlogComponent.class).articles()
+                    database.component(BlogComponent.class)
+                            .articles()
                             .detail("hello-world", request("/blog"));
 
             assertNotNull(detail);
@@ -90,7 +112,8 @@ public class ArticleServiceDatabaseTest {
     }
 
     @Test
-    public void shouldFollowSiteHostStaticModeAndCommentSwitchWithoutGlobalConfig() throws Exception {
+    public void shouldFollowSiteHostStaticModeAndCommentSwitchWithoutGlobalConfig()
+            throws Exception {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
             seedThreePublishedArticles(database);
             database.insertComment(1, 2, "first comment");
@@ -100,7 +123,8 @@ public class ArticleServiceDatabaseTest {
             database.putWebsite("disable_comment_status", true);
             database.cacheService().refreshInitData();
             ArticleDetailDTO staticArticle = service.detail("hello-world", request("/blog"));
-            assertEquals("//configured.example/blog/hello-world.html", staticArticle.getNoSchemeUrl());
+            assertEquals(
+                    "//configured.example/blog/hello-world.html", staticArticle.getNoSchemeUrl());
             assertEquals("/blog/tag/java.html", staticArticle.getTags().get(0).getUrl());
             assertEquals("/blog/previous-post.html", staticArticle.getLastLog().getUrl());
             assertTrue(staticArticle.getComments().isEmpty());
@@ -118,16 +142,35 @@ public class ArticleServiceDatabaseTest {
     }
 
     @Test
-    public void productionGraphsKeepDatabaseAndRefreshedSettingsOwnedByEachApplication() throws Exception {
+    public void productionGraphsKeepDatabaseAndRefreshedSettingsOwnedByEachApplication()
+            throws Exception {
         try (InMemoryBlogDatabase first = InMemoryBlogDatabase.open();
-             InMemoryBlogDatabase second = InMemoryBlogDatabase.open()) {
-            first.insertArticle(1, "shared", "First application", "First", "", "2026-06-01 10:00:00", false, false);
-            second.insertArticle(1, "shared", "Second application", "Second", "", "2026-06-01 10:00:00", false, false);
+                InMemoryBlogDatabase second = InMemoryBlogDatabase.open()) {
+            first.insertArticle(
+                    1,
+                    "shared",
+                    "First application",
+                    "First",
+                    "",
+                    "2026-06-01 10:00:00",
+                    false,
+                    false);
+            second.insertArticle(
+                    1,
+                    "shared",
+                    "Second application",
+                    "Second",
+                    "",
+                    "2026-06-01 10:00:00",
+                    false,
+                    false);
             var firstGraph = first.component(BlogComponent.class);
             var secondGraph = second.component(BlogComponent.class);
-            org.junit.Assert.assertSame(first.cacheService(), first.component(DataComponent.class).cache());
-            org.junit.Assert.assertSame(first.cacheService(), first.config().getServerConfig().getBindings().build()
-                    .get(CacheService.class));
+            org.junit.Assert.assertSame(
+                    first.cacheService(), first.component(DataComponent.class).cache());
+            org.junit.Assert.assertSame(
+                    first.cacheService(),
+                    first.config().getServerConfig().getBindings().build().get(CacheService.class));
             first.putWebsite("host", "first.example");
             first.cacheService().refreshInitData();
             var firstArticle = firstGraph.articles().detail("shared", request("/blog"));
@@ -142,15 +185,37 @@ public class ArticleServiceDatabaseTest {
     @Test
     public void shouldSearchArticlesThroughRealLogDao() throws Exception {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
-            database.insertArticle(1, "java-post", "Java Post", "Java content", "java,search",
-                    "2026-06-01 10:00:00", false, false);
-            database.insertArticle(2, "private-java-post", "Java Private", "Java private", "java",
-                    "2026-06-02 10:00:00", false, true);
-            database.insertArticle(3, "other-post", "Other Post", "Other content", "other",
-                    "2026-06-03 10:00:00", false, false);
+            database.insertArticle(
+                    1,
+                    "java-post",
+                    "Java Post",
+                    "Java content",
+                    "java,search",
+                    "2026-06-01 10:00:00",
+                    false,
+                    false);
+            database.insertArticle(
+                    2,
+                    "private-java-post",
+                    "Java Private",
+                    "Java private",
+                    "java",
+                    "2026-06-02 10:00:00",
+                    false,
+                    true);
+            database.insertArticle(
+                    3,
+                    "other-post",
+                    "Other Post",
+                    "Other content",
+                    "other",
+                    "2026-06-03 10:00:00",
+                    false,
+                    false);
 
             PageData<ArticleBasicDTO> data =
-                    database.component(BlogComponent.class).articles()
+                    database.component(BlogComponent.class)
+                            .articles()
                             .pageByKeywords(
                                     new PageRequestImpl(1L, 10L),
                                     "Java",
@@ -172,23 +237,56 @@ public class ArticleServiceDatabaseTest {
     @Test
     public void shouldUseStickyOrderOnlyForHomeArticlePages() throws Exception {
         try (InMemoryBlogDatabase database = InMemoryBlogDatabase.open()) {
-            database.insertArticle(1, "java-old", "Java Old", "Java old content", "java",
-                    "2026-06-01 10:00:00", false, false);
-            database.insertArticle(2, "java-new", "Java New", "Java new content", "java",
-                    "2026-06-02 10:00:00", false, false);
-            database.insertArticle(3, "other-post", "Other Post", "Other content", "other",
-                    "2026-06-03 10:00:00", false, false);
+            database.insertArticle(
+                    1,
+                    "java-old",
+                    "Java Old",
+                    "Java old content",
+                    "java",
+                    "2026-06-01 10:00:00",
+                    false,
+                    false);
+            database.insertArticle(
+                    2,
+                    "java-new",
+                    "Java New",
+                    "Java new content",
+                    "java",
+                    "2026-06-02 10:00:00",
+                    false,
+                    false);
+            database.insertArticle(
+                    3,
+                    "other-post",
+                    "Other Post",
+                    "Other content",
+                    "other",
+                    "2026-06-03 10:00:00",
+                    false,
+                    false);
             database.update("update log set sticky=? where logId=?", 1, 1);
             ArticleService service = database.component(BlogComponent.class).articles();
 
-            PageData<ArticleBasicDTO> home = service.pageByKeywords(
-                    new PageRequestImpl(1L, 10L), "", request("/blog"), ArticleListOrder.STICKY_FIRST);
-            PageData<ArticleBasicDTO> feed = service.pageByKeywords(
-                    new PageRequestImpl(1L, 10L), "", request("/blog"), ArticleListOrder.NEWEST_FIRST);
-            PageData<ArticleBasicDTO> legacy = service.pageByKeywords(
-                    new PageRequestImpl(1L, 10L), "", request("/blog"));
-            PageData<ArticleBasicDTO> search = service.pageByKeywords(
-                    new PageRequestImpl(1L, 10L), "Java", request("/blog"), ArticleListOrder.STICKY_FIRST);
+            PageData<ArticleBasicDTO> home =
+                    service.pageByKeywords(
+                            new PageRequestImpl(1L, 10L),
+                            "",
+                            request("/blog"),
+                            ArticleListOrder.STICKY_FIRST);
+            PageData<ArticleBasicDTO> feed =
+                    service.pageByKeywords(
+                            new PageRequestImpl(1L, 10L),
+                            "",
+                            request("/blog"),
+                            ArticleListOrder.NEWEST_FIRST);
+            PageData<ArticleBasicDTO> legacy =
+                    service.pageByKeywords(new PageRequestImpl(1L, 10L), "", request("/blog"));
+            PageData<ArticleBasicDTO> search =
+                    service.pageByKeywords(
+                            new PageRequestImpl(1L, 10L),
+                            "Java",
+                            request("/blog"),
+                            ArticleListOrder.STICKY_FIRST);
 
             assertEquals(3L, home.getTotalElements());
             assertEquals("java-old", home.getRows().get(0).getAlias());

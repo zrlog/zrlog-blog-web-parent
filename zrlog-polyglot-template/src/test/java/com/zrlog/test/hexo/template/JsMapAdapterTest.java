@@ -1,11 +1,10 @@
 package com.zrlog.test.hexo.template;
 
-import com.zrlog.blog.hexo.template.JsMapAdapter;
-import org.junit.Test;
-
-import java.util.Map;
-
 import static org.junit.Assert.*;
+
+import com.zrlog.blog.hexo.template.JsMapAdapter;
+import java.util.Map;
+import org.junit.Test;
 
 public class JsMapAdapterTest {
 

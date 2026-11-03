@@ -14,7 +14,6 @@ import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
 import com.zrlog.data.repository.CommentRepository;
 import jakarta.inject.Inject;
-
 import java.sql.SQLException;
 import java.util.List;
 
@@ -34,18 +33,21 @@ public class BlogApiArticleController extends Controller {
     @ResponseBody
     @RequestMethod(method = HttpMethod.GET)
     public ApiStandardResponse<ArticleDetailDTO> detail() throws SQLException {
-        return new ApiStandardResponse<>(articleService.detail(request.getParaToStr("id", ""), request));
+        return new ApiStandardResponse<>(
+                articleService.detail(request.getParaToStr("id", ""), request));
     }
 
     @ResponseBody
     @RequestMethod(method = HttpMethod.GET)
     public ApiStandardResponse<PageData<ArticleBasicDTO>> index() {
         String key = getRequest().getParaToStr("key", "");
-        ArticleListOrder listOrder = getRequest().getParaToBool("feed", false)
-                ? ArticleListOrder.NEWEST_FIRST
-                : ArticleListOrder.STICKY_FIRST;
-        return new ApiStandardResponse<>(articleService.pageByKeywords(
-                ControllerUtil.getPageRequest(this), key, getRequest(), listOrder));
+        ArticleListOrder listOrder =
+                getRequest().getParaToBool("feed", false)
+                        ? ArticleListOrder.NEWEST_FIRST
+                        : ArticleListOrder.STICKY_FIRST;
+        return new ApiStandardResponse<>(
+                articleService.pageByKeywords(
+                        ControllerUtil.getPageRequest(this), key, getRequest(), listOrder));
     }
 
     @ResponseBody

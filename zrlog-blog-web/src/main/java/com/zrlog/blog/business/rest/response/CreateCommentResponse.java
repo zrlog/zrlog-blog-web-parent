@@ -4,8 +4,7 @@ public class CreateCommentResponse {
 
     private String alias;
 
-    public CreateCommentResponse() {
-    }
+    public CreateCommentResponse() {}
 
     public CreateCommentResponse(String alias) {
         this.alias = alias;

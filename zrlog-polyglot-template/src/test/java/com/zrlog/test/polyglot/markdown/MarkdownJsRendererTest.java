@@ -1,15 +1,14 @@
 package com.zrlog.test.polyglot.markdown;
 
-import com.zrlog.blog.polyglot.markdown.MarkdownJsRenderer;
-import org.junit.Test;
+import static org.junit.Assert.*;
 
+import com.zrlog.blog.polyglot.markdown.MarkdownJsRenderer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class MarkdownJsRendererTest {
 
@@ -17,7 +16,9 @@ public class MarkdownJsRendererTest {
     public void shouldRenderGfmMarkdownWithFrontendCompatibleLineBreaks() {
         MarkdownJsRenderer renderer = new MarkdownJsRenderer();
 
-        String html = renderer.render("# Title\n\nfirst line\nsecond line\n\n| A | B |\n| - | - |\n| 1 | 2 |");
+        String html =
+                renderer.render(
+                        "# Title\n\nfirst line\nsecond line\n\n| A | B |\n| - | - |\n| 1 | 2 |");
 
         assertTrue(html.contains("<h1>Title</h1>"));
         assertTrue(html.contains("first line<br>second line"));
@@ -32,8 +33,10 @@ public class MarkdownJsRendererTest {
 
     @Test
     public void shouldRenderEditorCodeHighlightingAndCjkStrongBoundaries() {
-        String html = new MarkdownJsRenderer().render(
-                "\u4e2d**\u201c\u6587\u201d**\u5b57\n\n```javascript\nconst x = 1;\n```");
+        String html =
+                new MarkdownJsRenderer()
+                        .render(
+                                "\u4e2d**\u201c\u6587\u201d**\u5b57\n\n```javascript\nconst x = 1;\n```");
 
         assertTrue(html.contains("<strong>\u201c\u6587\u201d</strong>"));
         assertTrue(html.contains("code-block-wrapper"));
@@ -47,7 +50,7 @@ public class MarkdownJsRendererTest {
 
         assertTrue(renderer.render("$x^2$").contains("katex-html"));
         assertTrue(renderer.render("$$x^2$$").contains("katex-display"));
-        for (String language : new String[]{"math", "latex", "katex"}) {
+        for (String language : new String[] {"math", "latex", "katex"}) {
             String html = renderer.render("```" + language + "\nx^2\n```");
             assertTrue(language, html.contains("katex-html"));
             assertFalse(language, html.contains("data-code="));
@@ -62,8 +65,9 @@ public class MarkdownJsRendererTest {
 
         assertTrue(html.contains("<code>$x^2$</code>"));
         assertFalse(html.contains("katex"));
-        for (String language : new String[]{"flow", "seq"}) {
-            String diagram = renderer.render("```" + language + "\nA->B: <script>alert(1)</script>\n```");
+        for (String language : new String[] {"flow", "seq"}) {
+            String diagram =
+                    renderer.render("```" + language + "\nA->B: <script>alert(1)</script>\n```");
             assertTrue(diagram.contains("language-" + language));
             assertTrue(diagram.contains("&lt;script&gt;"));
             assertFalse(diagram.contains("<script>"));

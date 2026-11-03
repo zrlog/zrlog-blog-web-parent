@@ -25,7 +25,6 @@ import com.zrlog.data.repository.LogRepository;
 import com.zrlog.util.I18nUtil;
 import com.zrlog.util.ParseUtil;
 import jakarta.inject.Inject;
-
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
@@ -82,34 +81,53 @@ public class ArticleController extends Controller {
         return new ArticleUriInfoVO(key, page);
     }
 
-    /**
-     * add page info for template more easy
-     */
-    private void setPageDataInfo(String currentUri, PageData<ArticleBasicDTO> data, PageRequest pageRequest) {
+    /** add page info for template more easy */
+    private void setPageDataInfo(
+            String currentUri, PageData<ArticleBasicDTO> data, PageRequest pageRequest) {
         data.getRows().forEach(e -> ArticleService.handlerArticle(e, request, cacheService));
         getRequest().getAttr().put("yurl", Constants.getArticleUri() + currentUri);
         getRequest().getAttr().put("data", data);
-        long totalPage = BigDecimal.valueOf(Math.ceil(data.getTotalElements() * 1.0 / pageRequest.getSize())).longValue();
+        long totalPage =
+                BigDecimal.valueOf(Math.ceil(data.getTotalElements() * 1.0 / pageRequest.getSize()))
+                        .longValue();
         if (totalPage > 0) {
-            //大于1页
+            // 大于1页
             if (totalPage > 1) {
-                PagerVO pager = PagerUtil.generatorPager(currentUri, pageRequest.getPage(), totalPage);
-                String suffix = StaticSitePlugin.getSuffix(request, Boolean.TRUE.equals(cacheService.getPublicWebSiteInfo().getGenerator_html_status()));
+                PagerVO pager =
+                        PagerUtil.generatorPager(currentUri, pageRequest.getPage(), totalPage);
+                String suffix =
+                        StaticSitePlugin.getSuffix(
+                                request,
+                                Boolean.TRUE.equals(
+                                        cacheService
+                                                .getPublicWebSiteInfo()
+                                                .getGenerator_html_status()));
                 for (PagerVO.PageEntry pageMap : pager.getPageList()) {
-                    pageMap.setUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + pageMap.getUrl()) + suffix);
+                    pageMap.setUrl(
+                            WebTools.buildEncodedUrl(
+                                            request, Constants.getArticleUri() + pageMap.getUrl())
+                                    + suffix);
                 }
-                pager.setPageStartUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + pager.getPageStartUrl() + suffix));
-                pager.setPageEndUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + pager.getPageEndUrl() + suffix));
-                //pager
+                pager.setPageStartUrl(
+                        WebTools.buildEncodedUrl(
+                                request,
+                                Constants.getArticleUri() + pager.getPageStartUrl() + suffix));
+                pager.setPageEndUrl(
+                        WebTools.buildEncodedUrl(
+                                request,
+                                Constants.getArticleUri() + pager.getPageEndUrl() + suffix));
+                // pager
                 getRequest().getAttr().put("pager", pager);
             }
         }
-
     }
 
     @RequestMethod
     public String index() {
-        PageRequest pageRequest = new PageRequestImpl(parseUriInfo(request.getUri()).getPage(), cacheService.getPublicWebSiteInfo().getRows());
+        PageRequest pageRequest =
+                new PageRequestImpl(
+                        parseUriInfo(request.getUri()).getPage(),
+                        cacheService.getPublicWebSiteInfo().getRows());
         PageData<ArticleBasicDTO> data = articles.get().visitorFindHome(pageRequest);
         setPageDataInfo("all-", data, pageRequest);
         return "index";
@@ -174,7 +192,8 @@ public class ArticleController extends Controller {
     @RequestMethod
     public String detail() throws SQLException {
         String uri = getRequest().getUri();
-        ArticleDetailDTO detail = articleService.detail(uri.replace("/", "").replace(".html", ""), request);
+        ArticleDetailDTO detail =
+                articleService.detail(uri.replace("/", "").replace(".html", ""), request);
         if (Objects.nonNull(detail)) {
             request.getAttr().put("log", detail);
         }
@@ -190,7 +209,10 @@ public class ArticleController extends Controller {
                 articles.get().findByTypeAlias(uriInfoVO.getPage(), rows, uriInfoVO.getKey()),
                 new PageRequestImpl(uriInfoVO.getPage(), rows));
         request.getAttr().put("tipsType", I18nUtil.getBlogStringFromRes("category"));
-        Optional<TypeDTO> first = cacheService.getArticleTypes().stream().filter(e -> Objects.equals(e.getAlias(), uriInfoVO.getKey())).findFirst();
+        Optional<TypeDTO> first =
+                cacheService.getArticleTypes().stream()
+                        .filter(e -> Objects.equals(e.getAlias(), uriInfoVO.getKey()))
+                        .findFirst();
         if (first.isPresent()) {
             request.getAttr().put("tipsName", first.get().getTypeName());
         } else {
@@ -245,5 +267,4 @@ public class ArticleController extends Controller {
         setPageDataInfo(templateName, new PageData<>(), new PageRequestImpl(1L, rows));
         return templateName;
     }
-
 }

@@ -3,7 +3,6 @@ package com.zrlog.blog.hexo.template.util;
 import com.hibegin.common.util.LoggerUtil;
 import com.hibegin.common.util.ObjectHelpers;
 import com.zrlog.blog.hexo.template.HexoDateWrapper;
-
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -39,9 +38,14 @@ public class HexoDateObjUtils {
             if (dateObj instanceof Date) {
                 zonedDateTime = ((Date) dateObj).toInstant().atZone(ZoneId.systemDefault());
             } else if (dateObj instanceof Long) {
-                zonedDateTime = java.time.Instant.ofEpochMilli((Long) dateObj).atZone(ZoneId.systemDefault());
+                zonedDateTime =
+                        java.time.Instant.ofEpochMilli((Long) dateObj)
+                                .atZone(ZoneId.systemDefault());
             } else if (dateObj instanceof HexoDateWrapper) {
-                zonedDateTime = java.time.Instant.ofEpochMilli(((HexoDateWrapper) dateObj).getDate().getTime()).atZone(ZoneId.systemDefault());
+                zonedDateTime =
+                        java.time.Instant.ofEpochMilli(
+                                        ((HexoDateWrapper) dateObj).getDate().getTime())
+                                .atZone(ZoneId.systemDefault());
             } else {
                 return dateObj.toString();
             }
@@ -60,11 +64,14 @@ public class HexoDateObjUtils {
             // 简单处理：将 Hexo 的 YYYY 转换为 Java 的 yyyy
             formatStr = formatStr.replace("YYYY", "yyyy").replace("YY", "yy").replace("DD", "dd");
 
-            return zonedDateTime.format(DateTimeFormatter.ofPattern(formatStr, ObjectHelpers.requireNonNullElse(locales.get(local.replace("_", "")), Locale.getDefault())));
+            return zonedDateTime.format(
+                    DateTimeFormatter.ofPattern(
+                            formatStr,
+                            ObjectHelpers.requireNonNullElse(
+                                    locales.get(local.replace("_", "")), Locale.getDefault())));
         } catch (Exception e) {
             LOGGER.warning("Invalid Date " + e.getMessage());
             return dateObj.toString();
         }
-
     }
 }

@@ -1,5 +1,7 @@
 package com.zrlog.test.web;
 
+import static org.junit.Assert.*;
+
 import com.hibegin.common.dao.DataSourceWrapper;
 import com.zrlog.blog.web.BlogWebSetup;
 import com.zrlog.blog.web.BlogWebSetupProvider;
@@ -19,19 +21,15 @@ import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSetup;
 import com.zrlog.web.WebSetupContext;
+import java.io.File;
+import java.util.List;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
-import java.util.List;
-
-import static org.junit.Assert.*;
-
 public class BlogWebSetupContractTest {
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     private static boolean hasPlugin(Plugins plugins, Class<?> pluginClass) {
         return plugins.stream().anyMatch(pluginClass::isInstance);
@@ -49,8 +47,9 @@ public class BlogWebSetupContractTest {
     public void shouldExposeProviderMetadataAndCreateSetup() throws Exception {
         BlogWebSetupProvider provider = new BlogWebSetupProvider();
         TestZrLogConfig config = config();
-        WebSetupContext context = new WebSetupContext(config, new File("db.properties"),
-                new File("install.lock"), "/blog", null);
+        WebSetupContext context =
+                new WebSetupContext(
+                        config, new File("db.properties"), new File("install.lock"), "/blog", null);
 
         WebSetup setup = provider.create(context);
 
@@ -74,8 +73,9 @@ public class BlogWebSetupContractTest {
         assertTrue(config.getServerConfig().getStaticResourceMapper().containsKey("/assets/css/"));
         assertTrue(config.getServerConfig().getStaticResourceMapper().containsKey("/assets/js/"));
         assertTrue(config.getServerConfig().getRouter().getRouterMap().containsKey("/api/cache"));
-        assertTrue(config.getServerConfig().getHttpRequestListenerList().get(0)
-                instanceof ZrLogRequestRecordListener);
+        assertTrue(
+                config.getServerConfig().getHttpRequestListenerList().get(0)
+                        instanceof ZrLogRequestRecordListener);
     }
 
     @Test
@@ -84,12 +84,12 @@ public class BlogWebSetupContractTest {
 
         new DataWebSetup(config).setup();
         new ServiceWebSetup(
-                new WebSetupContext(
-                        config,
-                        new File("db.properties"),
-                        new File("install.lock"),
-                        "/blog",
-                        null))
+                        new WebSetupContext(
+                                config,
+                                new File("db.properties"),
+                                new File("install.lock"),
+                                "/blog",
+                                null))
                 .setup();
         BlogWebSetup setup = new BlogWebSetup(config, "/blog", true);
         setup.setup();
@@ -107,7 +107,9 @@ public class BlogWebSetupContractTest {
     private TestZrLogConfig config() throws Exception {
         String previousRootPath = System.getProperty("sws.root.path");
         try {
-            System.setProperty("sws.root.path", temporaryFolder.newFolder("zrlog-blog-setup").getAbsolutePath());
+            System.setProperty(
+                    "sws.root.path",
+                    temporaryFolder.newFolder("zrlog-blog-setup").getAbsolutePath());
             return new TestZrLogConfig();
         } finally {
             restoreProperty("sws.root.path", previousRootPath);

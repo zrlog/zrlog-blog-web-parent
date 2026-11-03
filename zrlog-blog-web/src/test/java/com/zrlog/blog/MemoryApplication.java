@@ -23,7 +23,6 @@ import com.zrlog.install.web.config.DefaultInstallConfig;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.test.support.MemoryRuntime;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -41,7 +40,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * Local-only application for reviewing the installed default blog theme with deterministic in-memory data.
+ * Local-only application for reviewing the installed default blog theme with deterministic
+ * in-memory data.
  */
 public class MemoryApplication {
 
@@ -71,9 +71,14 @@ public class MemoryApplication {
         boolean installedDefault = isInstalledDefaultMode(args);
         DevZrLogConfig config = prepareRuntime(port, !installedDefault);
         WebServerBuilder build = new WebServerBuilder.Builder().config(config).build();
-        LOGGER.info("Start ZrLog blog memory application at http://127.0.0.1:" + port
-                + config.getServerConfig().getContextPath() + "/, root=" + PathUtil.getRootPath()
-                + ", content=" + (installedDefault ? "installed-default" : "review-fixture"));
+        LOGGER.info(
+                "Start ZrLog blog memory application at http://127.0.0.1:"
+                        + port
+                        + config.getServerConfig().getContextPath()
+                        + "/, root="
+                        + PathUtil.getRootPath()
+                        + ", content="
+                        + (installedDefault ? "installed-default" : "review-fixture"));
         build.start();
     }
 
@@ -85,8 +90,11 @@ public class MemoryApplication {
         Path rootPath = MemoryRuntime.reset(MemoryRuntime.projectRoot());
         PathUtil.setRootPath(rootPath.toString());
 
-        InstallConfigVO installConfig = readInstallConfig(seedReviewFixture
-                ? MEMORY_INSTALL_CONFIG_FILE : INSTALLED_DEFAULT_CONFIG_FILE);
+        InstallConfigVO installConfig =
+                readInstallConfig(
+                        seedReviewFixture
+                                ? MEMORY_INSTALL_CONFIG_FILE
+                                : INSTALLED_DEFAULT_CONFIG_FILE);
         applyRuntimeConfig(installConfig, port);
         installFromConfig(installConfig);
 
@@ -124,8 +132,10 @@ public class MemoryApplication {
         if (!Files.exists(configPath)) {
             throw new IllegalStateException("Missing " + configPath);
         }
-        InstallConfigVO installConfig = GSON.fromJson(Files.readString(configPath), InstallConfigVO.class);
-        Properties properties = InMemoryDatabase.h2Properties(installConfig.getDbConfig().getDbName());
+        InstallConfigVO installConfig =
+                GSON.fromJson(Files.readString(configPath), InstallConfigVO.class);
+        Properties properties =
+                InMemoryDatabase.h2Properties(installConfig.getDbConfig().getDbName());
         installConfig.getDbConfig().setJdbcUrl(properties.getProperty("jdbcUrl"));
         installConfig.getDbConfig().setDriverClass(properties.getProperty("driverClass"));
         return installConfig;
@@ -138,7 +148,8 @@ public class MemoryApplication {
         }
         ReviewContent content = GSON.fromJson(Files.readString(contentPath), ReviewContent.class);
         if (content == null || content.articles == null || content.articles.isEmpty()) {
-            throw new IllegalStateException("Memory review content must contain at least one article");
+            throw new IllegalStateException(
+                    "Memory review content must contain at least one article");
         }
         return content;
     }
@@ -159,7 +170,8 @@ public class MemoryApplication {
         }
     }
 
-    private static void seedReviewContent(DataSourceWrapper dataSource, ReviewContent content) throws SQLException {
+    private static void seedReviewContent(DataSourceWrapper dataSource, ReviewContent content)
+            throws SQLException {
         var runner = dataSource.getQueryRunner();
         runner.update("delete from comment");
         runner.update("delete from log");
@@ -170,38 +182,92 @@ public class MemoryApplication {
         runner.update("update user set header=? where userId=1", "/attached/avatar.svg");
 
         for (ReviewNavigation navigation : safe(content.navigation)) {
-            runner.update("insert into lognav(navId, navName, url, sort, icon) values(?, ?, ?, ?, ?)",
-                    navigation.id, navigation.name, navigation.url, navigation.sort, "");
+            runner.update(
+                    "insert into lognav(navId, navName, url, sort, icon) values(?, ?, ?, ?, ?)",
+                    navigation.id,
+                    navigation.name,
+                    navigation.url,
+                    navigation.sort,
+                    "");
         }
         for (ReviewType type : safe(content.types)) {
-            runner.update("insert into type(typeId, typeName, remark, alias, pid, arrange_plugin) "
+            runner.update(
+                    "insert into type(typeId, typeName, remark, alias, pid, arrange_plugin) "
                             + "values(?, ?, ?, ?, ?, ?)",
-                    type.id, type.name, type.remark, type.alias, 0, null);
+                    type.id,
+                    type.name,
+                    type.remark,
+                    type.alias,
+                    0,
+                    null);
         }
         for (ReviewTag tag : safe(content.tags)) {
-            runner.update("insert into tag(tagId, text, count) values(?, ?, ?)", tag.id, tag.text, tag.count);
+            runner.update(
+                    "insert into tag(tagId, text, count) values(?, ?, ?)",
+                    tag.id,
+                    tag.text,
+                    tag.count);
         }
         for (ReviewLink link : safe(content.links)) {
-            runner.update("insert into link(linkId, linkName, url, alt, sort, status, icon) values(?, ?, ?, ?, ?, ?, ?)",
-                    link.id, link.name, link.url, link.alt, link.sort, true, link.icon);
+            runner.update(
+                    "insert into link(linkId, linkName, url, alt, sort, status, icon) values(?, ?, ?, ?, ?, ?, ?)",
+                    link.id,
+                    link.name,
+                    link.url,
+                    link.alt,
+                    link.sort,
+                    true,
+                    link.icon);
         }
         for (ReviewArticle article : content.articles) {
-            runner.update("insert into log(logId, alias, canComment, click, version, content, plain_content, markdown, "
+            runner.update(
+                    "insert into log(logId, alias, canComment, click, version, content, plain_content, markdown, "
                             + "digest, keywords, thumbnail, recommended, releaseTime, last_update_date, title, typeId, "
                             + "userId, hot, rubbish, privacy, editor_type, arrange_plugin) values(?, ?, ?, ?, ?, ?, ?, "
                             + "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    article.id, article.alias, article.canComment, article.click, 0, article.content,
-                    article.plainContent, article.markdown, article.digest, article.keywords, article.thumbnail, false,
-                    article.releaseTime, article.releaseTime, article.title, article.typeId, 1, false, false, false,
-                    "markdown", null);
+                    article.id,
+                    article.alias,
+                    article.canComment,
+                    article.click,
+                    0,
+                    article.content,
+                    article.plainContent,
+                    article.markdown,
+                    article.digest,
+                    article.keywords,
+                    article.thumbnail,
+                    false,
+                    article.releaseTime,
+                    article.releaseTime,
+                    article.title,
+                    article.typeId,
+                    1,
+                    false,
+                    false,
+                    false,
+                    "markdown",
+                    null);
         }
         for (ReviewComment comment : safe(content.comments)) {
-            runner.update("insert into comment(commentId, commTime, hide, have_read, td, userComment, userHome, "
+            runner.update(
+                    "insert into comment(commentId, commTime, hide, have_read, td, userComment, userHome, "
                             + "userIp, userMail, userName, logId, postId, header, user_agent, reply_id) values(?, ?, "
                             + "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    comment.id, comment.time, false, false, comment.time, comment.content, "", "127.0.0.1",
-                    "reader@example.com", comment.userName, comment.articleId, "memory-" + comment.id, "",
-                    "MemoryApplication", null);
+                    comment.id,
+                    comment.time,
+                    false,
+                    false,
+                    comment.time,
+                    comment.content,
+                    "",
+                    "127.0.0.1",
+                    "reader@example.com",
+                    comment.userName,
+                    comment.articleId,
+                    "memory-" + comment.id,
+                    "",
+                    "MemoryApplication",
+                    null);
         }
     }
 
@@ -218,7 +284,10 @@ public class MemoryApplication {
         Files.createDirectories(attachedDir);
         try (var stream = Files.list(sourceDir)) {
             for (Path source : stream.filter(Files::isRegularFile).collect(Collectors.toList())) {
-                Files.copy(source, attachedDir.resolve(source.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(
+                        source,
+                        attachedDir.resolve(source.getFileName()),
+                        StandardCopyOption.REPLACE_EXISTING);
             }
         }
     }
@@ -275,7 +344,9 @@ public class MemoryApplication {
 
                 @Override
                 public java.net.http.HttpRequest request() {
-                    return java.net.http.HttpRequest.newBuilder(URI.create("http://127.0.0.1/memory-plugin")).build();
+                    return java.net.http.HttpRequest.newBuilder(
+                                    URI.create("http://127.0.0.1/memory-plugin"))
+                            .build();
                 }
 
                 @Override
@@ -285,7 +356,8 @@ public class MemoryApplication {
 
                 @Override
                 public HttpHeaders headers() {
-                    return HttpHeaders.of(Map.of("content-type", List.of("text/html;charset=utf-8")),
+                    return HttpHeaders.of(
+                            Map.of("content-type", List.of("text/html;charset=utf-8")),
                             (name, value) -> true);
                 }
 
@@ -317,22 +389,26 @@ public class MemoryApplication {
         }
 
         @Override
-        public CloseResponseHandle getContext(String uri, HttpMethod method, HttpRequest request,
-                                              AdminTokenVO adminTokenVO) {
+        public CloseResponseHandle getContext(
+                String uri, HttpMethod method, HttpRequest request, AdminTokenVO adminTokenVO) {
             CloseResponseHandle handle = new CloseResponseHandle();
             handle.handle(null, memoryResponse(""));
             return handle;
         }
 
         @Override
-        public <T> T requestService(HttpRequest inputRequest, Map<String, String[]> params,
-                                    AdminTokenVO adminTokenVO, Class<T> clazz) {
+        public <T> T requestService(
+                HttpRequest inputRequest,
+                Map<String, String[]> params,
+                AdminTokenVO adminTokenVO,
+                Class<T> clazz) {
             return null;
         }
 
         @Override
-        public boolean accessPlugin(String uri, HttpRequest request, HttpResponse response,
-                                    AdminTokenVO adminTokenVO) throws URISyntaxException {
+        public boolean accessPlugin(
+                String uri, HttpRequest request, HttpResponse response, AdminTokenVO adminTokenVO)
+                throws URISyntaxException {
             return false;
         }
 

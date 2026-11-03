@@ -37,9 +37,10 @@ public class TemplateResolver {
         if (filePath.startsWith(CLASSPATH_PREFIX)) {
             // 如果是 classpath，截取最后一个斜杠之前的部分
             int lastSlash = filePath.lastIndexOf('/');
-            dirToPush = (lastSlash > CLASSPATH_PREFIX.length())
-                    ? filePath.substring(0, lastSlash)
-                    : CLASSPATH_PREFIX;
+            dirToPush =
+                    (lastSlash > CLASSPATH_PREFIX.length())
+                            ? filePath.substring(0, lastSlash)
+                            : CLASSPATH_PREFIX;
         } else {
             // 如果是普通文件，取其 Parent
             Path p = Paths.get(filePath).getParent();

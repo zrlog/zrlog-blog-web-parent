@@ -1,11 +1,10 @@
 package com.zrlog.test.polyglot.resource;
 
-import com.zrlog.blog.polyglot.resource.ScriptProvider;
-import org.junit.Test;
-
-import java.io.File;
-
 import static org.junit.Assert.*;
+
+import com.zrlog.blog.polyglot.resource.ScriptProvider;
+import java.io.File;
+import org.junit.Test;
 
 public class ScriptProviderTest {
 

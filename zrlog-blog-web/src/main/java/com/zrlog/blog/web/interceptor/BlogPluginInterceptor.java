@@ -6,7 +6,6 @@ import com.hibegin.http.server.api.HttpResponse;
 import com.zrlog.business.plugin.PluginCorePlugin;
 import com.zrlog.common.TokenService;
 import com.zrlog.common.vo.AdminTokenVO;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -15,9 +14,8 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * 目前插件服务拦截了
- * 1. /plugin/* /p/* （是plugin的短路由，代码逻辑上是不区分的，不检查权限）
- * 如果想了解更多关于插件的实现可以浏览这篇文章 <a href="https://blog.zrlog.com/zrlog-plugin-dev.html">插件实现</a>
+ * 目前插件服务拦截了 1. /plugin/* /p/* （是plugin的短路由，代码逻辑上是不区分的，不检查权限） 如果想了解更多关于插件的实现可以浏览这篇文章 <a
+ * href="https://blog.zrlog.com/zrlog-plugin-dev.html">插件实现</a>
  */
 public class BlogPluginInterceptor implements HandleAbleInterceptor {
     private static final String userPluginUriPath = "/plugin/";
@@ -26,8 +24,15 @@ public class BlogPluginInterceptor implements HandleAbleInterceptor {
     private static final String userPluginUriApiPath = "/api/plugin/";
     private final Supplier<TokenService> tokenService;
     private final Supplier<PluginCorePlugin> pluginCore;
-    private final List<String> pluginHandlerPaths = Arrays.asList(userPluginUriApiPathShort, userPluginUriApiPath, userPluginUriPath, userPluginUriPathShort);
-    public BlogPluginInterceptor(Supplier<TokenService> tokenService, Supplier<PluginCorePlugin> pluginCore) {
+    private final List<String> pluginHandlerPaths =
+            Arrays.asList(
+                    userPluginUriApiPathShort,
+                    userPluginUriApiPath,
+                    userPluginUriPath,
+                    userPluginUriPathShort);
+
+    public BlogPluginInterceptor(
+            Supplier<TokenService> tokenService, Supplier<PluginCorePlugin> pluginCore) {
         this.tokenService = Objects.requireNonNull(tokenService);
         this.pluginCore = Objects.requireNonNull(pluginCore);
     }
@@ -47,7 +52,9 @@ public class BlogPluginInterceptor implements HandleAbleInterceptor {
      * @param key
      * @throws IOException
      */
-    private void visitorPermission(String target, HttpRequest request, HttpResponse response, AdminTokenVO key) throws IOException, URISyntaxException, InterruptedException {
+    private void visitorPermission(
+            String target, HttpRequest request, HttpResponse response, AdminTokenVO key)
+            throws IOException, URISyntaxException, InterruptedException {
         String realUri = target;
         for (String prefixUri : pluginHandlerPaths) {
             realUri = realUri.replaceFirst(prefixUri, "/");
@@ -59,7 +66,8 @@ public class BlogPluginInterceptor implements HandleAbleInterceptor {
     }
 
     @Override
-    public boolean doInterceptor(HttpRequest request, HttpResponse response) throws IOException, URISyntaxException, InterruptedException {
+    public boolean doInterceptor(HttpRequest request, HttpResponse response)
+            throws IOException, URISyntaxException, InterruptedException {
         String target = request.getUri();
         TokenService tokenService = this.tokenService.get();
         if (Objects.isNull(tokenService)) {

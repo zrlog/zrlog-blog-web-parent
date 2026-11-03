@@ -13,7 +13,6 @@ import com.zrlog.blog.web.template.vo.BasePageInfo;
 import com.zrlog.common.exception.NotImplementException;
 import com.zrlog.common.vo.TemplateVO;
 import com.zrlog.theme.spi.BundledThemes;
-
 import java.io.File;
 import java.util.Map;
 
@@ -43,7 +42,9 @@ public class HexoTemplate implements ZrLogTemplate {
         try (JsTemplateRender jsTemplateRender = buildJsTemplateRender(root, pageInfo)) {
             hexoObjectBox.setup(jsTemplateRender);
             jsTemplateRender.init(root, hexoObjectBox.getHelperMap());
-            String body = jsTemplateRender.render((String) YamlLoader.getNestedValue(root, "page.layout"), root);
+            String body =
+                    jsTemplateRender.render(
+                            (String) YamlLoader.getNestedValue(root, "page.layout"), root);
             if (jsTemplateRender instanceof EjsTemplateRender) {
                 jsTemplateRender.getJsBindings().putMember("body", body);
 
@@ -53,9 +54,13 @@ public class HexoTemplate implements ZrLogTemplate {
         }
     }
 
-    private HexoObjectBox buildHexoObjectByTemplate(Map<String, Object> root, BasePageInfo pageInfo) {
-        String adapter = BundledThemes.getInstance().find(this.templateVO.getTemplate())
-                .map(com.zrlog.theme.spi.BundledThemeProvider::adapter).orElse("");
+    private HexoObjectBox buildHexoObjectByTemplate(
+            Map<String, Object> root, BasePageInfo pageInfo) {
+        String adapter =
+                BundledThemes.getInstance()
+                        .find(this.templateVO.getTemplate())
+                        .map(com.zrlog.theme.spi.BundledThemeProvider::adapter)
+                        .orElse("");
         if ("fluid".equals(adapter)) {
             return new FluidHexoObjectBox(root, rootPath, pageInfo, templateVO, template);
         }
@@ -68,7 +73,8 @@ public class HexoTemplate implements ZrLogTemplate {
         return new HexoObjectBox(root, rootPath, pageInfo, templateVO, template);
     }
 
-    private JsTemplateRender buildJsTemplateRender(Map<String, Object> root, BasePageInfo pageInfo) {
+    private JsTemplateRender buildJsTemplateRender(
+            Map<String, Object> root, BasePageInfo pageInfo) {
         if (templateVO.getViewType().equals(".ejs")) {
             return new EjsTemplateRender(template, pageInfo, root);
         }

@@ -6,6 +6,5 @@ import org.junit.Test;
 public class TestTag extends TestApplication {
 
     @Test
-    public void testUpdate() {
-    }
+    public void testUpdate() {}
 }

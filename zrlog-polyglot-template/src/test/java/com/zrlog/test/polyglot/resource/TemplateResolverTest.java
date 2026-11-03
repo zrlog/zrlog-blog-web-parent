@@ -1,12 +1,11 @@
 package com.zrlog.test.polyglot.resource;
 
-import com.zrlog.blog.polyglot.resource.TemplateResolver;
-import org.junit.Test;
-
-import java.nio.file.Paths;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import com.zrlog.blog.polyglot.resource.TemplateResolver;
+import java.nio.file.Paths;
+import org.junit.Test;
 
 public class TemplateResolverTest {
 
@@ -20,11 +19,17 @@ public class TemplateResolverTest {
     @Test
     public void shouldResolveClasspathPathAndPushPop() {
         TemplateResolver resolver = new TemplateResolver("classpath:templates/layout");
-        assertEquals("classpath:templates/partial/header.njk", resolver.resolve("../partial/header.njk"));
+        assertEquals(
+                "classpath:templates/partial/header.njk",
+                resolver.resolve("../partial/header.njk"));
         resolver.pushPath("classpath:templates/post/index.njk");
-        assertEquals("classpath:templates/post/components/card.njk", resolver.resolve("./components/card.njk"));
+        assertEquals(
+                "classpath:templates/post/components/card.njk",
+                resolver.resolve("./components/card.njk"));
         resolver.popPath();
-        assertEquals("classpath:templates/partial/footer.njk", resolver.resolve("../partial/footer.njk"));
+        assertEquals(
+                "classpath:templates/partial/footer.njk",
+                resolver.resolve("../partial/footer.njk"));
     }
 
     @Test

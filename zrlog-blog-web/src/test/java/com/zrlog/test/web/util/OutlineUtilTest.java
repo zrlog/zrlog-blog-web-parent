@@ -1,13 +1,12 @@
 package com.zrlog.test.web.util;
 
-import com.zrlog.blog.web.util.OutlineUtil;
-import com.zrlog.common.vo.Outline;
-import org.junit.Test;
-
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import com.zrlog.blog.web.util.OutlineUtil;
+import com.zrlog.common.vo.Outline;
+import java.util.List;
+import org.junit.Test;
 
 public class OutlineUtilTest {
 

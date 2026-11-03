@@ -16,8 +16,13 @@
 ## 构建与验证
 
 ```bash
+./mvnw -q spotless:apply
+./mvnw -q spotless:check
 ./mvnw test
 ./mvnw verify
 ```
+
+Java 源码统一使用 Google Java Format AOSP 四空格风格。格式化命令在仓库根目录使用 JDK 21+ 执行；
+`java-format` profile 会自动启用并在 `validate` 阶段检查格式，CI 的 Java Format 工作流使用 JDK 21 独立检查。
 
 内存预览入口为 `bash shell/memory-run.sh`，运行目录为 `.zrlog-memory/`。保留已有工作区改动，不提交运行目录和本地配置。

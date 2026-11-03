@@ -3,7 +3,6 @@ package com.zrlog.blog.polyglot.sytlus;
 import com.zrlog.blog.polyglot.resource.TemplateResolver;
 import com.zrlog.common.resource.ResourceScanner;
 import com.zrlog.common.resource.ZrLogResourceLoader;
-
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,7 +44,6 @@ public class StylusBundler {
         Matcher matcher = IMPORT_PATTERN.matcher(content);
         int lastPos = 0;
 
-
         while (matcher.find()) {
             // 添加当前文件在 @import 之前的原文
             sb.append(content, lastPos, matcher.start());
@@ -59,10 +57,12 @@ public class StylusBundler {
             try {
                 if (importedPath.contains("/*")) {
                     String basePath = path.substring(0, path.lastIndexOf("/"));
-                    List<String> strings = new ResourceScanner(basePath).listFiles(importedPath.replace("*", ""));
+                    List<String> strings =
+                            new ResourceScanner(basePath).listFiles(importedPath.replace("*", ""));
                     for (String string : strings) {
                         // 递归插入被导入文件的内容
-                        sb.append(resolveRecursive(string.substring(basePath.length() + 1), visited));
+                        sb.append(
+                                resolveRecursive(string.substring(basePath.length() + 1), visited));
                     }
                 } else {
                     // 递归插入被导入文件的内容
@@ -78,8 +78,8 @@ public class StylusBundler {
         sb.append(content.substring(lastPos));
 
         // 尾部标记
-        //sb.append("\n/* --- END IMPORT: ").append(path).append(" --- */\n");
-        //log.info("sb.toString() = {}", sb.toString());
+        // sb.append("\n/* --- END IMPORT: ").append(path).append(" --- */\n");
+        // log.info("sb.toString() = {}", sb.toString());
 
         return sb.toString();
     }

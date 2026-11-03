@@ -12,21 +12,14 @@ import com.zrlog.common.exception.UnknownException;
 import com.zrlog.plugin.BaseStaticSitePlugin;
 import com.zrlog.util.StaticFileCacheUtils;
 import com.zrlog.util.ZrLogUtil;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-/**
- * 静态文件读取优先级
- * 1. /static
- * 2. classpath:/
- * 3. /cache
- */
+/** 静态文件读取优先级 1. /static 2. classpath:/ 3. /cache */
 public class BlogStaticResourceInterceptor implements HandleAbleInterceptor {
-
 
     private final Supplier<BlogPageStaticSitePlugin> staticSite;
 
@@ -37,21 +30,24 @@ public class BlogStaticResourceInterceptor implements HandleAbleInterceptor {
     @Override
     public boolean doInterceptor(HttpRequest request, HttpResponse response) {
         File staticFile = PathUtil.getStaticFile(request.getUri());
-        //静态文件进行拦截
+        // 静态文件进行拦截
         if (staticFile.isFile() && staticFile.exists()) {
-            //缓存静态资源文件
+            // 缓存静态资源文件
             if (StaticFileCacheUtils.getInstance().isCacheableByRequest(request.getUri())) {
                 ZrLogUtil.putLongTimeCache(response);
             }
             response.writeFile(staticFile);
             return false;
         }
-        //静态文件
+        // 静态文件
         if (BlogResourceUtils.getInstance().existsResource(request.getUri().substring(1))) {
-            try (InputStream resourceAsStream = BlogStaticResourceInterceptor.class.getResourceAsStream(request.getUri())) {
+            try (InputStream resourceAsStream =
+                    BlogStaticResourceInterceptor.class.getResourceAsStream(request.getUri())) {
                 if (Objects.nonNull(resourceAsStream)) {
                     ZrLogUtil.putLongTimeCache(response);
-                    response.addHeader("Content-Type", MimeTypeUtil.getMimeStrByExt(FileUtils.getFileExt(request.getUri())));
+                    response.addHeader(
+                            "Content-Type",
+                            MimeTypeUtil.getMimeStrByExt(FileUtils.getFileExt(request.getUri())));
                     response.write(resourceAsStream, 200);
                     return false;
                 }

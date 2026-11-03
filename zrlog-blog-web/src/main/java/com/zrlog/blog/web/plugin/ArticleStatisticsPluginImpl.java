@@ -6,7 +6,6 @@ import com.zrlog.business.plugin.RequestInfo;
 import com.zrlog.util.ThreadUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
 import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -26,7 +25,7 @@ public class ArticleStatisticsPluginImpl implements ArticleStatisticsPlugin {
     @Override
     public void record(RequestInfo requestInfo) {
         String uri = requestInfo.getRequestUri();
-        //不记录后台路由，同时不记录 api 请求
+        // 不记录后台路由，同时不记录 api 请求
         if (uri.startsWith("/admin") || uri.startsWith("/api") || uri.equals("/install")) {
             return;
         }
@@ -35,7 +34,7 @@ public class ArticleStatisticsPluginImpl implements ArticleStatisticsPlugin {
 
     @Override
     public boolean autoStart() {
-        //FaaS 模式下，不需要后台任务
+        // FaaS 模式下，不需要后台任务
         return !EnvKit.isFaaSMode();
     }
 
@@ -63,4 +62,3 @@ public class ArticleStatisticsPluginImpl implements ArticleStatisticsPlugin {
         return true;
     }
 }
-

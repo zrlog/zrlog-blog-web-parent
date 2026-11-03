@@ -8,12 +8,11 @@ import com.zrlog.blog.polyglot.markdown.MarkdownJsRenderer;
 import com.zrlog.blog.polyglot.njk.NativeJavaLoader;
 import com.zrlog.blog.polyglot.resource.ScriptProvider;
 import com.zrlog.common.Constants;
-import org.graalvm.polyglot.Context;
-
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.graalvm.polyglot.Context;
 
 public class PolyglotNativeImageUtils {
 
@@ -22,14 +21,18 @@ public class PolyglotNativeImageUtils {
     public static void reg() {
         try {
             Method add = InjectionStorage.class.getMethod("add", String.class, String.class);
-            add.invoke(new InjectionStorage(null, null), Constants.TEMPLATE_BASE_PATH + "test", Constants.TEMPLATE_BASE_PATH + "test");
+            add.invoke(
+                    new InjectionStorage(null, null),
+                    Constants.TEMPLATE_BASE_PATH + "test",
+                    Constants.TEMPLATE_BASE_PATH + "test");
         } catch (Throwable e) {
             logNativeWarmupFailure("InjectionStorage", e);
         }
         try {
             Method isRelative = NativeJavaLoader.class.getMethod("isRelative", String.class);
             Method getSource = NativeJavaLoader.class.getMethod("getSource", String.class);
-            Method resolve = NativeJavaLoader.class.getMethod("resolve", String.class, String.class);
+            Method resolve =
+                    NativeJavaLoader.class.getMethod("resolve", String.class, String.class);
             NativeJavaLoader obj = new NativeJavaLoader("");
             isRelative.invoke(obj, "/test");
             getSource.invoke(obj, "/test");
@@ -62,10 +65,8 @@ public class PolyglotNativeImageUtils {
         }
         try (Context context = PolyglotContextUtils.buildJsContext()) {
             // 必须包含触发 ICU 反射的逻辑：日期格式化、本地化字符串等
-            context.eval("js",
-                    "new Date().toISOString(); " +
-                            "new Date().toLocaleString('zh-CN'); "
-            );
+            context.eval(
+                    "js", "new Date().toISOString(); " + "new Date().toLocaleString('zh-CN'); ");
             LOGGER.info("Polyglot native image metadata warmup finished");
         } catch (Throwable e) {
             logNativeWarmupFailure("PolyglotContext", e);

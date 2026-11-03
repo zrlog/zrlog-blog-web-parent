@@ -15,7 +15,6 @@ import com.zrlog.data.di.DataComponent;
 import dagger.BindsInstance;
 import dagger.Component;
 import jakarta.inject.Singleton;
-
 import java.util.function.Supplier;
 
 @Singleton

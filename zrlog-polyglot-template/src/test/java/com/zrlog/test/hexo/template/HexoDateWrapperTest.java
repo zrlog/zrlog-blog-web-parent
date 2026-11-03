@@ -1,10 +1,10 @@
 package com.zrlog.test.hexo.template;
 
-import com.zrlog.blog.hexo.template.HexoDateWrapper;
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+
+import com.zrlog.blog.hexo.template.HexoDateWrapper;
+import org.junit.Test;
 
 public class HexoDateWrapperTest {
 

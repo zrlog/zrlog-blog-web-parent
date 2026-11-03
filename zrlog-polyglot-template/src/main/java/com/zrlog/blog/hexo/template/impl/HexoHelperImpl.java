@@ -1,11 +1,10 @@
 package com.zrlog.blog.hexo.template.impl;
 
 import com.zrlog.blog.web.template.vo.BasePageInfo;
-import org.graalvm.polyglot.proxy.ProxyExecutable;
-
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.graalvm.polyglot.proxy.ProxyExecutable;
 
 public class HexoHelperImpl {
     private final BasePageInfo basePageInfo;
@@ -18,10 +17,11 @@ public class HexoHelperImpl {
         return args -> {
             if (args.length == 0) return "";
 
-            String joined = Arrays.stream(args)
-                    .map(v -> v.isNull() ? "" : v.asString())
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.joining("/"));
+            String joined =
+                    Arrays.stream(args)
+                            .map(v -> v.isNull() ? "" : v.asString())
+                            .filter(s -> !s.isEmpty())
+                            .collect(Collectors.joining("/"));
 
             // 正则处理：
             // 1. 将三个及以上连续斜杠转为单斜杠 (/// -> /)

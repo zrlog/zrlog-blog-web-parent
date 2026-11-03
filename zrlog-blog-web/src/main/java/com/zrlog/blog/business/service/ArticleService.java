@@ -23,7 +23,6 @@ import com.zrlog.util.ParseUtil;
 import com.zrlog.util.ZrLogUtil;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -37,12 +36,14 @@ public class ArticleService {
     private final jakarta.inject.Provider<LogRepository> articles;
 
     @Inject
-    public ArticleService(CacheService cacheService, jakarta.inject.Provider<LogRepository> articles) {
+    public ArticleService(
+            CacheService cacheService, jakarta.inject.Provider<LogRepository> articles) {
         this.cacheService = cacheService;
         this.articles = articles;
     }
 
-    private static List<ArticleDetailDTO.TagsDTO> getTags(ArticleBasicDTO log, HttpRequest request, String suffix) {
+    private static List<ArticleDetailDTO.TagsDTO> getTags(
+            ArticleBasicDTO log, HttpRequest request, String suffix) {
         String keywords = ObjectHelpers.requireNonNullElse(log.getKeywords(), "");
         List<ArticleDetailDTO.TagsDTO> tags = new ArrayList<>();
         for (String tag : keywords.split(",")) {
@@ -57,25 +58,45 @@ public class ArticleService {
         return tags;
     }
 
-    public static <T extends ArticleBasicDTO> T handlerArticle(T log, HttpRequest request, CacheService cacheService) {
-        String suffix = StaticSitePlugin.getSuffix(request, Boolean.TRUE.equals(cacheService.getPublicWebSiteInfo().getGenerator_html_status()));
+    public static <T extends ArticleBasicDTO> T handlerArticle(
+            T log, HttpRequest request, CacheService cacheService) {
+        String suffix =
+                StaticSitePlugin.getSuffix(
+                        request,
+                        Boolean.TRUE.equals(
+                                cacheService.getPublicWebSiteInfo().getGenerator_html_status()));
         String originalAlias = log.getAlias();
         String aliasUrl = UrlEncodeUtils.encodeUrl(originalAlias) + suffix;
-        String articleUrl = WebTools.buildEncodedUrl(request, Constants.getArticleUri() + originalAlias + suffix);
+        String articleUrl =
+                WebTools.buildEncodedUrl(
+                        request, Constants.getArticleUri() + originalAlias + suffix);
         log.setAlias(aliasUrl);
         log.setUrl(articleUrl);
         log.setRubbish(ResultValueConvertUtils.toBoolean(log.getRubbish()));
         log.setPrivacy(ResultValueConvertUtils.toBoolean(log.getPrivacy()));
         log.setHot(ResultValueConvertUtils.toBoolean(log.getHot()));
         PublicWebSiteInfo publicWebSiteInfo = cacheService.getPublicWebSiteInfo();
-        log.setCanComment(ResultValueConvertUtils.toBoolean(log.getCanComment()) && Objects.equals(publicWebSiteInfo.getDisable_comment_status(), false));
-        log.setTypeUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + "sort/" + log.getTypeAlias() + suffix));
-        log.setNoSchemeUrl(ZrLogUtil.getHomeUrlWithHost(request, publicWebSiteInfo.getHost()) + Constants.getArticleUri() + aliasUrl);
-        log.setCommentUrl(ZrLogUtil.getHomeUrlWithHost(request, publicWebSiteInfo.getHost()) + Constants.getArticleUri() + "addComment");
+        log.setCanComment(
+                ResultValueConvertUtils.toBoolean(log.getCanComment())
+                        && Objects.equals(publicWebSiteInfo.getDisable_comment_status(), false));
+        log.setTypeUrl(
+                WebTools.buildEncodedUrl(
+                        request,
+                        Constants.getArticleUri() + "sort/" + log.getTypeAlias() + suffix));
+        log.setNoSchemeUrl(
+                ZrLogUtil.getHomeUrlWithHost(request, publicWebSiteInfo.getHost())
+                        + Constants.getArticleUri()
+                        + aliasUrl);
+        log.setCommentUrl(
+                ZrLogUtil.getHomeUrlWithHost(request, publicWebSiteInfo.getHost())
+                        + Constants.getArticleUri()
+                        + "addComment");
         //
         log.setRecommended(ResultValueConvertUtils.toBoolean(log.getRecommended()));
-        Object lastUpdateDate = Objects.nonNull(log.getLastUpdateDate()) ? log.getLastUpdateDate()
-                : log.getLast_update_date();
+        Object lastUpdateDate =
+                Objects.nonNull(log.getLastUpdateDate())
+                        ? log.getLastUpdateDate()
+                        : log.getLast_update_date();
         log.setFullReleaseTime(formatDateValue(log.getReleaseTime(), "yyyy-MM-dd HH:mm:ss"));
         log.setFullLastUpdateDate(formatDateValue(lastUpdateDate, "yyyy-MM-dd HH:mm:ss"));
         log.setReleaseTime(formatDateValue(log.getReleaseTime(), "yyyy-MM-dd"));
@@ -90,7 +111,8 @@ public class ArticleService {
         if (Objects.isNull(log.getContent())) {
             log.setContent("");
         }
-        if (publicWebSiteInfo.getArticle_thumbnail_status() && StringUtils.isNotEmpty(log.getThumbnail())) {
+        if (publicWebSiteInfo.getArticle_thumbnail_status()
+                && StringUtils.isNotEmpty(log.getThumbnail())) {
             log.setThumbnailAlt(ParseUtil.removeHtmlElement(log.getTitle()));
         } else {
             log.setThumbnail(null);
@@ -128,11 +150,13 @@ public class ArticleService {
             return null;
         }
         String value = ((String) date).replace('\u202f', ' ').replace('\u00a0', ' ');
-        List<DateFormat> formats = Arrays.asList(
-                DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.getDefault()),
-                DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.ENGLISH),
-                new SimpleDateFormat("MMM d, yyyy, h:mm:ss a", Locale.ENGLISH)
-        );
+        List<DateFormat> formats =
+                Arrays.asList(
+                        DateFormat.getDateTimeInstance(
+                                DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.getDefault()),
+                        DateFormat.getDateTimeInstance(
+                                DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.ENGLISH),
+                        new SimpleDateFormat("MMM d, yyyy, h:mm:ss a", Locale.ENGLISH));
         for (DateFormat dateFormat : formats) {
             try {
                 return dateFormat.parse(value).getTime();
@@ -144,9 +168,21 @@ public class ArticleService {
 
     private ArticleDetailDTO fillArticleInfo(ArticleDetailDTO log, HttpRequest request) {
         handlerArticle(log, request, cacheService);
-        String suffix = StaticSitePlugin.getSuffix(request, Boolean.TRUE.equals(cacheService.getPublicWebSiteInfo().getGenerator_html_status()));
-        log.getNextLog().setUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + log.getNextLog().getAlias() + suffix));
-        log.getLastLog().setUrl(WebTools.buildEncodedUrl(request, Constants.getArticleUri() + log.getLastLog().getAlias() + suffix));
+        String suffix =
+                StaticSitePlugin.getSuffix(
+                        request,
+                        Boolean.TRUE.equals(
+                                cacheService.getPublicWebSiteInfo().getGenerator_html_status()));
+        log.getNextLog()
+                .setUrl(
+                        WebTools.buildEncodedUrl(
+                                request,
+                                Constants.getArticleUri() + log.getNextLog().getAlias() + suffix));
+        log.getLastLog()
+                .setUrl(
+                        WebTools.buildEncodedUrl(
+                                request,
+                                Constants.getArticleUri() + log.getLastLog().getAlias() + suffix));
 
         if (StringUtils.isNotEmpty(log.getMarkdown())) {
             List<Outline> outlineVO = OutlineUtil.extractOutline(log.getContent());
@@ -186,18 +222,25 @@ public class ArticleService {
         return fillArticleInfo(log, request);
     }
 
-    public PageData<ArticleBasicDTO> pageByKeywords(PageRequest pageRequest, String keywords, HttpRequest request) {
+    public PageData<ArticleBasicDTO> pageByKeywords(
+            PageRequest pageRequest, String keywords, HttpRequest request) {
         return pageByKeywords(pageRequest, keywords, request, ArticleListOrder.NEWEST_FIRST);
     }
 
-    public PageData<ArticleBasicDTO> pageByKeywords(PageRequest pageRequest, String keywords, HttpRequest request,
-                                                    ArticleListOrder listOrder) {
+    public PageData<ArticleBasicDTO> pageByKeywords(
+            PageRequest pageRequest,
+            String keywords,
+            HttpRequest request,
+            ArticleListOrder listOrder) {
         LogRepository log = articles.get();
-        PageData<ArticleBasicDTO> data = StringUtils.isEmpty(keywords)
-                && listOrder == ArticleListOrder.STICKY_FIRST
-                ? log.visitorFindHome(pageRequest)
-                : log.visitorFind(pageRequest, keywords);
-        ArticleHelpers.wrapperSearchKeyword(data, keywords, cacheService.getPublicWebSiteInfo().getArticle_auto_digest_length());
+        PageData<ArticleBasicDTO> data =
+                StringUtils.isEmpty(keywords) && listOrder == ArticleListOrder.STICKY_FIRST
+                        ? log.visitorFindHome(pageRequest)
+                        : log.visitorFind(pageRequest, keywords);
+        ArticleHelpers.wrapperSearchKeyword(
+                data,
+                keywords,
+                cacheService.getPublicWebSiteInfo().getArticle_auto_digest_length());
         data.setKey(keywords);
         data.getRows().forEach(e -> handlerArticle(e, request, cacheService));
         return data;
@@ -207,5 +250,4 @@ public class ArticleService {
         STICKY_FIRST,
         NEWEST_FIRST
     }
-
 }

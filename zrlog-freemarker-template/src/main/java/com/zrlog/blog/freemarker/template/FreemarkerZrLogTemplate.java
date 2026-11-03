@@ -3,7 +3,6 @@ package com.zrlog.blog.freemarker.template;
 import com.hibegin.http.server.util.FreeMarkerUtil;
 import com.zrlog.blog.web.template.ZrLogTemplate;
 import com.zrlog.blog.web.template.vo.BasePageInfo;
-
 import java.io.File;
 
 public class FreemarkerZrLogTemplate implements ZrLogTemplate {

@@ -4,15 +4,25 @@ import com.google.gson.annotations.SerializedName;
 
 public class CreateCommentRequest {
 
-    @SerializedName(value = "webHome", alternate = {"userHome", "blog"})
+    @SerializedName(
+            value = "webHome",
+            alternate = {"userHome", "blog"})
     private String userHome;
-    @SerializedName(value = "mail", alternate = {"userMail"})
+
+    @SerializedName(
+            value = "mail",
+            alternate = {"userMail"})
     private String mail;
+
     private String userIp;
     private String userName;
     private String logId;
-    @SerializedName(value = "comment", alternate = {"userComment"})
+
+    @SerializedName(
+            value = "comment",
+            alternate = {"userComment"})
     private String comment;
+
     private String ip;
     private String userAgent;
     private int replyId;

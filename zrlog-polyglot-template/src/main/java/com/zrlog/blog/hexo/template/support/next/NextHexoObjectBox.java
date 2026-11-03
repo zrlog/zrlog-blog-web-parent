@@ -6,14 +6,18 @@ import com.zrlog.blog.polyglot.JsTemplateRender;
 import com.zrlog.blog.web.template.vo.ArticleDetailPageVO;
 import com.zrlog.blog.web.template.vo.BasePageInfo;
 import com.zrlog.common.vo.TemplateVO;
-import org.graalvm.polyglot.Value;
-
 import java.util.Map;
 import java.util.Objects;
+import org.graalvm.polyglot.Value;
 
 public class NextHexoObjectBox extends HexoObjectBox {
 
-    public NextHexoObjectBox(Map<String, Object> root, String rootPath, BasePageInfo basePageInfo, TemplateVO templateVO, String templateDir) {
+    public NextHexoObjectBox(
+            Map<String, Object> root,
+            String rootPath,
+            BasePageInfo basePageInfo,
+            TemplateVO templateVO,
+            String templateDir) {
         super(root, rootPath, basePageInfo, templateVO, templateDir);
 
         Map<String, Object> theme = (Map<String, Object>) root.get("theme");
@@ -21,7 +25,7 @@ public class NextHexoObjectBox extends HexoObjectBox {
             theme.put("css", basePageInfo.getTemplateUrl() + "/source/" + theme.get("css"));
         }
         theme.put("permalink", "");
-        //webCm
+        // webCm
         if (basePageInfo instanceof ArticleDetailPageVO) {
             Map<String, Object> page = (Map<String, Object>) root.get("page");
             page.put("content", page.get("content") + basePageInfo.getWebs().getWebCm());
@@ -29,7 +33,8 @@ public class NextHexoObjectBox extends HexoObjectBox {
     }
 
     @Override
-    protected boolean helperRegister(JsTemplateRender jsTemplateRender, String name, Value[] values) {
+    protected boolean helperRegister(
+            JsTemplateRender jsTemplateRender, String name, Value[] values) {
         Value bindings = jsTemplateRender.getJsBindings();
         if (name.equals("next_inject")) {
             InjectPoint injectPoint = new InjectPoint(injectionStorage, jsTemplateRender);

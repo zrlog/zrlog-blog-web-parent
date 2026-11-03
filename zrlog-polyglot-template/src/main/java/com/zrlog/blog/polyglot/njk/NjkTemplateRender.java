@@ -9,13 +9,12 @@ import com.zrlog.blog.polyglot.resource.TemplateResolver;
 import com.zrlog.blog.polyglot.util.GraalDataUtils;
 import com.zrlog.blog.polyglot.util.PolyglotContextUtils;
 import com.zrlog.blog.web.template.vo.BasePageInfo;
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Value;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 public class NjkTemplateRender implements JsTemplateRender {
 
@@ -30,7 +29,8 @@ public class NjkTemplateRender implements JsTemplateRender {
     private final Map<String, Object> locals;
     private final ScriptProvider scriptProvider;
 
-    public NjkTemplateRender(String template, BasePageInfo basePageInfo, Map<String, Object> locals) {
+    public NjkTemplateRender(
+            String template, BasePageInfo basePageInfo, Map<String, Object> locals) {
         this.template = template;
         this.scriptProvider = ScriptProvider.getInstance();
         this.includeHook = new IncludeHook(this, new TemplateResolver(template), basePageInfo);
@@ -41,15 +41,29 @@ public class NjkTemplateRender implements JsTemplateRender {
             this.jsBindings = context.getBindings("js");
             this.jsBindings.putMember("scriptProvider", scriptProvider);
             context.eval("js", "var global = globalThis;");
-            context.eval("js", new String(PathUtil.getConfInputStream("base/scripts/require.js").readAllBytes()));
-            context.eval("js", new String(PathUtil.getConfInputStream("base/scripts/nunjucks.min.js").readAllBytes()));
+            context.eval(
+                    "js",
+                    new String(
+                            PathUtil.getConfInputStream("base/scripts/require.js").readAllBytes()));
+            context.eval(
+                    "js",
+                    new String(
+                            PathUtil.getConfInputStream("base/scripts/nunjucks.min.js")
+                                    .readAllBytes()));
             Value njk = jsBindings.getMember("nunjucks");
             if (njk == null || njk.getMember("render").isNull()) {
                 throw new RuntimeException("nunjucks 引擎未初始化，请先加载 njk.min.js");
             }
             this.jsBindings.putMember("javaLoader", new NativeJavaLoader(template));
-            context.eval("js", new String(PathUtil.getConfInputStream("base/scripts/hooks.js").readAllBytes()));
-            context.eval("js", new String(PathUtil.getConfInputStream("base/scripts/init-njk.js").readAllBytes()));
+            context.eval(
+                    "js",
+                    new String(
+                            PathUtil.getConfInputStream("base/scripts/hooks.js").readAllBytes()));
+            context.eval(
+                    "js",
+                    new String(
+                            PathUtil.getConfInputStream("base/scripts/init-njk.js")
+                                    .readAllBytes()));
             this.env = jsBindings.getMember("env");
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -81,8 +95,10 @@ public class NjkTemplateRender implements JsTemplateRender {
             if (Objects.nonNull(data)) {
                 locals.putAll(data);
             }
-            String path = (page + (page.endsWith(templateExt) ? "" : templateExt)).replaceAll("//", "/");
-            Value result = env.getMember("render").execute(path, GraalDataUtils.makeJsFriendly(locals));
+            String path =
+                    (page + (page.endsWith(templateExt) ? "" : templateExt)).replaceAll("//", "/");
+            Value result =
+                    env.getMember("render").execute(path, GraalDataUtils.makeJsFriendly(locals));
             return result.asString();
         } finally {
             LOGGER.info(page + " used time " + (System.currentTimeMillis() - start) + "ms");
@@ -107,12 +123,12 @@ public class NjkTemplateRender implements JsTemplateRender {
     @Override
     public void init(Map<String, Object> root, Map<String, Value> helpers) {
         String wrapperScript =
-                "var __wrapHelper = function(fn) {\n" +
-                        "    return function() {\n" +
-                        "        var realCtx = (this && this.ctx) ? this.ctx : globalThis;\n" +
-                        "        return fn.apply(realCtx, arguments);\n" +
-                        "    };\n" +
-                        "};";
+                "var __wrapHelper = function(fn) {\n"
+                        + "    return function() {\n"
+                        + "        var realCtx = (this && this.ctx) ? this.ctx : globalThis;\n"
+                        + "        return fn.apply(realCtx, arguments);\n"
+                        + "    };\n"
+                        + "};";
         context.eval("js", wrapperScript);
         Value wrapperFactory = context.getBindings("js").getMember("__wrapHelper");
         for (Map.Entry<String, Value> entry : helpers.entrySet()) {

@@ -5,15 +5,12 @@ import com.hibegin.http.server.api.HttpRequest;
 import com.hibegin.http.server.api.HttpResponse;
 import com.hibegin.http.server.web.Controller;
 import com.zrlog.blog.web.template.ZrLogTemplateRender;
-
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-/**
- * 静态化文章页，加快文章页的响应，压缩 html 文本，提供自定义插件标签的解析
- */
+/** 静态化文章页，加快文章页的响应，压缩 html 文本，提供自定义插件标签的解析 */
 public class BlogPageInterceptor implements HandleAbleInterceptor {
     private final RenderFactory renderFactory;
 
@@ -26,7 +23,11 @@ public class BlogPageInterceptor implements HandleAbleInterceptor {
         String target = request.getUri();
         Method method = request.getServerConfig().getRouter().getRouterMap().get(target);
         if (Objects.isNull(method) && target.endsWith(".html")) {
-            method = request.getServerConfig().getRouter().getRouterMap().get(target.substring(0, target.length() - 5));
+            method =
+                    request.getServerConfig()
+                            .getRouter()
+                            .getRouterMap()
+                            .get(target.substring(0, target.length() - 5));
         }
         if (target.startsWith("/all-")) {
             method = request.getServerConfig().getRouter().getRouterMap().get("/index");
@@ -56,7 +57,8 @@ public class BlogPageInterceptor implements HandleAbleInterceptor {
             String htmlStr = render.renderByTemplateName(invoke.toString());
             if (render.isNotFound()) {
                 response.setContentType("text/html;charset=UTF-8");
-                response.write(new ByteArrayInputStream(htmlStr.getBytes(StandardCharsets.UTF_8)), 404);
+                response.write(
+                        new ByteArrayInputStream(htmlStr.getBytes(StandardCharsets.UTF_8)), 404);
             } else {
                 response.renderHtmlStr(htmlStr);
             }
@@ -70,7 +72,7 @@ public class BlogPageInterceptor implements HandleAbleInterceptor {
         if (!target.contains(".")) {
             return true;
         }
-        //如果静态文件不为 .html，就扔出 404
+        // 如果静态文件不为 .html，就扔出 404
         return target.endsWith(".html");
     }
 

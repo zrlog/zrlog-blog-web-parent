@@ -10,7 +10,6 @@ import com.zrlog.business.service.CommonService;
 import com.zrlog.util.BlogBuildInfoUtil;
 import com.zrlog.util.I18nUtil;
 import jakarta.inject.Inject;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -43,6 +42,4 @@ public class BlogApiPublicController extends Controller {
         stringObjectMap.put("buildId", BlogBuildInfoUtil.getBuildId());
         return stringObjectMap;
     }
-
-
 }

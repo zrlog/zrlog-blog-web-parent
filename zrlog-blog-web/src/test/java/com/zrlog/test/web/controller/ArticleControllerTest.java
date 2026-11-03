@@ -1,5 +1,8 @@
 package com.zrlog.blog.web.controller.page;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+
 import com.hibegin.common.dao.DataSourceWrapper;
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.http.server.api.HttpRequest;
@@ -19,10 +22,6 @@ import com.zrlog.data.repository.LogRepository;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSiteInfoProvider;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
@@ -30,14 +29,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class ArticleControllerTest {
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
     private ZrLogConfig applicationConfig;
 
     private static void restoreProperty(String key, String value) {
@@ -48,40 +46,43 @@ public class ArticleControllerTest {
         }
     }
 
-    private static void setControllerRequest(Controller controller, HttpRequest request) throws Exception {
+    private static void setControllerRequest(Controller controller, HttpRequest request)
+            throws Exception {
         Field field = Controller.class.getDeclaredField("request");
         field.setAccessible(true);
         field.set(controller, request);
     }
 
-    private static void setArticleService(ArticleController controller, ArticleService articleService) throws Exception {
+    private static void setArticleService(
+            ArticleController controller, ArticleService articleService) throws Exception {
         Field field = ArticleController.class.getDeclaredField("articleService");
         field.setAccessible(true);
         field.set(controller, articleService);
     }
 
     private static HttpRequest request(String uri, Map<String, Object> attrs) {
-        return (HttpRequest) Proxy.newProxyInstance(
-                ArticleControllerTest.class.getClassLoader(),
-                new Class[]{HttpRequest.class},
-                (proxy, method, args) -> {
-                    if ("getUri".equals(method.getName())) {
-                        return uri;
-                    }
-                    if ("getAttr".equals(method.getName())) {
-                        return attrs;
-                    }
-                    if ("getContextPath".equals(method.getName())) {
-                        return "";
-                    }
-                    if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
-                        return "blog.example.com";
-                    }
-                    if ("toString".equals(method.getName())) {
-                        return "HttpRequestProxy";
-                    }
-                    return null;
-                });
+        return (HttpRequest)
+                Proxy.newProxyInstance(
+                        ArticleControllerTest.class.getClassLoader(),
+                        new Class[] {HttpRequest.class},
+                        (proxy, method, args) -> {
+                            if ("getUri".equals(method.getName())) {
+                                return uri;
+                            }
+                            if ("getAttr".equals(method.getName())) {
+                                return attrs;
+                            }
+                            if ("getContextPath".equals(method.getName())) {
+                                return "";
+                            }
+                            if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
+                                return "blog.example.com";
+                            }
+                            if ("toString".equals(method.getName())) {
+                                return "HttpRequestProxy";
+                            }
+                            return null;
+                        });
     }
 
     @Test
@@ -129,16 +130,20 @@ public class ArticleControllerTest {
                     ArticleController controller =
                             new ArticleController(
                                     cache,
-                                    new ArticleService(cache, () -> {
-                                        throw new IllegalStateException("Database is unavailable in this test");
-                                    }),
+                                    new ArticleService(
+                                            cache,
+                                            () -> {
+                                                throw new IllegalStateException(
+                                                        "Database is unavailable in this test");
+                                            }),
                                     () ->
                                             applicationConfig == null
                                                     ? null
                                                     : applicationConfig.getTokenService(),
                                     () -> applicationConfig.getPlugin(PluginCorePlugin.class),
                                     () -> {
-                                        throw new IllegalStateException("Database is unavailable in this test");
+                                        throw new IllegalStateException(
+                                                "Database is unavailable in this test");
                                     });
                     setControllerRequest(controller, request("/link", attrs));
 
@@ -159,16 +164,20 @@ public class ArticleControllerTest {
                     ArticleController controller =
                             new ArticleController(
                                     cache,
-                                    new ArticleService(cache, () -> {
-                                        throw new IllegalStateException("Database is unavailable in this test");
-                                    }),
+                                    new ArticleService(
+                                            cache,
+                                            () -> {
+                                                throw new IllegalStateException(
+                                                        "Database is unavailable in this test");
+                                            }),
                                     () ->
                                             applicationConfig == null
                                                     ? null
                                                     : applicationConfig.getTokenService(),
                                     () -> applicationConfig.getPlugin(PluginCorePlugin.class),
                                     () -> {
-                                        throw new IllegalStateException("Database is unavailable in this test");
+                                        throw new IllegalStateException(
+                                                "Database is unavailable in this test");
                                     });
                     setControllerRequest(controller, request("/tags", attrs));
 
@@ -186,16 +195,20 @@ public class ArticleControllerTest {
                     ArticleController controller =
                             new ArticleController(
                                     cache,
-                                    new ArticleService(cache, () -> {
-                                        throw new IllegalStateException("Database is unavailable in this test");
-                                    }),
+                                    new ArticleService(
+                                            cache,
+                                            () -> {
+                                                throw new IllegalStateException(
+                                                        "Database is unavailable in this test");
+                                            }),
                                     () ->
                                             applicationConfig == null
                                                     ? null
                                                     : applicationConfig.getTokenService(),
                                     () -> applicationConfig.getPlugin(PluginCorePlugin.class),
                                     () -> {
-                                        throw new IllegalStateException("Database is unavailable in this test");
+                                        throw new IllegalStateException(
+                                                "Database is unavailable in this test");
                                     });
                     FakeArticleService articleService = new FakeArticleService(null);
                     ArticleDetailDTO detail = new ArticleDetailDTO();
@@ -220,16 +233,20 @@ public class ArticleControllerTest {
                     ArticleController controller =
                             new ArticleController(
                                     cache,
-                                    new ArticleService(cache, () -> {
-                                        throw new IllegalStateException("Database is unavailable in this test");
-                                    }),
+                                    new ArticleService(
+                                            cache,
+                                            () -> {
+                                                throw new IllegalStateException(
+                                                        "Database is unavailable in this test");
+                                            }),
                                     () ->
                                             applicationConfig == null
                                                     ? null
                                                     : applicationConfig.getTokenService(),
                                     () -> applicationConfig.getPlugin(PluginCorePlugin.class),
                                     () -> {
-                                        throw new IllegalStateException("Database is unavailable in this test");
+                                        throw new IllegalStateException(
+                                                "Database is unavailable in this test");
                                     });
                     setArticleService(controller, new FakeArticleService(null));
                     setControllerRequest(controller, request("/missing.html", attrs));
@@ -273,8 +290,9 @@ public class ArticleControllerTest {
         public <T> T getWebSetup(Class<T> capability) {
             if (capability == WebSiteInfoProvider.class) {
                 CacheService cache = cacheForTest();
-                return cache == null ? null : capability.cast(
-                        (WebSiteInfoProvider) cache::getPublicWebSiteInfo);
+                return cache == null
+                        ? null
+                        : capability.cast((WebSiteInfoProvider) cache::getPublicWebSiteInfo);
             }
             return super.getWebSetup(capability);
         }
@@ -348,6 +366,7 @@ public class ArticleControllerTest {
         private ArticleDetailDTO detail;
         private Object lastId;
         private HttpRequest lastRequest;
+
         private FakeArticleService(DataSourceWrapper testDataSource) {
             super(new TestCacheService(), () -> new LogRepository(testDataSource));
         }

@@ -1,23 +1,24 @@
 package com.zrlog.test.business.rest.request;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.gson.Gson;
 import com.zrlog.blog.business.rest.request.CreateCommentRequest;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class CreateCommentRequestTest {
 
     @Test
     public void shouldDeserializeCurrentAndLegacyCommentFieldNames() {
-        String json = "{"
-                + "\"userHome\":\"https://example.com\","
-                + "\"userMail\":\"user@example.com\","
-                + "\"userComment\":\"hello\","
-                + "\"userName\":\"xiaochun\","
-                + "\"logId\":\"1\","
-                + "\"replyId\":2"
-                + "}";
+        String json =
+                "{"
+                        + "\"userHome\":\"https://example.com\","
+                        + "\"userMail\":\"user@example.com\","
+                        + "\"userComment\":\"hello\","
+                        + "\"userName\":\"xiaochun\","
+                        + "\"logId\":\"1\","
+                        + "\"replyId\":2"
+                        + "}";
 
         CreateCommentRequest request = new Gson().fromJson(json, CreateCommentRequest.class);
 
@@ -31,14 +32,15 @@ public class CreateCommentRequestTest {
 
     @Test
     public void shouldDeserializePrimaryCommentFieldNames() {
-        String json = "{"
-                + "\"webHome\":\"https://zrlog.com\","
-                + "\"mail\":\"admin@zrlog.com\","
-                + "\"comment\":\"primary\","
-                + "\"userIp\":\"203.0.113.1\","
-                + "\"ip\":\"198.51.100.2\","
-                + "\"userAgent\":\"Mozilla/5.0\""
-                + "}";
+        String json =
+                "{"
+                        + "\"webHome\":\"https://zrlog.com\","
+                        + "\"mail\":\"admin@zrlog.com\","
+                        + "\"comment\":\"primary\","
+                        + "\"userIp\":\"203.0.113.1\","
+                        + "\"ip\":\"198.51.100.2\","
+                        + "\"userAgent\":\"Mozilla/5.0\""
+                        + "}";
 
         CreateCommentRequest request = new Gson().fromJson(json, CreateCommentRequest.class);
 
@@ -52,8 +54,11 @@ public class CreateCommentRequestTest {
 
     @Test
     public void shouldDeserializeBlogAliasForUserHome() {
-        CreateCommentRequest request = new Gson().fromJson("{\"blog\":\"https://legacy.example.com\"}",
-                CreateCommentRequest.class);
+        CreateCommentRequest request =
+                new Gson()
+                        .fromJson(
+                                "{\"blog\":\"https://legacy.example.com\"}",
+                                CreateCommentRequest.class);
 
         assertEquals("https://legacy.example.com", request.getUserHome());
     }

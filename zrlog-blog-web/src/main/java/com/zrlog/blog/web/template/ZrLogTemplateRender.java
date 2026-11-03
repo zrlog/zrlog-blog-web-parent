@@ -24,7 +24,6 @@ import com.zrlog.common.exception.NotImplementException;
 import com.zrlog.common.vo.AdminTokenVO;
 import com.zrlog.common.vo.TemplateVO;
 import com.zrlog.plugin.BaseStaticSitePlugin;
-
 import java.io.File;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -48,15 +47,22 @@ public class ZrLogTemplateRender implements TemplateRender {
     private final StaticSitePlugin staticSite;
     private final ResponseConfig responseConfig;
 
-    public ZrLogTemplateRender(HttpRequest request, CacheService cacheService, TokenService tokenService,
-                               PluginCorePlugin pluginCore, TemplateDownloadPlugin templateDownload,
-                               StaticSitePlugin staticSite, ResponseConfig responseConfig) throws Exception {
+    public ZrLogTemplateRender(
+            HttpRequest request,
+            CacheService cacheService,
+            TokenService tokenService,
+            PluginCorePlugin pluginCore,
+            TemplateDownloadPlugin templateDownload,
+            StaticSitePlugin staticSite,
+            ResponseConfig responseConfig)
+            throws Exception {
         this.tokenService = tokenService;
         this.pluginCore = pluginCore;
         this.staticSite = staticSite;
         this.responseConfig = responseConfig;
         this.request = request;
-        this.pageInfo = TemplateRenderUtils.fullTemplateInfo(request, cacheService, templateDownload);
+        this.pageInfo =
+                TemplateRenderUtils.fullTemplateInfo(request, cacheService, templateDownload);
         loadClasspathTemplateI18n(pageInfo);
         this.zrLogTemplate = setupTemplate();
     }
@@ -66,8 +72,10 @@ public class ZrLogTemplateRender implements TemplateRender {
         if (Objects.isNull(templateVO) || !templateVO.isClasspathTemplate()) {
             return;
         }
-        String resourcePath = pageInfo.getTemplate() + "/language/i18n_" + pageInfo.getLocal() + ".properties";
-        try (InputStream inputStream = ZrLogTemplateRender.class.getResourceAsStream(resourcePath)) {
+        String resourcePath =
+                pageInfo.getTemplate() + "/language/i18n_" + pageInfo.getLocal() + ".properties";
+        try (InputStream inputStream =
+                ZrLogTemplateRender.class.getResourceAsStream(resourcePath)) {
             if (Objects.isNull(inputStream)) {
                 return;
             }
@@ -83,9 +91,7 @@ public class ZrLogTemplateRender implements TemplateRender {
         }
     }
 
-    /**
-     * 处理静态化文件
-     */
+    /** 处理静态化文件 */
     static boolean catGeneratorHtml(HttpRequest request, boolean staticHtml) {
         if (BaseStaticSitePlugin.isStaticPluginRequest(request)) {
             return false;
@@ -130,9 +136,12 @@ public class ZrLogTemplateRender implements TemplateRender {
     public boolean existsByTemplateName(String templateName) {
         File path = PathUtil.getStaticFile(pageInfo.getTemplate());
         if (path.exists() && !TemplateInfoHelper.isDefaultTemplate(pageInfo.getTemplate())) {
-            return Arrays.stream(Objects.requireNonNull(path.listFiles())).anyMatch(e -> e.getName().startsWith(templateName + "."));
+            return Arrays.stream(Objects.requireNonNull(path.listFiles()))
+                    .anyMatch(e -> e.getName().startsWith(templateName + "."));
         } else {
-            return Objects.nonNull(ZrLogTemplateRender.class.getResourceAsStream(pageInfo.getTemplate() + "/" + templateName + ".ftl"));
+            return Objects.nonNull(
+                    ZrLogTemplateRender.class.getResourceAsStream(
+                            pageInfo.getTemplate() + "/" + templateName + ".ftl"));
         }
     }
 
@@ -148,7 +157,8 @@ public class ZrLogTemplateRender implements TemplateRender {
 
     @Override
     public String renderByTemplateName(String page) throws Exception {
-        if (StringUtils.isNotEmpty(pageInfo.getArrangePlugin()) && existsByTemplateName("arrange")) {
+        if (StringUtils.isNotEmpty(pageInfo.getArrangePlugin())
+                && existsByTemplateName("arrange")) {
             page = "arrange";
         }
         long start = System.currentTimeMillis();
@@ -157,17 +167,30 @@ public class ZrLogTemplateRender implements TemplateRender {
         if (Objects.nonNull(tokenService)) {
             adminTokenVO = tokenService.getAdminTokenVO(request);
         }
-        HtmlTemplateProcessor pluginTagHande = new HtmlTemplateProcessor(
-                request, adminTokenVO, Objects.requireNonNullElse(pageInfo.getStaticResourceBaseUrl(), "/"), pluginCore);
+        HtmlTemplateProcessor pluginTagHande =
+                new HtmlTemplateProcessor(
+                        request,
+                        adminTokenVO,
+                        Objects.requireNonNullElse(pageInfo.getStaticResourceBaseUrl(), "/"),
+                        pluginCore);
         String realHtmlStr = pluginTagHande.transform(htmlStr);
         if (EnvKit.isDevMode()) {
-            LOGGER.info("Render " + request.getUri() + " page, used time " + (System.currentTimeMillis() - start) + "ms");
+            LOGGER.info(
+                    "Render "
+                            + request.getUri()
+                            + " page, used time "
+                            + (System.currentTimeMillis() - start)
+                            + "ms");
         }
-        if (isNotFound() || !catGeneratorHtml(request, Boolean.TRUE.equals(pageInfo.getWebs().getGenerator_html_status()))) {
+        if (isNotFound()
+                || !catGeneratorHtml(
+                        request,
+                        Boolean.TRUE.equals(pageInfo.getWebs().getGenerator_html_status()))) {
             return realHtmlStr;
         }
-        //save to cache
-        try (BodySaveResponse bodySaveResponse = new BodySaveResponse(request, responseConfig, false, staticSite)) {
+        // save to cache
+        try (BodySaveResponse bodySaveResponse =
+                new BodySaveResponse(request, responseConfig, false, staticSite)) {
             bodySaveResponse.renderHtmlStr(realHtmlStr);
         }
         return realHtmlStr;

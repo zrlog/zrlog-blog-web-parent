@@ -35,8 +35,9 @@ public class HexoJsExImpl implements ProxyExecutable {
         // 3. 返回标准的 HTML 标签
         if (src.startsWith("http")) {
             return String.format("<script src=\"%s\"%s></script>", src + args[1], attributes);
-
         }
-        return String.format("<script src=\"%s\"%s></script>", basePageInfo.getTemplateUrl() + "/source" + src + "/" + args[1], attributes);
+        return String.format(
+                "<script src=\"%s\"%s></script>",
+                basePageInfo.getTemplateUrl() + "/source" + src + "/" + args[1], attributes);
     }
 }

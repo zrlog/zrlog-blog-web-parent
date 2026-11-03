@@ -1,5 +1,7 @@
 package com.zrlog.test.business.service;
 
+import static org.junit.Assert.*;
+
 import com.hibegin.common.dao.DataSourceWrapper;
 import com.hibegin.http.server.api.HttpRequest;
 import com.zrlog.blog.business.service.ArticleService;
@@ -15,21 +17,17 @@ import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSiteInfoProvider;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.*;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class ArticleServiceTest {
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
     private com.zrlog.common.ZrLogConfig applicationConfig;
 
     private static ArticleBasicDTO article() {
@@ -54,24 +52,25 @@ public class ArticleServiceTest {
     }
 
     private static HttpRequest request(String contextPath, String host) {
-        return (HttpRequest) Proxy.newProxyInstance(
-                ArticleServiceTest.class.getClassLoader(),
-                new Class[]{HttpRequest.class},
-                (proxy, method, args) -> {
-                    if ("getContextPath".equals(method.getName())) {
-                        return contextPath;
-                    }
-                    if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
-                        return host;
-                    }
-                    if ("getHeaderMap".equals(method.getName())) {
-                        return Collections.singletonMap("Host", host);
-                    }
-                    if ("toString".equals(method.getName())) {
-                        return "HttpRequestProxy";
-                    }
-                    return null;
-                });
+        return (HttpRequest)
+                Proxy.newProxyInstance(
+                        ArticleServiceTest.class.getClassLoader(),
+                        new Class[] {HttpRequest.class},
+                        (proxy, method, args) -> {
+                            if ("getContextPath".equals(method.getName())) {
+                                return contextPath;
+                            }
+                            if ("getHeader".equals(method.getName()) && "Host".equals(args[0])) {
+                                return host;
+                            }
+                            if ("getHeaderMap".equals(method.getName())) {
+                                return Collections.singletonMap("Host", host);
+                            }
+                            if ("toString".equals(method.getName())) {
+                                return "HttpRequestProxy";
+                            }
+                            return null;
+                        });
     }
 
     private static void restoreProperty(String key, String value) {
@@ -90,53 +89,63 @@ public class ArticleServiceTest {
         publicWebSiteInfo.setArticle_thumbnail_status(true);
         ArticleBasicDTO article = article();
 
-        withConfig(publicWebSiteInfo, cache -> {
-            ArticleBasicDTO result = ArticleService.handlerArticle(article, request("/blog", "blog.example.com"), cache);
+        withConfig(
+                publicWebSiteInfo,
+                cache -> {
+                    ArticleBasicDTO result =
+                            ArticleService.handlerArticle(
+                                    article, request("/blog", "blog.example.com"), cache);
 
-            assertEquals(Long.valueOf(10L), result.getId());
-            assertEquals("hello-world", result.getAlias());
-            assertEquals("/blog/hello-world", result.getUrl());
-            assertEquals("/blog/sort/default", result.getTypeUrl());
-            assertEquals("//blog.example.com/blog/hello-world", result.getNoSchemeUrl());
-            assertEquals("//blog.example.com/blog/addComment", result.getCommentUrl());
-            assertEquals(Boolean.TRUE, result.getCanComment());
-            assertEquals(Boolean.TRUE, result.getRubbish());
-            assertEquals(Boolean.FALSE, result.getPrivacy());
-            assertEquals(Boolean.TRUE, result.getHot());
-            assertEquals(Boolean.FALSE, result.getRecommended());
-            assertEquals("2026-06-29", result.getReleaseTime());
-            assertTrue(result.getFullReleaseTime().startsWith("2026-06-29 12:13:14"));
-            assertEquals("2026-06-29", result.getLastUpdateDate());
-            assertEquals("2026-06-29", result.getLast_update_date());
-            assertEquals("", result.getDigest());
-            assertEquals("", result.getContent());
-            assertEquals("/attached/cover.png", result.getThumbnail());
-            assertEquals("Hello", result.getThumbnailAlt());
-            assertEquals(2, result.getTags().size());
-            assertEquals("java", result.getTags().get(0).getName());
-            assertEquals("/blog/tag/java", result.getTags().get(0).getUrl());
-            assertEquals("zrlog", result.getTags().get(1).getName());
-        });
+                    assertEquals(Long.valueOf(10L), result.getId());
+                    assertEquals("hello-world", result.getAlias());
+                    assertEquals("/blog/hello-world", result.getUrl());
+                    assertEquals("/blog/sort/default", result.getTypeUrl());
+                    assertEquals("//blog.example.com/blog/hello-world", result.getNoSchemeUrl());
+                    assertEquals("//blog.example.com/blog/addComment", result.getCommentUrl());
+                    assertEquals(Boolean.TRUE, result.getCanComment());
+                    assertEquals(Boolean.TRUE, result.getRubbish());
+                    assertEquals(Boolean.FALSE, result.getPrivacy());
+                    assertEquals(Boolean.TRUE, result.getHot());
+                    assertEquals(Boolean.FALSE, result.getRecommended());
+                    assertEquals("2026-06-29", result.getReleaseTime());
+                    assertTrue(result.getFullReleaseTime().startsWith("2026-06-29 12:13:14"));
+                    assertEquals("2026-06-29", result.getLastUpdateDate());
+                    assertEquals("2026-06-29", result.getLast_update_date());
+                    assertEquals("", result.getDigest());
+                    assertEquals("", result.getContent());
+                    assertEquals("/attached/cover.png", result.getThumbnail());
+                    assertEquals("Hello", result.getThumbnailAlt());
+                    assertEquals(2, result.getTags().size());
+                    assertEquals("java", result.getTags().get(0).getName());
+                    assertEquals("/blog/tag/java", result.getTags().get(0).getUrl());
+                    assertEquals("zrlog", result.getTags().get(1).getName());
+                });
     }
 
     @Test
-    public void shouldDisableCommentAndClearThumbnailWhenWebsiteConfigDisablesThem() throws Exception {
+    public void shouldDisableCommentAndClearThumbnailWhenWebsiteConfigDisablesThem()
+            throws Exception {
         PublicWebSiteInfo publicWebSiteInfo = new PublicWebSiteInfo();
         publicWebSiteInfo.setDisable_comment_status(true);
         publicWebSiteInfo.setGenerator_html_status(false);
         publicWebSiteInfo.setArticle_thumbnail_status(false);
         ArticleBasicDTO article = article();
 
-        withConfig(publicWebSiteInfo, cache -> {
-            ArticleBasicDTO result = ArticleService.handlerArticle(article, request("/", "blog.example.com"), cache);
+        withConfig(
+                publicWebSiteInfo,
+                cache -> {
+                    ArticleBasicDTO result =
+                            ArticleService.handlerArticle(
+                                    article, request("/", "blog.example.com"), cache);
 
-            assertEquals(Boolean.FALSE, result.getCanComment());
-            assertNull(result.getThumbnail());
-            assertNull(result.getThumbnailAlt());
-        });
+                    assertEquals(Boolean.FALSE, result.getCanComment());
+                    assertNull(result.getThumbnail());
+                    assertNull(result.getThumbnailAlt());
+                });
     }
 
-    private void withConfig(PublicWebSiteInfo publicWebSiteInfo, ThrowingRunnable runnable) throws Exception {
+    private void withConfig(PublicWebSiteInfo publicWebSiteInfo, ThrowingRunnable runnable)
+            throws Exception {
         String previousRootPath = System.getProperty("sws.root.path");
         try {
             System.setProperty("sws.root.path", temporaryFolder.newFolder().getAbsolutePath());
@@ -173,8 +182,9 @@ public class ArticleServiceTest {
         public <T> T getWebSetup(Class<T> capability) {
             if (capability == WebSiteInfoProvider.class) {
                 CacheService cache = cacheForTest();
-                return cache == null ? null : capability.cast(
-                        (WebSiteInfoProvider) cache::getPublicWebSiteInfo);
+                return cache == null
+                        ? null
+                        : capability.cast((WebSiteInfoProvider) cache::getPublicWebSiteInfo);
             }
             return super.getWebSetup(capability);
         }

@@ -16,15 +16,14 @@ import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSetupContext;
 import com.zrlog.web.WebSetupLoader;
 import com.zrlog.web.WebSiteInfoProvider;
-import org.apache.commons.dbutils.handlers.MapHandler;
-import org.apache.commons.dbutils.handlers.MapListHandler;
-import org.apache.commons.dbutils.handlers.ScalarHandler;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.dbutils.handlers.MapHandler;
+import org.apache.commons.dbutils.handlers.MapListHandler;
+import org.apache.commons.dbutils.handlers.ScalarHandler;
 
 public class InMemoryBlogDatabase implements AutoCloseable {
 
@@ -50,7 +49,8 @@ public class InMemoryBlogDatabase implements AutoCloseable {
     }
 
     public TestCacheService unitCacheService() {
-        if (config.modulesLoaded) throw new IllegalStateException("Use the production cache after loading modules");
+        if (config.modulesLoaded)
+            throw new IllegalStateException("Use the production cache after loading modules");
         return cacheService;
     }
 
@@ -87,32 +87,86 @@ public class InMemoryBlogDatabase implements AutoCloseable {
         return dataSource.getQueryRunner().query(sql, new MapListHandler(), params);
     }
 
-    public void insertArticle(long logId, String alias, String title, String plainContent, String keywords,
-                              String releaseTime, boolean rubbish, boolean privacy) throws SQLException {
-        update("insert into log (logId, alias, canComment, click, version, content, plain_content, markdown, digest, "
+    public void insertArticle(
+            long logId,
+            String alias,
+            String title,
+            String plainContent,
+            String keywords,
+            String releaseTime,
+            boolean rubbish,
+            boolean privacy)
+            throws SQLException {
+        update(
+                "insert into log (logId, alias, canComment, click, version, content, plain_content, markdown, digest, "
                         + "keywords, thumbnail, recommended, releaseTime, last_update_date, title, typeId, userId, "
                         + "hot, rubbish, privacy, editor_type) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
                         + "?, ?, ?, ?, ?, ?)",
-                logId, alias, true, logId * 10, 0, "<h2>" + title + "</h2><p>" + plainContent + "</p>", plainContent,
-                "## " + title, plainContent, keywords, "/attached/" + alias + ".png", false, releaseTime, releaseTime,
-                title, 1, 1, false, rubbish, privacy, "markdown");
+                logId,
+                alias,
+                true,
+                logId * 10,
+                0,
+                "<h2>" + title + "</h2><p>" + plainContent + "</p>",
+                plainContent,
+                "## " + title,
+                plainContent,
+                keywords,
+                "/attached/" + alias + ".png",
+                false,
+                releaseTime,
+                releaseTime,
+                title,
+                1,
+                1,
+                false,
+                rubbish,
+                privacy,
+                "markdown");
     }
 
     public void insertComment(long commentId, long logId, String userComment) throws SQLException {
-        update("insert into comment (commentId, commTime, hide, have_read, td, userComment, userHome, userIp, "
+        update(
+                "insert into comment (commentId, commTime, hide, have_read, td, userComment, userHome, userIp, "
                         + "userMail, userName, logId, postId, header, user_agent, reply_id) values (?, ?, ?, ?, ?, ?, "
                         + "?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                commentId, "2026-06-03 12:00:00", false, false, "2026-06-03 12:00:00", userComment,
-                "https://reader.example.com", "127.0.0.1", "reader@example.com", "reader", logId,
-                "post-" + commentId, "", "JUnit", null);
+                commentId,
+                "2026-06-03 12:00:00",
+                false,
+                false,
+                "2026-06-03 12:00:00",
+                userComment,
+                "https://reader.example.com",
+                "127.0.0.1",
+                "reader@example.com",
+                "reader",
+                logId,
+                "post-" + commentId,
+                "",
+                "JUnit",
+                null);
     }
 
     private void seedBaseData() throws SQLException {
-        update("insert into user (userId, email, password, userName, header, secretKey, mfaEnabled, mfaSecret) "
+        update(
+                "insert into user (userId, email, password, userName, header, secretKey, mfaEnabled, mfaSecret) "
                         + "values (?, ?, ?, ?, ?, ?, ?, ?)",
-                1, "admin@example.com", "pwd", "admin", "/attached/admin.png", "secret", false, null);
-        update("insert into type (typeId, alias, remark, typeName, pid, arrange_plugin) values (?, ?, ?, ?, ?, ?)",
-                1, "default", "Default category", "Default", 0, null);
+                1,
+                "admin@example.com",
+                "pwd",
+                "admin",
+                "/attached/admin.png",
+                "secret",
+                false,
+                null);
+        update(
+                "insert into type (typeId, alias, remark, typeName, pid, arrange_plugin) values (?, ?, ?, ?, ?, ?)",
+                1,
+                "default",
+                "Default category",
+                "Default",
+                0,
+                null);
         database.putWebsite("host", "blog.example.com");
         database.putWebsite("rows", 2);
         database.putWebsite("language", Constants.DEFAULT_LANGUAGE);
@@ -137,9 +191,13 @@ public class InMemoryBlogDatabase implements AutoCloseable {
         private synchronized void webModules() {
             if (modulesLoaded) return;
             webSetups.clear();
-            webSetups.addAll(WebSetupLoader.load(
-                    new WebSetupContext(this, dbPropertiesFile, installLockFile, "/blog", null),
-                    provider -> java.util.Set.of("data", "services", "blog").contains(provider.name())));
+            webSetups.addAll(
+                    WebSetupLoader.load(
+                            new WebSetupContext(
+                                    this, dbPropertiesFile, installLockFile, "/blog", null),
+                            provider ->
+                                    java.util.Set.of("data", "services", "blog")
+                                            .contains(provider.name())));
             modulesLoaded = true;
             initializeWebSetups();
         }
@@ -158,8 +216,9 @@ public class InMemoryBlogDatabase implements AutoCloseable {
         public <T> T getWebSetup(Class<T> capability) {
             if (!modulesLoaded && capability == WebSiteInfoProvider.class) {
                 CacheService cache = cacheForTest();
-                return cache == null ? null : capability.cast(
-                        (WebSiteInfoProvider) cache::getPublicWebSiteInfo);
+                return cache == null
+                        ? null
+                        : capability.cast((WebSiteInfoProvider) cache::getPublicWebSiteInfo);
             }
             return super.getWebSetup(capability);
         }

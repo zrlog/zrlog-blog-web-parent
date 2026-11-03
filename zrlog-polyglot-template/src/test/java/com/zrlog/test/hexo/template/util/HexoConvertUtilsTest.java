@@ -1,14 +1,13 @@
 package com.zrlog.test.hexo.template.util;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
 import com.zrlog.blog.hexo.template.util.HexoConvertUtils;
 import com.zrlog.blog.web.template.vo.ArticleDetailPageVO;
 import com.zrlog.data.dto.ArticleDetailDTO;
-import org.junit.Test;
-
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import org.junit.Test;
 
 public class HexoConvertUtilsTest {
 

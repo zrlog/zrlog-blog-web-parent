@@ -1,12 +1,11 @@
 package com.zrlog.test.polyglot.util;
 
-import com.zrlog.blog.polyglot.util.YamlLoader;
-import org.junit.Test;
-
-import java.util.Map;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+
+import com.zrlog.blog.polyglot.util.YamlLoader;
+import java.util.Map;
+import org.junit.Test;
 
 public class YamlLoaderTest {
 
