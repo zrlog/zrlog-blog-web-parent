@@ -21,7 +21,7 @@ import com.zrlog.common.cache.dto.TypeDTO;
 import com.zrlog.common.vo.AdminTokenVO;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
-import com.zrlog.model.Log;
+import com.zrlog.data.repository.LogRepository;
 import com.zrlog.util.I18nUtil;
 import com.zrlog.util.ParseUtil;
 import jakarta.inject.Inject;
@@ -42,7 +42,7 @@ public class ArticleController extends Controller {
     private final Supplier<TokenService> tokenService;
     private final Supplier<PluginCorePlugin> pluginCore;
 
-    private final jakarta.inject.Provider<Log> articles;
+    private final jakarta.inject.Provider<LogRepository> articles;
 
     @Inject
     public ArticleController(
@@ -50,7 +50,7 @@ public class ArticleController extends Controller {
             ArticleService articleService,
             Supplier<TokenService> tokenService,
             Supplier<PluginCorePlugin> pluginCore,
-            jakarta.inject.Provider<Log> articles) {
+            jakarta.inject.Provider<LogRepository> articles) {
         this.articles = articles;
         this.tokenService = tokenService;
         this.pluginCore = pluginCore;

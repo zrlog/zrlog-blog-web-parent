@@ -6,7 +6,7 @@ import com.hibegin.common.util.EnvKit;
 import com.hibegin.common.util.LoggerUtil;
 import com.hibegin.common.util.StringUtils;
 import com.zrlog.business.plugin.RequestInfo;
-import com.zrlog.model.Log;
+import com.zrlog.data.repository.LogRepository;
 import com.zrlog.plugin.BaseStaticSitePlugin;
 import com.zrlog.util.UserAgentUtils;
 import jakarta.inject.Inject;
@@ -45,7 +45,7 @@ public class ArticleStatisticsRunnable extends BaseLockObject implements Runnabl
         statements
                 .get()
                 .execute(
-                        "update " + Log.TABLE_NAME + " set click = click + 1  where logId=?",
+                        "update " + LogRepository.TABLE_NAME + " set click = click + 1  where logId=?",
                         logId);
     }
 
