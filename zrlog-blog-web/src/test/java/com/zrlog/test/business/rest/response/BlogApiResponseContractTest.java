@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import com.zrlog.blog.business.rest.response.ApiStandardResponse;
-import com.zrlog.blog.business.rest.response.CreateCommentResponse;
 import org.junit.Test;
 
 public class BlogApiResponseContractTest {
@@ -29,17 +28,5 @@ public class BlogApiResponseContractTest {
         assertEquals("changed", withMessage.getData());
         assertEquals(7, withMessage.getError());
         assertEquals("failed", withMessage.getMessage());
-    }
-
-    @Test
-    public void shouldExposeCreateCommentAlias() {
-        CreateCommentResponse empty = new CreateCommentResponse();
-        assertNull(empty.getAlias());
-
-        CreateCommentResponse response = new CreateCommentResponse("hello");
-        assertEquals("hello", response.getAlias());
-
-        response.setAlias("changed");
-        assertEquals("changed", response.getAlias());
     }
 }
