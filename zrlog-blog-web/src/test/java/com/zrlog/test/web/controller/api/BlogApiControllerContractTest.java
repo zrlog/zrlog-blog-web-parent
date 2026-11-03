@@ -1,6 +1,5 @@
 package com.zrlog.test.web.controller.api;
 
-import com.hibegin.common.dao.DataSourceWrapper;
 import com.hibegin.common.dao.dto.PageData;
 import com.hibegin.common.dao.dto.PageRequest;
 import com.hibegin.http.server.api.HttpRequest;
@@ -24,8 +23,7 @@ import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
 import com.zrlog.data.repository.CommentRepository;
 import com.zrlog.util.I18nUtil;
-import org.apache.commons.dbutils.QueryRunner;
-import org.apache.commons.dbutils.ResultSetHandler;
+import com.zrlog.test.support.InMemoryBlogDatabase;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -41,7 +39,7 @@ public class BlogApiControllerContractTest {
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
-    private DataSourceWrapper queryDataSource;
+    private final CommentRepository comments = org.mockito.Mockito.mock(CommentRepository.class);
 
     private static void restoreProperty(String key, String value) {
         if (value == null) {
@@ -116,32 +114,6 @@ public class BlogApiControllerContractTest {
         field.set(controller, articleService);
     }
 
-    private static DataSourceWrapper dataSource(QueryRunner queryRunner) {
-        return (DataSourceWrapper) Proxy.newProxyInstance(
-                BlogApiControllerContractTest.class.getClassLoader(),
-                new Class[]{DataSourceWrapper.class},
-                (proxy, method, args) -> {
-                    if ("getDataSourceProperties".equals(method.getName())) return new java.util.Properties();
-                    if ("getQueryRunner".equals(method.getName())) {
-                        return queryRunner;
-                    }
-                    if ("toString".equals(method.getName())) {
-                        return "DataSourceWrapperProxy";
-                    }
-                    Class<?> returnType = method.getReturnType();
-                    if (returnType == boolean.class) {
-                        return false;
-                    }
-                    if (returnType == int.class) {
-                        return 0;
-                    }
-                    if (returnType == long.class) {
-                        return 0L;
-                    }
-                    return null;
-                });
-    }
-
     @Test
     public void shouldReturnCacheInitDataFromConfiguredCacheService() throws Exception {
         BaseDataInitVO initData = new BaseDataInitVO();
@@ -201,7 +173,7 @@ public class BlogApiControllerContractTest {
     public void shouldReturnArticleDetailFromArticleService() throws Exception {
         FakeArticleService articleService = new FakeArticleService();
         BlogApiArticleController controller =
-                new BlogApiArticleController(articleService, () -> new CommentRepository(queryDataSource));
+                new BlogApiArticleController(articleService, () -> comments);
         ArticleDetailDTO detail = new ArticleDetailDTO();
         detail.setLogId(7L);
         articleService.detail = detail;
@@ -219,7 +191,7 @@ public class BlogApiControllerContractTest {
     public void shouldReturnArticlePageDataFromArticleService() throws Exception {
         FakeArticleService articleService = new FakeArticleService();
         BlogApiArticleController controller =
-                new BlogApiArticleController(articleService, () -> new CommentRepository(queryDataSource));
+                new BlogApiArticleController(articleService, () -> comments);
         ArticleBasicDTO row = new ArticleBasicDTO();
         row.setLogId(8L);
         articleService.pageData = new PageData<>(1L, List.of(row), 2L, 5L);
@@ -240,7 +212,7 @@ public class BlogApiControllerContractTest {
     public void shouldRequestNewestFirstArticlePageForFeed() throws Exception {
         FakeArticleService articleService = new FakeArticleService();
         BlogApiArticleController controller =
-                new BlogApiArticleController(articleService, () -> new CommentRepository(queryDataSource));
+                new BlogApiArticleController(articleService, () -> comments);
         setControllerRequest(controller, request(Map.of("feed", "true")));
 
         controller.index();
@@ -249,12 +221,13 @@ public class BlogApiControllerContractTest {
     }
 
     @Test
-    public void shouldReturnVisitorCommentsFromDao() throws Exception {
-        BlogApiArticleController controller =
-                new BlogApiArticleController(new FakeArticleService(), () -> new CommentRepository(queryDataSource));
-        FakeCommentQueryRunner queryRunner = new FakeCommentQueryRunner();
-        DataSourceWrapper previousDataSource = setQueryDataSource(dataSource(queryRunner));
-        try {
+    public void shouldReturnVisitorCommentsFromTypedRepository() throws Exception {
+        try (InMemoryBlogDatabase db = InMemoryBlogDatabase.open()) {
+            db.insertComment(5, 7, "hello");
+            db.update("UPDATE comment SET userMail=NULL WHERE commentId=5");
+            db.insertComment(6, 8, "another article");
+            BlogApiArticleController controller = new BlogApiArticleController(
+                    new FakeArticleService(), () -> new CommentRepository(db.dataSource()));
             setControllerRequest(controller, request(Map.of("id", "7")));
 
             ApiStandardResponse<List<VisitorCommentDTO>> response = controller.comment();
@@ -263,10 +236,7 @@ public class BlogApiControllerContractTest {
             assertEquals(Long.valueOf(5L), response.getData().get(0).getId());
             assertEquals("hello", response.getData().get(0).getUserComment());
             assertEquals("", response.getData().get(0).getGravatarId());
-            assertEquals("select * from comment where logId=?", queryRunner.sql);
-            assertEquals(7, queryRunner.params[0]);
-        } finally {
-            restoreQueryDataSource(previousDataSource);
+            assertEquals("2026-06-03 12:00:00", response.getData().get(0).getCommTime());
         }
     }
 
@@ -278,16 +248,6 @@ public class BlogApiControllerContractTest {
         } finally {
             restoreProperty("sws.root.path", previousRootPath);
         }
-    }
-
-    private DataSourceWrapper setQueryDataSource(DataSourceWrapper dataSource) {
-        DataSourceWrapper previous = queryDataSource;
-        queryDataSource = dataSource;
-        return previous;
-    }
-
-    private void restoreQueryDataSource(DataSourceWrapper previousDataSource) {
-        queryDataSource = previousDataSource;
     }
 
     private interface ThrowingRunnable {
@@ -386,24 +346,4 @@ public class BlogApiControllerContractTest {
         }
     }
 
-    private static class FakeCommentQueryRunner extends QueryRunner {
-        private String sql;
-        private Object[] params = new Object[0];
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public <T> T query(String sql, ResultSetHandler<T> rsh, Object... params) {
-            this.sql = sql;
-            this.params = params;
-            Map<String, Object> comment = new HashMap<>();
-            comment.put("id", 5L);
-            comment.put("userComment", "hello");
-            comment.put("header", "");
-            comment.put("commTime", "2026-06-29 12:13:14");
-            comment.put("userHome", "https://example.com");
-            comment.put("userName", "reader");
-            comment.put("userMail", null);
-            return (T) List.of(comment);
-        }
-    }
 }
