@@ -1,7 +1,6 @@
 package com.zrlog.blog.web.plugin;
 
 import com.hibegin.common.BaseLockObject;
-import com.hibegin.common.dao.DAO;
 import com.hibegin.common.util.EnvKit;
 import com.hibegin.common.util.LoggerUtil;
 import com.hibegin.common.util.StringUtils;
@@ -13,7 +12,6 @@ import jakarta.inject.Inject;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,24 +27,13 @@ public class ArticleStatisticsRunnable extends BaseLockObject implements Runnabl
      */
     private static final long REMOVE_TIME = 2 * 1000 * 60L;
     private final Supplier<String> webCm;
-    private final jakarta.inject.Provider<DAO> statements;
+    private final jakarta.inject.Provider<LogRepository> articles;
     private final List<RequestInfo> requestInfoList = Collections.synchronizedList(new ArrayList<>());
     @Inject
     public ArticleStatisticsRunnable(
-            Supplier<String> webCm, jakarta.inject.Provider<DAO> statements) {
-        this.statements = statements;
+            Supplier<String> webCm, jakarta.inject.Provider<LogRepository> articles) {
+        this.articles = articles;
         this.webCm = Objects.requireNonNull(webCm);
-    }
-
-    /**
-     *
-     */
-    private void clickAdd(Long logId) throws SQLException {
-        statements
-                .get()
-                .execute(
-                        "update " + LogRepository.TABLE_NAME + " set click = click + 1  where logId=?",
-                        logId);
     }
 
     @Override
@@ -62,7 +49,7 @@ public class ArticleStatisticsRunnable extends BaseLockObject implements Runnabl
                     if (UserAgentUtils.parse(requestInfo.getUserAgent()).isCrawler()) {
                         continue;
                     }
-                    clickAdd(requestInfo.getArticleId());
+                    articles.get().incrementClick(requestInfo.getArticleId());
                     requestInfo.setDeal(true);
                 }
                 if (System.currentTimeMillis() - requestInfo.getRequestTime() > REMOVE_TIME) {
