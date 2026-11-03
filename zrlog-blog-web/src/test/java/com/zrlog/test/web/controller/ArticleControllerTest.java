@@ -15,7 +15,7 @@ import com.zrlog.common.cache.dto.UserBasicDTO;
 import com.zrlog.common.cache.vo.BaseDataInitVO;
 import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.data.dto.ArticleDetailDTO;
-import com.zrlog.model.Log;
+import com.zrlog.data.repository.LogRepository;
 import com.zrlog.plugin.IPlugin;
 import com.zrlog.plugin.Plugins;
 import com.zrlog.web.WebSiteInfoProvider;
@@ -349,7 +349,7 @@ public class ArticleControllerTest {
         private Object lastId;
         private HttpRequest lastRequest;
         private FakeArticleService(DataSourceWrapper testDataSource) {
-            super(new TestCacheService(), () -> new Log(testDataSource));
+            super(new TestCacheService(), () -> new LogRepository(testDataSource));
         }
 
         @Override

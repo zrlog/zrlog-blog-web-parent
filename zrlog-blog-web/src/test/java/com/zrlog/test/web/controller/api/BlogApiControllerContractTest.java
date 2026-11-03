@@ -22,7 +22,7 @@ import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
-import com.zrlog.model.Comment;
+import com.zrlog.data.repository.CommentRepository;
 import com.zrlog.util.I18nUtil;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
@@ -121,6 +121,7 @@ public class BlogApiControllerContractTest {
                 BlogApiControllerContractTest.class.getClassLoader(),
                 new Class[]{DataSourceWrapper.class},
                 (proxy, method, args) -> {
+                    if ("getDataSourceProperties".equals(method.getName())) return new java.util.Properties();
                     if ("getQueryRunner".equals(method.getName())) {
                         return queryRunner;
                     }
@@ -200,7 +201,7 @@ public class BlogApiControllerContractTest {
     public void shouldReturnArticleDetailFromArticleService() throws Exception {
         FakeArticleService articleService = new FakeArticleService();
         BlogApiArticleController controller =
-                new BlogApiArticleController(articleService, () -> new Comment(queryDataSource));
+                new BlogApiArticleController(articleService, () -> new CommentRepository(queryDataSource));
         ArticleDetailDTO detail = new ArticleDetailDTO();
         detail.setLogId(7L);
         articleService.detail = detail;
@@ -218,7 +219,7 @@ public class BlogApiControllerContractTest {
     public void shouldReturnArticlePageDataFromArticleService() throws Exception {
         FakeArticleService articleService = new FakeArticleService();
         BlogApiArticleController controller =
-                new BlogApiArticleController(articleService, () -> new Comment(queryDataSource));
+                new BlogApiArticleController(articleService, () -> new CommentRepository(queryDataSource));
         ArticleBasicDTO row = new ArticleBasicDTO();
         row.setLogId(8L);
         articleService.pageData = new PageData<>(1L, List.of(row), 2L, 5L);
@@ -239,7 +240,7 @@ public class BlogApiControllerContractTest {
     public void shouldRequestNewestFirstArticlePageForFeed() throws Exception {
         FakeArticleService articleService = new FakeArticleService();
         BlogApiArticleController controller =
-                new BlogApiArticleController(articleService, () -> new Comment(queryDataSource));
+                new BlogApiArticleController(articleService, () -> new CommentRepository(queryDataSource));
         setControllerRequest(controller, request(Map.of("feed", "true")));
 
         controller.index();
@@ -250,7 +251,7 @@ public class BlogApiControllerContractTest {
     @Test
     public void shouldReturnVisitorCommentsFromDao() throws Exception {
         BlogApiArticleController controller =
-                new BlogApiArticleController(new FakeArticleService(), () -> new Comment(queryDataSource));
+                new BlogApiArticleController(new FakeArticleService(), () -> new CommentRepository(queryDataSource));
         FakeCommentQueryRunner queryRunner = new FakeCommentQueryRunner();
         DataSourceWrapper previousDataSource = setQueryDataSource(dataSource(queryRunner));
         try {

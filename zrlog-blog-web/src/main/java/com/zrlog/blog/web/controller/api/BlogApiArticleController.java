@@ -12,7 +12,7 @@ import com.zrlog.business.util.ControllerUtil;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
 import com.zrlog.data.dto.VisitorCommentDTO;
-import com.zrlog.model.Comment;
+import com.zrlog.data.repository.CommentRepository;
 import jakarta.inject.Inject;
 
 import java.sql.SQLException;
@@ -22,11 +22,11 @@ public class BlogApiArticleController extends Controller {
 
     private final ArticleService articleService;
 
-    private final jakarta.inject.Provider<Comment> comments;
+    private final jakarta.inject.Provider<CommentRepository> comments;
 
     @Inject
     public BlogApiArticleController(
-            ArticleService articleService, jakarta.inject.Provider<Comment> comments) {
+            ArticleService articleService, jakarta.inject.Provider<CommentRepository> comments) {
         this.comments = comments;
         this.articleService = articleService;
     }

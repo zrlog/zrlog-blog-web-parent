@@ -17,7 +17,7 @@ import com.zrlog.common.vo.Outline;
 import com.zrlog.common.vo.PublicWebSiteInfo;
 import com.zrlog.data.dto.ArticleBasicDTO;
 import com.zrlog.data.dto.ArticleDetailDTO;
-import com.zrlog.model.Log;
+import com.zrlog.data.repository.LogRepository;
 import com.zrlog.util.I18nUtil;
 import com.zrlog.util.ParseUtil;
 import com.zrlog.util.ZrLogUtil;
@@ -34,10 +34,10 @@ public class ArticleService {
 
     private final CacheService cacheService;
 
-    private final jakarta.inject.Provider<Log> articles;
+    private final jakarta.inject.Provider<LogRepository> articles;
 
     @Inject
-    public ArticleService(CacheService cacheService, jakarta.inject.Provider<Log> articles) {
+    public ArticleService(CacheService cacheService, jakarta.inject.Provider<LogRepository> articles) {
         this.cacheService = cacheService;
         this.articles = articles;
     }
@@ -192,7 +192,7 @@ public class ArticleService {
 
     public PageData<ArticleBasicDTO> pageByKeywords(PageRequest pageRequest, String keywords, HttpRequest request,
                                                     ArticleListOrder listOrder) {
-        Log log = articles.get();
+        LogRepository log = articles.get();
         PageData<ArticleBasicDTO> data = StringUtils.isEmpty(keywords)
                 && listOrder == ArticleListOrder.STICKY_FIRST
                 ? log.visitorFindHome(pageRequest)
