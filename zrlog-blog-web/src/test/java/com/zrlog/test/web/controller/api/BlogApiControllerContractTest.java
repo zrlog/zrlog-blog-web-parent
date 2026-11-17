@@ -283,11 +283,6 @@ public class BlogApiControllerContractTest {
         }
 
         @Override
-        public long getCurrentSqlVersion() {
-            return 0;
-        }
-
-        @Override
         public long getWebSiteVersion() {
             return 0;
         }

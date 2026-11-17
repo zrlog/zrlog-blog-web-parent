@@ -744,11 +744,6 @@ public class ZrLogTemplateRenderTest {
         }
 
         @Override
-        public long getCurrentSqlVersion() {
-            return 0;
-        }
-
-        @Override
         public long getWebSiteVersion() {
             return 0;
         }
